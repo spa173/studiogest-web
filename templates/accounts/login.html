@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - StudioGest{% endblock %}
+
+{% block full_page %}
+<!-- Contenedor Maestro de Inicio de Sesión -->
+<div class="min-h-screen w-full flex flex-col lg:flex-row bg-surface">
+  
+  <!-- Columna Izquierda: Hero Visual de Marca (Azul Noche, Detalles Turquesa y Acento Dorado) -->
+  <div class="relative w-full lg:w-5/12 xl:w-[48%] bg-primary-container text-inverse-on-surface p-8 lg:p-14 flex flex-col justify-between overflow-hidden">
+    <!-- Decoración de fondo ambiental sutil -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-tertiary-container/30 blur-2xl pointer-events-none"></div>
+
+    <!-- Cabecera de Columna con Logotipo Oficial SVG -->
+    <div class="relative z-10">
+      <div class="inline-block p-3.5 rounded-2xl bg-surface-container-lowest/10 backdrop-blur-md border border-outline-variant/20 mb-8 shadow-sm">
+        <img src="{% static 'img/logo_studiogest.svg' %}" alt="Logotipo de StudioGest" class="h-10 w-auto object-contain">
+      </div>
+
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/15 border border-secondary/30 mb-6">
+        <span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+        <span class="font-label-sm text-label-sm text-secondary-container font-semibold">Sede Principal • En línea</span>
+      </div>
+
+      <h1 class="font-headline text-3xl lg:text-4xl font-bold text-inverse-on-surface tracking-tight max-w-lg mb-5 leading-tight">
+        Gestión integral y eficiente para barberías y peluquerías
+      </h1>
+
+      <p class="font-body-md text-base text-inverse-primary/80 max-w-md leading-relaxed">
+        Control diario simplificado. Todo lo que tu equipo necesita para sincronizar turnos, gestionar clientes y administrar servicios sin complicaciones.
+      </p>
+    </div>
+
+    <!-- Tarjeta Resumen Operativo -->
+    <div class="relative z-10 my-8 bg-primary-container/85 backdrop-blur-md border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
+      <div class="flex items-center justify-between pb-3.5 border-b border-outline-variant/20 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary-container text-xl">storefront</span>
+          <span class="font-label-md text-label-md text-inverse-on-surface font-semibold">Resumen Operativo de Hoy</span>
+        </div>
+        <span class="font-label-xs text-label-xs text-on-tertiary-container bg-tertiary-container/90 px-2.5 py-1 rounded-md border border-on-tertiary-container/30 font-semibold">
+          Sede Principal
+        </span>
+      </div>
+
+      <!-- Métricas Locales Clave -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="p-3 rounded-xl bg-surface-container-lowest/5 border border-outline-variant/10">
+          <div class="flex items-center gap-1 text-secondary-container mb-1">
+            <span class="material-symbols-outlined text-sm">calendar_today</span>
+            <span class="font-label-xs text-[11px] font-semibold">Citas</span>
+          </div>
+          <p class="font-headline text-xl font-bold text-inverse-on-surface">Activa</p>
+          <span class="font-body-sm text-[11px] text-inverse-primary/70">Agenda abierta</span>
+        </div>
+
+        <div class="p-3 rounded-xl bg-surface-container-lowest/5 border border-outline-variant/10">
+          <div class="flex items-center gap-1 text-secondary-container mb-1">
+            <span class="material-symbols-outlined text-sm">badge</span>
+            <span class="font-label-xs text-[11px] font-semibold">Equipo</span>
+          </div>
+          <p class="font-headline text-xl font-bold text-inverse-on-surface">Turnos</p>
+          <span class="font-body-sm text-[11px] text-inverse-primary/70">En servicio</span>
+        </div>
+
+        <div class="p-3 rounded-xl bg-surface-container-lowest/5 border border-outline-variant/10">
+          <div class="flex items-center gap-1 text-secondary-container mb-1">
+            <span class="material-symbols-outlined text-sm">point_of_sale</span>
+            <span class="font-label-xs text-[11px] font-semibold">Caja</span>
+          </div>
+          <p class="font-headline text-xl font-bold text-inverse-on-surface">Abierta</p>
+          <span class="font-body-sm text-[11px] text-inverse-primary/70">Jornada 1</span>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-outline-variant/15 flex items-center justify-between text-inverse-primary/70">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm text-secondary-container">check_circle</span>
+          <span class="font-body-sm text-xs">Acceso seguro con control de roles</span>
+        </div>
+        <span class="font-label-xs text-[11px] text-inverse-primary/60">StudioGest</span>
+      </div>
+    </div>
+
+    <!-- Pie de Columna Izquierda -->
+    <div class="relative z-10 pt-2 flex items-center justify-between text-inverse-primary/60 border-t border-outline-variant/15">
+      <span class="font-body-sm text-xs">Peluquería &amp; Barbería Profesional</span>
+      <div class="flex items-center gap-1 text-secondary-container">
+        <span class="material-symbols-outlined text-sm">verified</span>
+        <span class="font-label-xs text-xs font-medium">Versión Autorizada</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna Derecha: Tarjeta de Autenticación Centrada -->
+  <div class="w-full lg:w-7/12 xl:w-[52%] bg-surface flex flex-col justify-between p-6 sm:p-12 lg:p-16">
+    
+    <!-- Top Utility Bar -->
+    <div class="w-full flex justify-end items-center mb-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant/30">
+        <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+        <span class="font-label-xs text-xs text-on-surface-variant font-medium">Terminal Principal</span>
+      </div>
+    </div>
+
+    <!-- Main Login Card (Centered) -->
+    <div class="w-full max-w-[440px] mx-auto my-auto py-4">
+      
+      <!-- Header de Login -->
+      <div class="mb-6">
+        <div class="inline-block mb-3">
+          <span class="font-label-xs text-xs uppercase tracking-wider text-secondary bg-secondary/10 px-2.5 py-1 rounded-md border border-secondary/20 font-semibold">
+            Sistema de Gestión Local
+          </span>
+        </div>
+        <h2 class="font-headline text-3xl font-bold text-on-surface tracking-tight">
+          Iniciar Sesión
+        </h2>
+        <p class="font-body-md text-sm text-on-surface-variant mt-1.5">
+          Ingresa tus credenciales para administrar tu negocio
+        </p>
+      </div>
+
+      <!-- Alerta de Validación Condicional (Solo si hay errores reales) -->
+      {% if form.errors or messages %}
+      <div class="mb-6 space-y-2" id="validation-alert">
+        {% if form.errors %}
+        <div class="flex items-start justify-between gap-3 p-3.5 rounded-xl bg-error-container/70 border border-error/30 text-on-error-container transition-all duration-200">
+          <div class="flex items-start gap-2.5">
+            <span class="material-symbols-outlined text-error text-xl shrink-0 mt-0.5">error</span>
+            <div>
+              <p class="font-label-sm text-sm font-semibold text-error">Acceso no autorizado</p>
+              <div class="font-body-sm text-xs text-on-error-container/90 mt-0.5 space-y-0.5">
+                {% for field, error_list in form.errors.items %}
+                  {% for error in error_list %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="document.getElementById('validation-alert').remove()" class="text-on-error-container/60 hover:text-on-error-container p-1" title="Cerrar">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+        {% endif %}
+
+        {% if messages %}
+          {% for message in messages %}
+          <div class="p-3.5 rounded-xl bg-secondary/10 border border-secondary/30 text-secondary text-xs font-medium flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">info</span>
+            <span>{{ message }}</span>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Formulario de Autenticación con Django & Tailwind -->
+      <form action="{% url 'accounts:login' %}{% if next %}?next={{ next }}{% endif %}" method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <!-- Campo Correo o Usuario -->
+        <div>
+          <label for="id_login" class="block font-label-md text-sm text-on-surface mb-1.5 font-medium">
+            Correo electrónico o usuario
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">mail</span>
+            </div>
+            {{ form.login }}
+          </div>
+        </div>
+
+        <!-- Campo Contraseña -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="id_password" class="block font-label-md text-sm text-on-surface font-medium">
+              Contraseña
+            </label>
+          </div>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+              <span class="material-symbols-outlined text-lg">lock</span>
+            </div>
+            {{ form.password }}
+            <!-- Botón para Mostrar/Ocultar Contraseña -->
+            <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface transition-colors cursor-pointer" title="Mostrar u ocultar contraseña">
+              <span class="material-symbols-outlined text-lg" id="passwordIcon">visibility</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fila Recordarme & Recuperación -->
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            {{ form.remember_me }}
+            <span class="font-body-md text-sm text-on-surface-variant">Recordarme</span>
+          </label>
+          <a href="#" onclick="alert('Por favor contacta al administrador principal de la sede para restablecer tu contraseña.'); return false;" class="font-label-md text-sm text-secondary hover:text-on-secondary-container transition-colors font-medium">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
+
+        <!-- Botón Principal Iniciar Sesión -->
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-secondary text-on-secondary font-headline text-base font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer">
+            <span>Iniciar sesión</span>
+            <span class="material-symbols-outlined text-lg">arrow_forward</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Indicador de Contexto Local -->
+      <div class="mt-8 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center gap-3">
+        <span class="material-symbols-outlined text-on-surface-variant text-lg">badge</span>
+        <div class="font-body-sm text-xs text-on-surface-variant">
+          Acceso exclusivo para administradores, barberos y estilistas autorizados.
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="w-full mt-8 pt-4 border-t border-outline-variant/30 text-center">
+      <p class="font-body-sm text-xs text-outline">
+        StudioGest v1.0 • Sistema de Gestión para Barberías &amp; Peluquerías. Sede Principal.
+      </p>
+    </footer>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('id_password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      passwordIcon.textContent = 'visibility_off';
+    } else {
+      passwordInput.type = 'password';
+      passwordIcon.textContent = 'visibility';
+    }
+  }
+</script>
+{% endblock %}

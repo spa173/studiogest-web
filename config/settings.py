@@ -32,8 +32,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Aplicaciones del proyecto (se crearán en las siguientes fases)
+    # Aplicaciones del proyecto
+    'accounts',
 ]
+
+AUTH_USER_MODEL = 'accounts.User'
+
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'dashboard:index'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
