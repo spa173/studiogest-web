@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 72" width="280" height="72" fill="none">
+  <rect width="56" height="56" rx="14" y="8" fill="#101827"/>
+  <path d="M22 24C22 21.7909 23.7909 20 26 20H32C35.3137 20 38 22.6863 38 26C38 28.5 36.5 30.5 34.2 31.4C37 32.5 39 35.1 39 38.2C39 41.9553 35.9553 45 32.2 45H25C23.3431 45 22 43.6569 22 42V24Z" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="28" cy="27" r="2.5" fill="#D5A66D"/>
+  <circle cx="31" cy="38" r="2.5" fill="#0D9488"/>
+  <path d="M38 22L44 16M44 16C45.1 14.9 46.9 14.9 48 16C49.1 17.1 49.1 18.9 48 20L42 26" stroke="#D5A66D" stroke-width="2" stroke-linecap="round"/>
+  <text x="68" y="38" font-family="Plus Jakarta Sans, sans-serif" font-size="24" font-weight="800" fill="#101827" letter-spacing="-0.5">Studio<tspan fill="#0D9488">Gest</tspan></text>
+  <text x="69" y="52" font-family="Plus Jakarta Sans, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing="1.5">BARBERÍA &amp; ESTÉTICA</text>
+</svg>

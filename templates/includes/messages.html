@@ -1,0 +1,28 @@
+{% if messages %}
+<div class="fixed top-20 right-6 z-50 space-y-3 max-w-md w-full" id="messages-container">
+  {% for message in messages %}
+  <div class="flex items-start justify-between gap-3 p-4 rounded-xl border shadow-lg backdrop-blur-md transition-all duration-300 {% if message.tags == 'error' %}bg-error-container/90 border-error/30 text-on-error-container{% elif message.tags == 'success' %}bg-secondary/10 border-secondary/30 text-secondary{% elif message.tags == 'warning' %}bg-tertiary-container/80 border-on-tertiary-container/30 text-on-tertiary-container{% else %}bg-surface-container-high border-outline-variant text-on-surface{% endif %}" role="alert">
+    <div class="flex items-center gap-2.5">
+      <span class="material-symbols-outlined text-xl shrink-0">
+        {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
+      </span>
+      <p class="font-body-md text-body-md font-medium">{{ message }}</p>
+    </div>
+    <button type="button" onclick="this.closest('[role=alert]').remove()" class="opacity-70 hover:opacity-100 transition-opacity p-1" aria-label="Cerrar">
+      <span class="material-symbols-outlined text-lg">close</span>
+    </button>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  // Auto-dismiss messages after 6 seconds
+  setTimeout(() => {
+    const container = document.getElementById('messages-container');
+    if (container) {
+      container.style.opacity = '0';
+      setTimeout(() => container.remove(), 400);
+    }
+  }, 6000);
+</script>
+{% endif %}

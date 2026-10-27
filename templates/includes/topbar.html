@@ -1,0 +1,44 @@
+{% load static %}
+<!-- TOPBAR (Cabecera Superior) -->
+<header class="sticky top-0 right-0 z-30 h-16 w-full bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 shadow-sm flex items-center px-4 sm:px-6 justify-between">
+  
+  <!-- Left Side: Mobile Logo / Sede & Dynamic Date -->
+  <div class="flex items-center gap-3 sm:gap-5">
+    <!-- Mobile Brand Display (visible only on mobile) -->
+    <a href="{% url 'dashboard:index' %}" class="flex lg:hidden items-center gap-2">
+      <img src="{% static 'img/logo_studiogest.svg' %}" alt="StudioGest" class="h-8 w-auto">
+    </a>
+
+    <!-- Sede Badge -->
+    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface">
+      <span class="material-symbols-outlined text-[18px] text-secondary">storefront</span>
+      <span class="font-label-md text-label-md font-semibold">Sede Principal</span>
+    </div>
+
+    <!-- Fecha Dinámica de Colombia -->
+    <div class="flex items-center gap-1.5 text-on-surface-variant font-body-md text-body-md border-l border-outline-variant/30 pl-3 sm:pl-4">
+      <span class="material-symbols-outlined text-[18px] text-secondary">calendar_month</span>
+      <span class="hidden md:inline font-medium text-on-surface">Hoy:</span>
+      <span class="font-medium text-on-surface capitalize">{% now "l, j \d\e F \d\e Y" %}</span>
+    </div>
+  </div>
+
+  <!-- Right Side: Búsqueda y Botón de Acción Rápida -->
+  <div class="flex items-center gap-2 sm:gap-3">
+    <!-- CTA Principal "+ Nueva Cita" -->
+    <button type="button" onclick="if(window.openAppointmentModal){ openAppointmentModal(); } else { window.location.href='{% url 'appointments:calendar' %}?action=new'; }" class="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-secondary text-on-secondary font-label-md text-label-md font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span class="hidden sm:inline">+ Nueva Cita</span>
+      <span class="sm:hidden">Cita</span>
+    </button>
+
+    <!-- Notificaciones / Ayuda -->
+    <div class="relative">
+      <button type="button" class="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Notificaciones">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary rounded-full ring-2 ring-surface-container-lowest"></span>
+      </button>
+    </div>
+  </div>
+
+</header>

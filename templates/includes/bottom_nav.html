@@ -1,0 +1,42 @@
+<!-- BARRA DE NAVEGACIÓN INFERIOR (Solo Móvil - lg:hidden) -->
+<nav class="fixed bottom-0 left-0 w-full z-40 lg:hidden flex justify-around items-center px-2 py-2 bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 shadow-lg">
+  <!-- 1: Inicio -->
+  <a href="{% url 'dashboard:index' %}" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all {% if request.resolver_match.app_name == 'dashboard' %}text-secondary bg-secondary/10 font-bold{% else %}text-on-surface-variant hover:text-secondary{% endif %}">
+    <span class="material-symbols-outlined text-[22px]" {% if request.resolver_match.app_name == 'dashboard' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>dashboard</span>
+    <span class="font-label-xs text-[11px] mt-0.5">Inicio</span>
+  </a>
+
+  <!-- 2: Agenda -->
+  <a href="{% url 'appointments:calendar' %}" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all {% if request.resolver_match.app_name == 'appointments' %}text-secondary bg-secondary/10 font-bold{% else %}text-on-surface-variant hover:text-secondary{% endif %}">
+    <span class="material-symbols-outlined text-[22px]" {% if request.resolver_match.app_name == 'appointments' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>calendar_today</span>
+    <span class="font-label-xs text-[11px] mt-0.5">Agenda</span>
+  </a>
+
+  <!-- 3: Clientes -->
+  <a href="#" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-secondary transition-all">
+    <span class="material-symbols-outlined text-[22px]">groups</span>
+    <span class="font-label-xs text-[11px] mt-0.5">Clientes</span>
+  </a>
+
+  <!-- 4: Ventas -->
+  <a href="#" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-secondary transition-all">
+    <span class="material-symbols-outlined text-[22px]">point_of_sale</span>
+    <span class="font-label-xs text-[11px] mt-0.5">Ventas</span>
+  </a>
+
+  <!-- 5: Perfil / Salir -->
+  {% if request.user.is_authenticated %}
+  <form action="{% url 'accounts:logout' %}" method="POST" class="inline">
+    {% csrf_token %}
+    <button type="submit" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-error transition-all">
+      <span class="material-symbols-outlined text-[22px]">logout</span>
+      <span class="font-label-xs text-[11px] mt-0.5">Salir</span>
+    </button>
+  </form>
+  {% else %}
+  <a href="{% url 'accounts:login' %}" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-secondary transition-all">
+    <span class="material-symbols-outlined text-[22px]">login</span>
+    <span class="font-label-xs text-[11px] mt-0.5">Acceso</span>
+  </a>
+  {% endif %}
+</nav>
