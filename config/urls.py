@@ -13,6 +13,8 @@ def root_redirect(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
+    path('dashboard/', include('dashboard.urls')),
+    path('appointments/', include('appointments.urls')),
     # Ruta raíz
     path('', root_redirect, name='root'),
 ]

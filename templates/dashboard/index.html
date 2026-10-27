@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel Administrativo - StudioGest{% endblock %}
+
+{% block content %}
+<!-- Saludo y Estado Operativo -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-outline-variant/30">
+  <div>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight flex items-center gap-2">
+      ¡Hola, {{ request.user.first_name|default:request.user.username }}! <span class="inline-block animate-pulse">👋</span>
+    </h1>
+    <p class="font-body-md text-sm text-on-surface-variant mt-1">
+      Resumen operacional en tiempo real de servicios, turnos y clientes para la Sede Principal.
+    </p>
+  </div>
+
+  <!-- Estado del Salón -->
+  <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-surface-container border border-outline-variant/40 text-on-surface self-start sm:self-auto shadow-sm">
+    <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+    <span class="font-label-sm text-xs font-bold text-secondary">Salón Abierto</span>
+    <span class="text-outline-variant">·</span>
+    <span class="font-body-sm text-xs text-on-surface-variant">{{ professionals.count }} estilistas activos</span>
+  </div>
+</div>
+
+<!-- FILA DE MÉTRICAS CLAVE (4 KPI Bento Cards) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  
+  <!-- KPI 1: Ventas del Día -->
+  <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-secondary/40 transition-colors">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-label-sm text-xs font-semibold text-on-surface-variant">Ventas Atendidas Hoy</span>
+      <span class="p-2 rounded-xl bg-secondary/10 text-secondary">
+        <span class="material-symbols-outlined text-xl">payments</span>
+      </span>
+    </div>
+    <div class="space-y-1">
+      <div class="font-headline text-2xl font-bold text-on-surface tracking-tight">
+        {{ total_sales_formatted }}
+      </div>
+      <div class="flex items-center gap-1.5 font-label-xs text-xs font-semibold text-secondary">
+        <span class="material-symbols-outlined text-sm">trending_up</span>
+        <span>Proyectado hoy: {{ projected_sales_formatted }}</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-outline-variant/20">
+      <div class="flex items-center justify-between text-xs text-on-surface-variant mb-1">
+        <span>Meta sugerida: $ 1.000.000 COP</span>
+        <span class="font-bold text-on-surface">Activo</span>
+      </div>
+      <div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+        <div class="bg-secondary h-full rounded-full" style="width: 65%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI 2: Citas de Hoy -->
+  <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-secondary/40 transition-colors">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-label-sm text-xs font-semibold text-on-surface-variant">Citas del Día</span>
+      <span class="p-2 rounded-xl bg-secondary/10 text-secondary">
+        <span class="material-symbols-outlined text-xl">calendar_month</span>
+      </span>
+    </div>
+    <div class="space-y-1">
+      <div class="font-headline text-2xl font-bold text-on-surface tracking-tight">
+        {{ today_count }} Citas
+      </div>
+      <div class="flex items-center gap-1.5 font-label-xs text-xs font-medium text-secondary">
+        <span class="material-symbols-outlined text-sm">check_circle</span>
+        <span>{{ completed_count }} completadas · {{ upcoming_appointments.count }} por atender</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-outline-variant/20">
+      <a href="{% url 'appointments:calendar' %}" class="text-xs font-semibold text-secondary hover:underline flex items-center gap-1">
+        <span>Ver agenda del día</span>
+        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI 3: Clientes Registrados -->
+  <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-secondary/40 transition-colors">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-label-sm text-xs font-semibold text-on-surface-variant">Fidelización de Clientes</span>
+      <span class="p-2 rounded-xl bg-tertiary-container/40 text-on-tertiary-container">
+        <span class="material-symbols-outlined text-xl">groups</span>
+      </span>
+    </div>
+    <div class="space-y-1">
+      <div class="font-headline text-2xl font-bold text-on-surface tracking-tight">
+        {{ total_customers }} Clientes
+      </div>
+      <div class="flex items-center gap-1.5 font-label-xs text-xs font-semibold text-on-tertiary-container">
+        <span class="material-symbols-outlined text-sm">stars</span>
+        <span>Base de clientes activa</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-outline-variant/20">
+      <span class="text-xs text-on-surface-variant">Registro directo desde citas</span>
+    </div>
+  </div>
+
+  <!-- KPI 4: Alertas de Inventario -->
+  <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-error/40 transition-colors">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-label-sm text-xs font-semibold text-on-surface-variant">Alertas de Stock</span>
+      <span class="p-2 rounded-xl bg-error-container/60 text-error">
+        <span class="material-symbols-outlined text-xl">inventory_2</span>
+      </span>
+    </div>
+    <div class="space-y-1">
+      <div class="font-headline text-2xl font-bold text-on-surface tracking-tight">
+        {{ inventory_alerts|length }} Productos
+      </div>
+      <div class="flex items-center gap-1.5 font-label-xs text-xs font-semibold text-error">
+        <span class="material-symbols-outlined text-sm">warning</span>
+        <span>Bajo el stock mínimo requerido</span>
+      </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-outline-variant/20">
+      <span class="text-xs text-outline">Reabastecimiento sugerido</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- GRID PRINCIPAL (2 COLUMNAS) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  
+  <!-- Columna Izquierda (8 cols): Próximas Citas de Hoy -->
+  <div class="lg:col-span-8 space-y-4">
+    
+    <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm">
+      <div class="flex items-center justify-between pb-4 border-b border-outline-variant/20 mb-4">
+        <div>
+          <h2 class="font-headline text-lg font-bold text-on-surface">Próximas Citas de Hoy</h2>
+          <p class="font-body-sm text-xs text-on-surface-variant">Turnos programados pendientes de atención</p>
+        </div>
+        <a href="{% url 'appointments:calendar' %}" class="px-3 py-1.5 rounded-xl bg-surface-container text-on-surface hover:bg-surface-container-high text-xs font-semibold transition-colors flex items-center gap-1">
+          <span>Ver Agenda Completa</span>
+          <span class="material-symbols-outlined text-sm">calendar_month</span>
+        </a>
+      </div>
+
+      {% if upcoming_appointments %}
+      <div class="space-y-3">
+        {% for app in upcoming_appointments %}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/30 hover:border-secondary/40 transition-all gap-3">
+          
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-secondary/10 flex flex-col items-center justify-center text-secondary shrink-0 font-bold">
+              <span class="text-xs">{{ app.start_time|time:"H:i" }}</span>
+              <span class="text-[9px] uppercase text-outline">{{ app.start_time|date:"A" }}</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="font-headline text-sm font-bold text-on-surface">{{ app.customer.name }}</h4>
+                {% if app.customer.is_vip %}
+                <span class="px-1.5 py-0.2 rounded bg-tertiary-container text-on-tertiary-container text-[10px] font-bold">VIP</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">
+                {{ app.service.name }} · <span class="font-medium text-secondary">{{ app.professional.name }}</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-outline-variant/20">
+            <span class="font-headline text-sm font-bold text-on-surface">{{ app.price_cop_formatted }}</span>
+            <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="px-3 py-1.5 bg-secondary text-on-secondary rounded-lg text-xs font-semibold hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer shadow-sm">
+                <span class="material-symbols-outlined text-sm">check</span>
+                <span>Atender</span>
+              </button>
+            </form>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="py-12 flex flex-col items-center justify-center text-center text-on-surface-variant">
+        <span class="material-symbols-outlined text-4xl text-outline mb-2">event_available</span>
+        <p class="font-headline text-base font-bold text-on-surface">No hay más citas pendientes hoy</p>
+        <p class="text-xs text-on-surface-variant mt-1">Todas las citas del día han sido atendidas o no hay turnos agendados.</p>
+        <a href="{% url 'appointments:calendar' %}" class="mt-4 px-4 py-2 bg-secondary text-on-secondary rounded-xl text-xs font-semibold hover:opacity-95 transition-all">
+          + Agendar Nueva Cita
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Columna Derecha (4 cols): Profesionales y Alertas -->
+  <div class="lg:col-span-4 space-y-5">
+    
+    <!-- Profesionales en Turno -->
+    <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/20 mb-3">
+        <h3 class="font-headline text-sm font-bold text-on-surface">Equipo en Turno</h3>
+        <span class="text-xs text-secondary font-semibold">{{ professionals.count }} activos</span>
+      </div>
+
+      <div class="space-y-3">
+        {% for prof in professionals %}
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-low/50 border border-outline-variant/20">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold text-xs border border-secondary/30">
+              {{ prof.user.first_name|slice:":1" }}{{ prof.user.last_name|slice:":1" }}
+            </div>
+            <div>
+              <p class="font-headline text-xs font-bold text-on-surface">{{ prof.name }}</p>
+              <p class="text-[11px] text-on-surface-variant">{{ prof.specialty }}</p>
+            </div>
+          </div>
+          <span class="w-2.5 h-2.5 rounded-full bg-secondary" title="Activo"></span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Alertas de Stock Bajo -->
+    <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/20 mb-3">
+        <h3 class="font-headline text-sm font-bold text-on-surface">Control de Insumos</h3>
+        <span class="text-[11px] text-error font-semibold">Crítico</span>
+      </div>
+
+      <div class="space-y-2.5">
+        {% for item in inventory_alerts %}
+        <div class="p-2.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/25 flex items-center justify-between">
+          <div>
+            <p class="font-headline text-xs font-semibold text-on-surface">{{ item.name }}</p>
+            <p class="text-[11px] text-error font-medium">
+              {{ item.stock }} unidades restantes <span class="text-on-surface-variant font-normal">(Mínimo: {{ item.min_stock }})</span>
+            </p>
+          </div>
+          <span class="text-[10px] font-bold text-error bg-error-container/60 px-2 py-0.5 rounded-md">
+            {{ item.deficit }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

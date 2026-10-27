@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agenda Semanal de Citas - StudioGest{% endblock %}
+
+{% block content %}
+<!-- Cabecera de la Agenda -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-outline-variant/30">
+  <div>
+    <div class="flex items-center gap-2">
+      <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+        Agenda Semanal
+      </h1>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/25 text-secondary font-label-sm text-xs font-bold">
+        <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+        Sede Principal
+      </span>
+    </div>
+    <p class="font-body-md text-sm text-on-surface-variant mt-1">
+      Planificación de turnos, profesionales y citas sin solapamientos.
+    </p>
+  </div>
+
+  <!-- Botones de Navegación y CTA -->
+  <div class="flex flex-wrap items-center gap-2.5">
+    <!-- Navegación de Semanas -->
+    <div class="inline-flex items-center bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-1 shadow-sm">
+      <a href="?date={{ prev_week }}{% if selected_professional %}&professional={{ selected_professional }}{% endif %}" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Semana Anterior">
+        <span class="material-symbols-outlined text-lg">chevron_left</span>
+      </a>
+      <a href="?date={% now 'Y-m-d' %}{% if selected_professional %}&professional={{ selected_professional }}{% endif %}" class="px-3 py-1 text-xs font-semibold text-secondary hover:bg-surface-container-low rounded-lg transition-colors">
+        Hoy
+      </a>
+      <a href="?date={{ next_week }}{% if selected_professional %}&professional={{ selected_professional }}{% endif %}" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Semana Siguiente">
+        <span class="material-symbols-outlined text-lg">chevron_right</span>
+      </a>
+    </div>
+
+    <!-- Filtro por Profesional -->
+    <form method="GET" class="inline-block">
+      <input type="hidden" name="date" value="{{ current_date|date:'Y-m-d' }}">
+      <select name="professional" onchange="this.form.submit()" class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl text-xs font-medium text-on-surface py-2 pl-3 pr-8 focus:border-secondary focus:ring-2 focus:ring-secondary/10 cursor-pointer shadow-sm">
+        <option value="">Todos los Profesionales</option>
+        {% for prof in professionals_list %}
+          <option value="{{ prof.id }}" {% if selected_professional == prof.id|stringformat:"s" %}selected{% endif %}>
+            {{ prof.name }} ({{ prof.specialty }})
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <!-- Botón Principal: + Nueva Cita -->
+    <button type="button" onclick="openAppointmentModal()" class="flex items-center gap-2 bg-secondary text-on-secondary py-2.5 px-4 rounded-xl font-headline text-sm font-semibold hover:opacity-95 active:scale-[0.98] transition-all shadow-sm cursor-pointer">
+      <span class="material-symbols-outlined text-lg">add_circle</span>
+      <span>+ Nueva Cita</span>
+    </button>
+  </div>
+</div>
+
+<!-- Banner de Resumen Semanal -->
+<div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+      <span class="material-symbols-outlined text-2xl">event_available</span>
+    </div>
+    <div>
+      <span class="font-label-xs text-xs text-on-surface-variant uppercase tracking-wider font-semibold">Semana en visualización</span>
+      <h3 class="font-headline text-base font-bold text-on-surface">
+        {{ week_days.0|date:"d \d\e M" }} - {{ week_days.6|date:"d \d\e M \d\e Y" }}
+      </h3>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-6">
+    <div class="text-right">
+      <span class="font-label-xs text-xs text-on-surface-variant block">Citas programadas</span>
+      <span class="font-headline text-lg font-bold text-secondary">{{ total_week_appointments }} citas</span>
+    </div>
+    <div class="hidden sm:block h-8 w-px bg-outline-variant/40"></div>
+    <div class="hidden sm:flex items-center gap-2 text-xs text-on-surface-variant">
+      <span class="w-2.5 h-2.5 rounded-full bg-secondary"></span> <span>Confirmada</span>
+      <span class="w-2.5 h-2.5 rounded-full bg-tertiary ml-2"></span> <span>Completada</span>
+    </div>
+  </div>
+</div>
+
+<!-- Grilla Semanal Responsive -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  
+  <!-- Encabezados de Días (Desktop: 7 columnas) -->
+  <div class="grid grid-cols-1 md:grid-cols-7 border-b border-outline-variant/30 bg-surface-container-low/50">
+    {% for day in week_days %}
+    <div class="p-3 text-center border-b md:border-b-0 md:border-r border-outline-variant/30 last:border-r-0 {% if day == current_date %}bg-secondary/10{% endif %}">
+      <span class="font-label-xs text-[11px] uppercase tracking-wider font-bold {% if day == current_date %}text-secondary{% else %}text-on-surface-variant{% endif %} block">
+        {{ day|date:"l" }}
+      </span>
+      <span class="font-headline text-lg font-bold {% if day == current_date %}text-secondary{% else %}text-on-surface{% endif %}">
+        {{ day|date:"d" }}
+      </span>
+      {% if day == current_date %}
+      <span class="inline-block px-2 py-0.5 mt-0.5 rounded-full bg-secondary text-white text-[10px] font-bold">Hoy</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Contenido de las Citas por Día -->
+  <div class="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-outline-variant/30 min-h-[480px]">
+    {% for day, appointments in appointments_by_day.items %}
+    <div class="p-3 space-y-3 flex flex-col {% if day == current_date %}bg-secondary/5{% endif %}">
+      
+      {% if appointments %}
+        {% for app in appointments %}
+        <!-- Tarjeta de Cita -->
+        <div class="group relative p-3 rounded-xl border bg-surface-container-lowest shadow-sm hover:shadow-md transition-all duration-150 {% if app.status == 'COMPLETADA' %}border-tertiary/40 bg-tertiary-container/10{% else %}border-secondary/30 hover:border-secondary{% endif %}">
+          
+          <!-- Horario & Estado -->
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="font-bold {% if app.status == 'COMPLETADA' %}text-on-tertiary-container{% else %}text-secondary{% endif %}">
+              {{ app.start_time|time:"H:i" }} - {{ app.end_time|time:"H:i" }}
+            </span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold {% if app.status == 'COMPLETADA' %}bg-tertiary/20 text-on-tertiary-container{% else %}bg-secondary/15 text-secondary{% endif %}">
+              {{ app.get_status_display }}
+            </span>
+          </div>
+
+          <!-- Cliente -->
+          <div class="font-headline font-semibold text-sm text-on-surface truncate">
+            {{ app.customer.name }}
+          </div>
+
+          <!-- Servicio & Profesional -->
+          <div class="text-xs text-on-surface-variant truncate mt-0.5">
+            {{ app.service.name }}
+          </div>
+          <div class="text-[11px] text-outline truncate flex items-center gap-1 mt-1">
+            <span class="material-symbols-outlined text-[13px] text-secondary">badge</span>
+            <span>{{ app.professional.name }}</span>
+          </div>
+
+          <!-- Precio COP -->
+          <div class="mt-2 pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs">
+            <span class="font-bold text-on-surface">{{ app.price_cop_formatted }}</span>
+            
+            <!-- Acciones rápidas (Completar / Cancelar) -->
+            <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+              {% if app.status != 'COMPLETADA' %}
+              <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas que esta cita ha sido atendida y completada?');">
+                {% csrf_token %}
+                <button type="submit" class="p-1 rounded text-secondary hover:bg-secondary/10 transition-colors" title="Marcar como Atendida">
+                  <span class="material-symbols-outlined text-base">check_circle</span>
+                </button>
+              </form>
+              <form action="{% url 'appointments:cancel' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas cancelar esta cita?');">
+                {% csrf_token %}
+                <button type="submit" class="p-1 rounded text-error hover:bg-error-container/20 transition-colors" title="Cancelar Cita">
+                  <span class="material-symbols-outlined text-base">cancel</span>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Estado Vacío del Día -->
+        <div class="h-28 flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/60 text-outline p-3 text-center">
+          <span class="material-symbols-outlined text-xl opacity-60">event_busy</span>
+          <span class="text-xs mt-1">Sin citas</span>
+        </div>
+      {% endif %}
+
+      <!-- Botón Rápido de Agendar en este día -->
+      <button type="button" onclick="openAppointmentModalWithDate('{{ day|date:'Y-m-d' }}')" class="w-full mt-auto py-2 rounded-xl border border-dashed border-outline-variant/60 hover:border-secondary hover:bg-secondary/5 text-on-surface-variant hover:text-secondary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-sm">add</span>
+        <span>Agendar</span>
+      </button>
+
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modal %}
+<!-- ========================================================================= -->
+<!-- MODAL: REGISTRAR NUEVA CITA (Fiel al diseño Stitch)                       -->
+<!-- ========================================================================= -->
+<div id="appointmentModal" class="fixed inset-0 z-50 {% if not modal_has_errors %}hidden{% else %}flex{% endif %} items-center justify-center p-4 bg-primary-container/60 backdrop-blur-sm transition-opacity duration-200" role="dialog" aria-modal="true">
+  
+  <div class="bg-surface-container-lowest w-full max-w-2xl rounded-2xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    
+    <!-- Modal Header -->
+    <div class="px-6 py-5 border-b border-outline-variant flex items-center justify-between bg-surface-container-lowest sticky top-0 z-10">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="font-headline text-xl sm:text-2xl font-bold text-on-surface tracking-tight">
+            Registrar Nueva Cita
+          </h2>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-xs text-xs font-semibold border border-secondary/20">
+            <span class="material-symbols-outlined text-sm">event_available</span>
+            Paso 1 de 1
+          </span>
+        </div>
+        <p class="font-body-sm text-xs text-on-surface-variant mt-1">
+          Diligencie la información del cliente y asigne horario según disponibilidad de agenda.
+        </p>
+      </div>
+
+      <button type="button" onclick="closeAppointmentModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer" title="Cerrar modal">
+        <span class="material-symbols-outlined text-2xl">close</span>
+      </button>
+    </div>
+
+    <!-- Badge Informativo de Prevención de Conflictos -->
+    <div class="px-6 pt-4">
+      <div class="p-3 rounded-xl bg-secondary/10 border border-secondary/30 flex items-center gap-2.5 text-secondary">
+        <span class="material-symbols-outlined text-xl shrink-0" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        <span class="font-label-sm text-xs sm:text-sm font-semibold text-secondary">
+          Sistema de validación automática: se impedirá el solapamiento con turnos existentes.
+        </span>
+      </div>
+    </div>
+
+    <!-- Alerta de Errores de Validación -->
+    {% if form.errors %}
+    <div class="px-6 pt-3">
+      <div class="p-3 rounded-xl bg-error-container/70 border border-error/30 text-on-error-container text-xs font-medium space-y-1">
+        <div class="flex items-center gap-1.5 font-bold text-error">
+          <span class="material-symbols-outlined text-base">error</span>
+          <span>No se pudo agendar la cita:</span>
+        </div>
+        {% for field, error_list in form.errors.items %}
+          {% for err in error_list %}
+            <p>• {{ err }}</p>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Formulario de la Cita (2 Columnas) -->
+    <form action="{% url 'appointments:calendar' %}" method="POST" class="p-6 space-y-4" id="appointmentForm">
+      {% csrf_token %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- COLUMNA 1 -->
+        <div class="space-y-4">
+          <!-- Cliente: Dropdown existente o escribir nuevo -->
+          <div>
+            <label for="customerSelect" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Seleccionar Cliente Registrado
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">person</span>
+              {{ form.customer }}
+            </div>
+          </div>
+
+          <div>
+            <label for="clientInput" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              O Registrar Nuevo Cliente
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">person_add</span>
+              {{ form.customer_name }}
+            </div>
+          </div>
+
+          <div>
+            <label for="clientPhoneInput" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Teléfono / WhatsApp Nuevo Cliente
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">call</span>
+              {{ form.customer_phone }}
+            </div>
+          </div>
+
+          <!-- Servicio -->
+          <div>
+            <label for="serviceSelect" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Servicio <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">content_cut</span>
+              {{ form.service }}
+            </div>
+          </div>
+
+          <!-- Profesional Asignado -->
+          <div>
+            <label for="staffSelect" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Profesional Asignado <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">badge</span>
+              {{ form.professional }}
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMNA 2 -->
+        <div class="space-y-4">
+          <!-- Fecha -->
+          <div>
+            <label for="dateInput" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Fecha de la Cita <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-outline">calendar_today</span>
+              {{ form.date }}
+            </div>
+          </div>
+
+          <!-- Hora de Inicio y Duración -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="timeInput" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+                Hora Inicio <span class="text-error">*</span>
+              </label>
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-2.5 top-2.5 text-base text-outline">schedule</span>
+                {{ form.start_time }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+                Duración Estimada
+              </label>
+              <div class="relative">
+                <input type="text" id="durationDisplay" readonly value="45 min" class="w-full py-2.5 px-3 bg-surface-container-low border border-outline-variant rounded-xl font-body-md text-xs font-bold text-on-surface text-center">
+              </div>
+            </div>
+          </div>
+
+          <!-- Precio Estimado en COP -->
+          <div>
+            <label class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Tarifa Estándar del Servicio (COP)
+            </label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-secondary">payments</span>
+              <input type="text" id="priceDisplay" readonly value="$ 65.000 COP" class="w-full pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl font-headline font-bold text-secondary text-sm">
+            </div>
+            <span class="text-[11px] text-on-surface-variant mt-1 block">Tarifa estándar de lista · Sede Principal</span>
+          </div>
+
+          <!-- Observaciones y Preferencias -->
+          <div>
+            <label for="notesTextarea" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+              Observaciones y Preferencias
+            </label>
+            <div class="relative">
+              {{ form.notes }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Notificación por WhatsApp -->
+      <div class="pt-2 border-t border-outline-variant/30 flex items-center justify-between">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          {{ form.send_whatsapp }}
+          <span class="font-label-sm text-xs text-on-surface">Enviar recordatorio automático por WhatsApp al cliente</span>
+        </label>
+      </div>
+
+      <!-- Botones de Acción del Modal -->
+      <div class="pt-3 border-t border-outline-variant/30 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeAppointmentModal()" class="px-4 py-2.5 bg-surface-container-lowest text-on-surface border border-outline-variant rounded-xl font-label-md text-xs font-semibold hover:bg-surface-container-low transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 bg-secondary text-on-secondary rounded-xl font-headline text-xs font-semibold hover:opacity-95 active:scale-[0.98] transition-all shadow-md flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-base">check</span>
+          <span>Guardar Cita</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Datos de servicios para cálculo instantáneo en el frontend
+  const servicesData = {
+    {% for s in services_list %}
+      "{{ s.id }}": {
+        "price": "{{ s.price_cop_formatted }}",
+        "duration": "{{ s.duration_minutes }} min"
+      },
+    {% endfor %}
+  };
+
+  function updateServiceDetails() {
+    const serviceSelect = document.getElementById('serviceSelect');
+    const priceDisplay = document.getElementById('priceDisplay');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const selectedId = serviceSelect.value;
+
+    if (servicesData[selectedId]) {
+      priceDisplay.value = servicesData[selectedId].price;
+      durationDisplay.value = servicesData[selectedId].duration;
+    }
+  }
+
+  function openAppointmentModal() {
+    const modal = document.getElementById('appointmentModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+    updateServiceDetails();
+  }
+
+  function openAppointmentModalWithDate(dateStr) {
+    const dateInput = document.getElementById('dateInput');
+    if (dateInput) {
+      dateInput.value = dateStr;
+    }
+    openAppointmentModal();
+  }
+
+  function closeAppointmentModal() {
+    const modal = document.getElementById('appointmentModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  // Cerrar al hacer clic en el fondo oscuro
+  document.getElementById('appointmentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeAppointmentModal();
+    }
+  });
+
+  // Cerrar con tecla Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAppointmentModal();
+    }
+  });
+
+  // Ejecutar al cargar la página si el modal tiene errores
+  document.addEventListener('DOMContentLoaded', function() {
+    updateServiceDetails();
+    {% if modal_has_errors %}
+      openAppointmentModal();
+    {% endif %}
+  });
+</script>
+{% endblock %}
