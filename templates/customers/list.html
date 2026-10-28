@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Clientes - StudioGest{% endblock %}
+
+{% block content %}
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-outline-variant/30">
+  <div>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Clientes</h1>
+    <p class="font-body-md text-sm text-on-surface-variant mt-1">
+      {{ total_clientes }} cliente{{ total_clientes|pluralize }} registrado{{ total_clientes|pluralize }}
+      · {{ total_vip }} VIP
+    </p>
+  </div>
+  <a href="{% url 'customers:create' %}"
+     class="inline-flex items-center justify-center gap-2 bg-secondary text-on-secondary py-2.5 px-4 rounded-xl font-headline-sm text-sm font-semibold hover:opacity-95 active:scale-[0.98] transition-all shadow-sm self-start sm:self-auto">
+    <span class="material-symbols-outlined text-[20px]">person_add</span>
+    Nuevo cliente
+  </a>
+</div>
+
+<!-- Búsqueda y filtro -->
+<form method="get" class="flex flex-col sm:flex-row gap-3">
+  <div class="relative flex-1">
+    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o correo"
+           class="w-full pl-10 pr-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 transition-all">
+  </div>
+  <label class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl cursor-pointer text-sm font-medium text-on-surface">
+    <input type="checkbox" name="vip" value="1" {% if solo_vip %}checked{% endif %}
+           class="rounded border-outline text-secondary focus:ring-secondary h-4 w-4">
+    Solo VIP
+  </label>
+  <button type="submit" class="px-4 py-2.5 rounded-xl bg-surface-container border border-outline-variant/50 text-on-surface font-semibold text-sm hover:bg-surface-container-high transition-colors">
+    Buscar
+  </button>
+  {% if q or solo_vip %}
+  <a href="{% url 'customers:list' %}" class="px-4 py-2.5 rounded-xl text-on-surface-variant font-medium text-sm hover:text-on-surface text-center">Limpiar</a>
+  {% endif %}
+</form>
+
+<!-- Tabla -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  {% if pagina %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wide">
+        <tr>
+          <th class="px-4 py-3 font-semibold">Cliente</th>
+          <th class="px-4 py-3 font-semibold">Teléfono</th>
+          <th class="px-4 py-3 font-semibold hidden md:table-cell">Correo</th>
+          <th class="px-4 py-3 font-semibold text-center hidden sm:table-cell">Citas</th>
+          <th class="px-4 py-3 font-semibold text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for c in pagina %}
+        <tr class="hover:bg-surface-container-low/60 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-on-surface">{{ c.name }}</span>
+              {% if c.is_vip %}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-[11px] font-bold">
+                <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>VIP
+              </span>
+              {% endif %}
+            </div>
+            {% if c.notes %}<p class="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{{ c.notes }}</p>{% endif %}
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <a href="{{ c.whatsapp }}" target="_blank" rel="noopener" class="text-secondary font-medium hover:underline" title="Escribir por WhatsApp">{{ c.phone }}</a>
+          </td>
+          <td class="px-4 py-3 text-on-surface-variant hidden md:table-cell">{{ c.email|default:"—" }}</td>
+          <td class="px-4 py-3 text-center text-on-surface hidden sm:table-cell">{{ c.num_citas }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-1">
+              <a href="{% url 'customers:update' c.pk %}" class="p-2 rounded-lg text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-colors" title="Editar" aria-label="Editar {{ c.name }}">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+              </a>
+              {% if request.user.is_admin %}
+              <a href="{% url 'customers:delete' c.pk %}" class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container-low transition-colors" title="Eliminar" aria-label="Eliminar {{ c.name }}">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagina.has_other_pages %}
+  <div class="flex items-center justify-between px-4 py-3 border-t border-outline-variant/20 text-sm">
+    <span class="text-on-surface-variant">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+      {% if pagina.has_previous %}
+      <a href="?page={{ pagina.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if solo_vip %}&vip=1{% endif %}" class="px-3 py-1.5 rounded-lg border border-outline-variant/50 hover:bg-surface-container-low font-medium">Anterior</a>
+      {% endif %}
+      {% if pagina.has_next %}
+      <a href="?page={{ pagina.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if solo_vip %}&vip=1{% endif %}" class="px-3 py-1.5 rounded-lg border border-outline-variant/50 hover:bg-surface-container-low font-medium">Siguiente</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline">groups</span>
+    <p class="mt-2 font-semibold text-on-surface">No se encontraron clientes</p>
+    <p class="text-sm text-on-surface-variant mt-1">
+      {% if q or solo_vip %}Prueba con otra búsqueda o limpia los filtros.{% else %}Registra el primero con el botón «Nuevo cliente».{% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

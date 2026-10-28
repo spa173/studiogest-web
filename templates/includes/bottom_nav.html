@@ -13,8 +13,8 @@
   </a>
 
   <!-- 3: Clientes -->
-  <a href="#" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-secondary transition-all">
-    <span class="material-symbols-outlined text-[22px]">groups</span>
+  <a href="{% url 'customers:list' %}" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all {% if request.resolver_match.app_name == 'customers' %}text-secondary bg-secondary/10 font-bold{% else %}text-on-surface-variant hover:text-secondary{% endif %}">
+    <span class="material-symbols-outlined text-[22px]" {% if request.resolver_match.app_name == 'customers' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>groups</span>
     <span class="font-label-xs text-[11px] mt-0.5">Clientes</span>
   </a>
 

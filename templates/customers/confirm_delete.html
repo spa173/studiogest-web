@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar cliente - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto w-full">
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 space-y-4 text-center">
+    <span class="material-symbols-outlined text-5xl text-error">warning</span>
+    <h1 class="font-headline text-xl font-bold text-on-surface">¿Eliminar a {{ cliente.name }}?</h1>
+    <p class="text-sm text-on-surface-variant">Esta acción no se puede deshacer.</p>
+    <form method="post" class="flex flex-col-reverse sm:flex-row sm:justify-center gap-3 pt-2">
+      {% csrf_token %}
+      <a href="{% url 'customers:list' %}" class="px-4 py-2.5 rounded-xl font-semibold text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-error text-on-error font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all">
+        Sí, eliminar
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
