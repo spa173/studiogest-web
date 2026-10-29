@@ -39,7 +39,7 @@
     <!-- Filtro por Profesional -->
     <form method="GET" class="inline-block">
       <input type="hidden" name="date" value="{{ current_date|date:'Y-m-d' }}">
-      <select name="professional" onchange="this.form.submit()" class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl text-xs font-medium text-on-surface py-2 pl-3 pr-8 focus:border-secondary focus:ring-2 focus:ring-secondary/10 cursor-pointer shadow-sm">
+      <select name="professional" aria-label="Filtrar por profesional" onchange="this.form.submit()" class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl text-xs font-medium text-on-surface py-2 pl-3 pr-8 focus:border-secondary focus:ring-2 focus:ring-secondary/10 cursor-pointer shadow-sm">
         <option value="">Todos los Profesionales</option>
         {% for prof in professionals_list %}
           <option value="{{ prof.id }}" {% if selected_professional == prof.id|stringformat:"s" %}selected{% endif %}>
