@@ -16,6 +16,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('appointments/', include('appointments.urls')),
     path('customers/', include('customers.urls')),
+    path('services/', include('services.urls')),
     # Ruta raíz
     path('', root_redirect, name='root'),
 ]
