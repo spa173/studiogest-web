@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Servicios - StudioGest{% endblock %}
+
+{% block content %}
+<div class="pb-2 border-b border-outline-variant/30">
+  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Servicios</h1>
+  <p class="font-body-md text-sm text-on-surface-variant mt-1">Consulta el catálogo de servicios de la barbería.</p>
+</div>
+
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  {% if services %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wide">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Nombre</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Descripción</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Duración</th>
+          <th scope="col" class="px-4 py-3 font-semibold text-right">Precio</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Estado</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for service in services %}
+        <tr class="hover:bg-surface-container-low/60 transition-colors">
+          <td class="px-4 py-3 font-semibold text-on-surface">{{ service.name }}</td>
+          <td class="px-4 py-3 text-sm text-on-surface-variant whitespace-pre-line break-words">{{ service.description|default:'Sin descripción' }}</td>
+          <td class="px-4 py-3 text-on-surface whitespace-nowrap">{{ service.duration_minutes }} min</td>
+          <td class="px-4 py-3 text-on-surface text-right whitespace-nowrap">{{ service.price_cop_formatted }}</td>
+          <td class="px-4 py-3">
+            {% if service.is_active %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold">Activo</span>
+            {% else %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Inactivo</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">content_cut</span>
+    <p class="mt-2 font-semibold text-on-surface">No hay servicios registrados</p>
+    <p class="text-sm text-on-surface-variant mt-1">Los servicios aparecerán aquí cuando estén disponibles en el catálogo.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
