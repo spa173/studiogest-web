@@ -196,13 +196,15 @@
 
         <!-- Fila Recordarme & Recuperación -->
         <div class="flex items-center justify-between pt-1">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label for="{{ form.remember_me.id_for_label }}" class="flex items-center gap-2 cursor-pointer select-none">
             {{ form.remember_me }}
             <span class="font-body-md text-sm text-on-surface-variant">Recordarme</span>
           </label>
-          <a href="#" onclick="alert('Por favor contacta al administrador principal de la sede para restablecer tu contraseña.'); return false;" class="font-label-md text-sm text-secondary hover:text-on-secondary-container transition-colors font-medium">
-            ¿Olvidaste tu contraseña?
-          </a>
+          <button type="button"
+        onclick="alert('Por favor contacte al administrador principal de la sede para restablecer su contraseña.')"
+        class="font-label-md text-sm text-secondary hover:text-on-secondary-container transition-colors font-medium">
+    ¿Olvidaste tu contraseña?
+</button>
         </div>
 
         <!-- Botón Principal Iniciar Sesión -->
