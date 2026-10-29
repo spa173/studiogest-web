@@ -5,11 +5,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_GET, require_http_methods
 
 from .forms import CustomerForm
 from .models import Customer
 
 POR_PAGINA = 10
+URL_LISTA = 'customers:list'
+GET_POST = ['GET', 'POST']
 
 
 def _enlace_whatsapp(telefono):
@@ -21,6 +24,7 @@ def _enlace_whatsapp(telefono):
 
 
 @login_required
+@require_GET
 def customer_list(request):
     texto = request.GET.get('q', '').strip()
     solo_vip = request.GET.get('vip') == '1'
@@ -48,19 +52,21 @@ def customer_list(request):
 
 
 @login_required
+@require_http_methods(GET_POST)
 def customer_create(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
         if form.is_valid():
             cliente = form.save()
             messages.success(request, f'Cliente «{cliente.name}» registrado correctamente.')
-            return redirect('customers:list')
+            return redirect(URL_LISTA)
     else:
         form = CustomerForm()
     return render(request, 'customers/form.html', {'form': form, 'titulo': 'Nuevo cliente'})
 
 
 @login_required
+@require_http_methods(GET_POST)
 def customer_update(request, pk):
     cliente = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
@@ -68,7 +74,7 @@ def customer_update(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f'Los datos de «{cliente.name}» se actualizaron.')
-            return redirect('customers:list')
+            return redirect(URL_LISTA)
     else:
         form = CustomerForm(instance=cliente)
     return render(request, 'customers/form.html',
@@ -76,13 +82,14 @@ def customer_update(request, pk):
 
 
 @login_required
+@require_http_methods(GET_POST)
 def customer_delete(request, pk):
     cliente = get_object_or_404(Customer, pk=pk)
 
     # Solo el administrador puede eliminar clientes
     if not request.user.is_admin:
         messages.error(request, 'Solo un administrador puede eliminar clientes.')
-        return redirect('customers:list')
+        return redirect(URL_LISTA)
 
     # Eliminar un cliente borraría también sus citas, así que se bloquea
     num_citas = cliente.appointments.count()
@@ -91,11 +98,11 @@ def customer_delete(request, pk):
             request,
             f'No se puede eliminar a «{cliente.name}» porque tiene {num_citas} cita(s) registrada(s).'
         )
-        return redirect('customers:list')
+        return redirect(URL_LISTA)
 
     if request.method == 'POST':
         nombre = cliente.name
         cliente.delete()
         messages.success(request, f'Cliente «{nombre}» eliminado.')
-        return redirect('customers:list')
+        return redirect(URL_LISTA)
     return render(request, 'customers/confirm_delete.html', {'cliente': cliente})

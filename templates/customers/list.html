@@ -23,7 +23,8 @@
 <form method="get" class="flex flex-col sm:flex-row gap-3">
   <div class="relative flex-1">
     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
-    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o correo"
+    <label for="buscar" class="sr-only">Buscar cliente por nombre, teléfono o correo</label>
+    <input type="search" id="buscar" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o correo"
            class="w-full pl-10 pr-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 transition-all">
   </div>
   <label class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl cursor-pointer text-sm font-medium text-on-surface">
