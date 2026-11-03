@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.http import url_has_allowed_host_and_scheme
-from .forms import LoginForm
+from django.views.decorators.http import require_http_methods
+from .forms import LoginForm, ProfileForm
 
 
 def login_view(request):
@@ -44,3 +46,19 @@ def logout_view(request):
         logout(request)
         messages.info(request, f"Sesión finalizada. ¡Hasta pronto, {nombre}!")
     return redirect('accounts:login')
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def profile_settings(request):
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.save(update_fields=form.Meta.fields)
+            messages.success(request, 'Tus datos personales se actualizaron correctamente.')
+            return redirect('accounts:settings')
+        messages.error(request, 'No se pudieron guardar los cambios. Revisa los campos indicados.')
+    else:
+        form = ProfileForm(instance=request.user)
+    return render(request, 'accounts/settings.html', {'form': form})

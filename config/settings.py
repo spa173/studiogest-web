@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     'services',
     'appointments',
     'dashboard',
+    'reports',
+    'inventory',
+    'sales',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
