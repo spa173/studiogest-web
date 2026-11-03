@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Profesionales - StudioGest{% endblock %}
+
+{% block content %}
+<div class="pb-2 border-b border-outline-variant/30">
+  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Profesionales</h1>
+  <p class="font-body-md text-sm text-on-surface-variant mt-1">Consulta los profesionales registrados en la barbería.</p>
+</div>
+
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  {% if professionals %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wide">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Nombre</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Especialidad</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Estado</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for professional in professionals %}
+        <tr class="hover:bg-surface-container-low/60 transition-colors">
+          <td class="px-4 py-3 font-semibold text-on-surface">{{ professional.name }}</td>
+          <td class="px-4 py-3 text-sm text-on-surface-variant break-words">{{ professional.specialty }}</td>
+          <td class="px-4 py-3">
+            {% if professional.is_active %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold">Activo</span>
+            {% else %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Inactivo</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">badge</span>
+    <p class="mt-2 font-semibold text-on-surface">No hay profesionales registrados</p>
+    <p class="text-sm text-on-surface-variant mt-1">Los profesionales aparecerán aquí cuando estén registrados en el sistema.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
