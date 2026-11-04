@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  function initializeNavigation() {
+  function initializeNavigation(document, window) {
     const openers = document.querySelectorAll('[data-open-dialog]');
     const closers = document.querySelectorAll('[data-close-dialog]');
     const dialogs = document.querySelectorAll('#mobile-menu, #notifications-panel');
@@ -40,7 +40,7 @@
     const desktop = window.matchMedia('(min-width: 1024px)');
     desktop.addEventListener('change', event => {
       const mobileMenu = document.getElementById('mobile-menu');
-      if (event.matches && mobileMenu && mobileMenu.open) mobileMenu.close();
+      if (event.matches && mobileMenu?.open) mobileMenu.close();
     });
 
     if (new URLSearchParams(window.location.search).get('action') === 'new' &&
@@ -49,9 +49,17 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeNavigation, {once: true});
-  } else {
-    initializeNavigation();
+  function startNavigation(document, window) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => initializeNavigation(document, window), {once: true});
+    } else {
+      initializeNavigation(document, window);
+    }
+  }
+  if (typeof module !== 'undefined') {
+    module.exports = {startNavigation};
+  }
+  if (typeof document !== 'undefined') {
+    startNavigation(document, window);
   }
 })();

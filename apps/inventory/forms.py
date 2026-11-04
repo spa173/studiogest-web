@@ -31,36 +31,59 @@ class ProductRegistrationForm(forms.Form):
         self.product = product
         self.mode = mode
         super().__init__(*args, **kwargs)
-        if mode == 'edit':
+        self._configure_mode()
+        if product:
+            self._load_product(product)
+        self._configure_unit_fields(self._current_unit())
+        self._style_fields()
+
+    def _configure_mode(self):
+        if self.mode == 'edit':
             self.fields.pop('presentation_count')
             self.fields.pop('total_cost')
-        elif mode == 'purchase':
+        elif self.mode == 'purchase':
             self.fields['presentation_count'].label = 'Cantidad de presentaciones recibidas'
             self.fields['presentation_count'].help_text = 'Presentaciones recibidas en esta entrada posterior.'
             self.fields['total_cost'].label = 'Costo total de la entrada (COP)'
-        if product:
-            self.initial.update({
-                'code': product.code, 'name': product.name, 'description': product.description,
-                'presentation': product.presentation, 'base_unit': product.base_unit,
-                'content': product.content_per_presentation,
-                'presentation_sale_price': product.presentation_sale_price,
-                'minimum_stock': product.minimum_stock, 'is_active': product.is_active,
-                'usage_price': product.usage_price_override if product.content_per_presentation is not None else product.service_usage_price,
-            })
-            self.fields['code'].disabled = True
-            self.fields['base_unit'].disabled = True
-            if product.content_per_presentation is not None:
-                self.fields['content'].disabled = True
-                self.fields['presentation'].disabled = True
-        unit = product.base_unit if product else (self.data.get('base_unit') if self.is_bound else Product.BaseUnit.UNIT)
-        self.fields['content'].widget.attrs['data-locked'] = 'true' if product and product.content_per_presentation is not None else 'false'
+
+    def _load_product(self, product):
+        usage_price = product.service_usage_price
+        if product.content_per_presentation is not None:
+            usage_price = product.usage_price_override
+            self.fields['content'].disabled = True
+            self.fields['presentation'].disabled = True
+        self.initial.update({
+            'code': product.code, 'name': product.name, 'description': product.description,
+            'presentation': product.presentation, 'base_unit': product.base_unit,
+            'content': product.content_per_presentation,
+            'presentation_sale_price': product.presentation_sale_price,
+            'minimum_stock': product.minimum_stock, 'is_active': product.is_active,
+            'usage_price': usage_price,
+        })
+        self.fields['code'].disabled = True
+        self.fields['base_unit'].disabled = True
+
+    def _current_unit(self):
+        if self.product:
+            return self.product.base_unit
+        if self.is_bound:
+            return self.data.get('base_unit')
+        return Product.BaseUnit.UNIT
+
+    def _configure_unit_fields(self, unit):
+        content_locked = self.product is not None and self.product.content_per_presentation is not None
+        self.fields['content'].widget.attrs['data-locked'] = 'true' if content_locked else 'false'
         if unit == Product.BaseUnit.UNIT:
             self.fields['content'].disabled = True
             self.fields['usage_price'].disabled = True
             self.initial['content'] = Decimal('1')
             self.initial['usage_price'] = None
-        symbol = 'unidades' if unit == Product.BaseUnit.UNIT else 'ml' if unit == Product.BaseUnit.ML else 'g' if unit == Product.BaseUnit.G else 'unidad de control'
+        symbols = {Product.BaseUnit.UNIT: 'unidades', Product.BaseUnit.ML: 'ml', Product.BaseUnit.G: 'g'}
+        symbol = symbols.get(unit, 'unidad de control')
         self.fields['minimum_stock'].help_text = f'Se expresa en {symbol}, no en frascos ni tubos para productos divisibles.'
+
+    def _style_fields(self):
+        decimal_steps = {'usage_price': '0.00000001', 'content': '0.001', 'minimum_stock': '0.001'}
         for name, field in self.fields.items():
             if name == 'is_active':
                 field.widget.attrs['class'] = 'rounded border-outline text-secondary focus:ring-secondary'
@@ -71,7 +94,7 @@ class ProductRegistrationForm(forms.Form):
                     'focus:border-secondary focus:ring-secondary'
                 )
             if isinstance(field, forms.DecimalField):
-                field.widget.attrs['step'] = '0.00000001' if name == 'usage_price' else ('0.001' if name in ['content', 'minimum_stock'] else '0.01')
+                field.widget.attrs['step'] = decimal_steps.get(name, '0.01')
 
     def clean_code(self):
         code = self.cleaned_data['code'].strip().upper()

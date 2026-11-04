@@ -1,22 +1,18 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const test = require('node:test');
-const vm = require('node:vm');
+const {startNavigation} = require('../../static/js/navigation.js');
 
-const source = fs.readFileSync(path.join(__dirname, '../../static/js/navigation.js'), 'utf8');
+function button(dialogId, close = false) {
+  return {dataset: close ? {closeDialog: dialogId} : {openDialog: dialogId},
+    attributes: {'aria-expanded': 'false'}, events: {},
+    addEventListener(event, handler) { this.events[event] = handler; },
+    setAttribute(name, value) { this.attributes[name] = value; }};
+}
 
 function setup({search = '', appointmentPage = false, readyState = 'complete', withPanels = true} = {}) {
   const listeners = {}, ready = {}, media = {};
   let modalCalls = 0;
   const elements = {};
-  function button(dialogId, close = false) {
-    const result = {dataset: close ? {closeDialog: dialogId} : {openDialog: dialogId},
-      attributes: {'aria-expanded': 'false'}, events: {},
-      addEventListener(event, handler) { this.events[event] = handler; },
-      setAttribute(name, value) { this.attributes[name] = value; }};
-    return result;
-  }
   const openers = [], closers = [], dialogs = [];
   if (withPanels) {
     for (const id of ['mobile-menu', 'notifications-panel']) {
@@ -35,11 +31,14 @@ function setup({search = '', appointmentPage = false, readyState = 'complete', w
   }
   const document = {readyState,
     addEventListener: (event, handler) => { ready[event] = handler; },
-    querySelectorAll: selector => selector === '[data-open-dialog]' ? openers : selector === '[data-close-dialog]' ? closers : dialogs,
+    querySelectorAll(selector) {
+      const groups = {'[data-open-dialog]': openers, '[data-close-dialog]': closers};
+      return groups[selector] ?? dialogs;
+    },
     getElementById: id => elements[id]};
   const window = {location: {search}, matchMedia: () => ({addEventListener: (event, handler) => { media[event] = handler; }})};
   if (appointmentPage) window.openAppointmentModal = () => { modalCalls++; };
-  vm.runInNewContext(source, {document, window, URLSearchParams});
+  startNavigation(document, window);
   return {elements, openers, closers, listeners, media, ready, modalCalls: () => modalCalls};
 }
 

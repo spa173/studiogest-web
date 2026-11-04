@@ -26,42 +26,73 @@ def product_list(request):
 def register_product(request, pk=None, mode='new'):
     if not request.user.is_admin:
         raise PermissionDenied('Solo los administradores pueden registrar productos y actualizar sus datos y precios.')
-    product = get_object_or_404(Product, pk=pk) if pk else None
-    form = ProductRegistrationForm(request.POST if request.method == 'POST' else None,
-                                   product=product, mode=mode,
+    product = None
+    if pk:
+        product = get_object_or_404(Product, pk=pk)
+    data = None
+    if request.method == 'POST':
+        data = request.POST
+    form = ProductRegistrationForm(data, product=product, mode=mode,
                                    initial={'operation_token': operation_token(request.user, product, mode)})
     if request.method == 'POST':
-        try:
-            key = verify_token(request.POST.get('operation_token'), request.user, product, mode)
-            fingerprint = request_fingerprint(request.POST)
-            previous = StockEntry.objects.filter(operation_key=key).first()
-            if previous:
-                if previous.request_fingerprint != fingerprint or previous.created_by_id != request.user.pk:
-                    raise ValidationError('Esta operación ya se registró con otros datos. Abre un formulario nuevo.')
-                messages.info(request, 'Este registro ya estaba guardado. No se volvió a aumentar el stock.')
-                return redirect('inventory:history')
-            if form.is_valid():
-                try:
-                    _, created = save_registration(data=form.cleaned_data, user=request.user, key=key,
-                                                   fingerprint=fingerprint, product=product, mode=mode)
-                except IntegrityError:
-                    previous = StockEntry.objects.filter(operation_key=key, created_by=request.user,
-                                                         request_fingerprint=fingerprint).first()
-                    if previous:
-                        messages.info(request, 'Este registro ya estaba guardado. No se volvió a aumentar el stock.')
-                        return redirect('inventory:history')
-                    raise ValidationError('No se pudo guardar: el código o la operación ya existen. Revisa el inventario.')
-                messages.success(request, 'Datos y precios actualizados sin cambiar existencias.' if mode == 'edit'
-                                 else 'Producto registrado con su saldo inicial.' if mode == 'new' and created
-                                 else 'Entrada registrada y existencias actualizadas.' if created else 'El registro ya estaba guardado.')
-                return redirect('inventory:list')
-        except ValidationError as error:
-            form.is_valid()
-            form.add_error(None, error.messages)
-        except OperationalError:
-            form.is_valid()
-            form.add_error(None, 'La base de datos está ocupada. Intenta guardar otra vez; no se registró una entrada parcial.')
+        response = _handle_registration_post(request, form, product, mode)
+        if response is not None:
+            return response
     return render(request, 'inventory/form.html', {'form': form, 'product': product, 'mode': mode})
+
+
+def _duplicate_registration_response(request):
+    messages.info(request, 'Este registro ya estaba guardado. No se volvió a aumentar el stock.')
+    return redirect('inventory:history')
+
+
+def _registration_success_message(mode, created):
+    if mode == 'edit':
+        return 'Datos y precios actualizados sin cambiar existencias.'
+    if not created:
+        return 'El registro ya estaba guardado.'
+    if mode == 'new':
+        return 'Producto registrado con su saldo inicial.'
+    return 'Entrada registrada y existencias actualizadas.'
+
+
+def _save_registration_form(request, form, product, mode, key, fingerprint):
+    try:
+        _, created = save_registration(data=form.cleaned_data, user=request.user, key=key,
+                                      fingerprint=fingerprint, product=product, mode=mode)
+    except IntegrityError as error:
+        duplicate = StockEntry.objects.filter(operation_key=key, created_by=request.user,
+                                              request_fingerprint=fingerprint).exists()
+        if duplicate:
+            return _duplicate_registration_response(request)
+        raise ValidationError('No se pudo guardar: el código o la operación ya existen. Revisa el inventario.') from error
+    messages.success(request, _registration_success_message(mode, created))
+    return redirect('inventory:list')
+
+
+def _process_registration_post(request, form, product, mode):
+    key = verify_token(request.POST.get('operation_token'), request.user, product, mode)
+    fingerprint = request_fingerprint(request.POST)
+    previous = StockEntry.objects.filter(operation_key=key).first()
+    if previous:
+        if previous.request_fingerprint != fingerprint or previous.created_by_id != request.user.pk:
+            raise ValidationError('Esta operación ya se registró con otros datos. Abre un formulario nuevo.')
+        return _duplicate_registration_response(request)
+    if not form.is_valid():
+        return None
+    return _save_registration_form(request, form, product, mode, key, fingerprint)
+
+
+def _handle_registration_post(request, form, product, mode):
+    try:
+        return _process_registration_post(request, form, product, mode)
+    except ValidationError as error:
+        form.is_valid()
+        form.add_error(None, error.messages)
+    except OperationalError:
+        form.is_valid()
+        form.add_error(None, 'La base de datos está ocupada. Intenta guardar otra vez; no se registró una entrada parcial.')
+    return None
 
 
 @login_required

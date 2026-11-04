@@ -1,8 +1,6 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
 const test = require('node:test');
+const {initializeInventoryRegistration} = require('../../static/js/inventory-registration.js');
 
 function setup({unit = 'ML', content = '50', count = '10', total = '100', sale = '20', usage = '', mode = 'new'} = {}) {
   const fields = Object.fromEntries(Object.entries({base_unit: unit, content, presentation_count: count,
@@ -25,7 +23,7 @@ function setup({unit = 'ML', content = '50', count = '10', total = '100', sale =
     addEventListener: (event, handler) => { handlers[event] = handler; },
   };
   const document = {getElementById: id => id === 'inventory-registration' ? form : ids[id]};
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../static/js/inventory-registration.js'), 'utf8'), {document});
+  initializeInventoryRegistration(document);
   return {fields, ids, wrappers, handlers, button};
 }
 
