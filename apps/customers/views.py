@@ -7,6 +7,8 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
+from appointments.models import Appointment
+
 from .forms import CustomerForm
 from .models import Customer
 
@@ -91,12 +93,16 @@ def customer_delete(request, pk):
         messages.error(request, 'Solo un administrador puede eliminar clientes.')
         return redirect(URL_LISTA)
 
-    # Eliminar un cliente borraría también sus citas, así que se bloquea
-    num_citas = cliente.appointments.count()
-    if num_citas:
+    # Las citas canceladas no aparecen en la agenda y no bloquean la eliminación.
+    # Las demás (pendientes, confirmadas, en atención o completadas) sí la bloquean,
+    # porque eliminar al cliente borraría también ese historial.
+    citas_canceladas = cliente.appointments.filter(status=Appointment.Status.CANCELLED)
+    citas_vigentes = cliente.appointments.exclude(status=Appointment.Status.CANCELLED).count()
+    if citas_vigentes:
         messages.error(
             request,
-            f'No se puede eliminar a «{cliente.name}» porque tiene {num_citas} cita(s) registrada(s).'
+            f'No se puede eliminar a «{cliente.name}» porque tiene {citas_vigentes} cita(s) '
+            'que no están canceladas (pendientes, confirmadas o completadas).'
         )
         return redirect(URL_LISTA)
 
@@ -105,4 +111,5 @@ def customer_delete(request, pk):
         cliente.delete()
         messages.success(request, f'Cliente «{nombre}» eliminado.')
         return redirect(URL_LISTA)
-    return render(request, 'customers/confirm_delete.html', {'cliente': cliente})
+    return render(request, 'customers/confirm_delete.html',
+                  {'cliente': cliente, 'num_canceladas': citas_canceladas.count()})
