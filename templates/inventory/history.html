@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load inventory_format %}
+{% block title %}Entradas de Inventario - StudioGest{% endblock %}
+{% block content %}
+<div class="pb-3 border-b border-outline-variant/30">
+  <a href="{% url 'inventory:list' %}" class="text-sm font-semibold text-secondary hover:underline">Volver a Inventario</a>
+  <h1 class="mt-2 font-headline text-2xl font-bold">Historial de entradas</h1>
+  <p class="mt-1 text-sm text-on-surface-variant">Saldos iniciales y compras históricas, sin editar ni eliminar registros anteriores. El tipo indica el origen de cada entrada.</p>
+</div>
+<div class="rounded-2xl bg-surface-container-lowest border border-outline-variant/30 overflow-hidden shadow-sm">
+{% if page %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant"><tr>
+        <th scope="col" class="p-4">Fecha / responsable</th><th scope="col" class="p-4">Producto</th>
+        <th scope="col" class="p-4">Tipo / presentaciones</th><th scope="col" class="p-4">Cantidad ingresada</th>
+        <th scope="col" class="p-4">Costo total (COP)</th><th scope="col" class="p-4">Costo por presentación (COP)</th>
+      </tr></thead>
+      <tbody class="divide-y divide-outline-variant/20">{% for entry in page %}<tr>
+        <td class="p-4 whitespace-nowrap">{{ entry.created_at|date:'d/m/Y H:i' }}<br>{{ entry.created_by.get_full_name|default:entry.created_by.username }}<br><span class="text-xs text-on-surface-variant">Entrada #{{ entry.pk }}</span></td>
+        <td class="p-4">{{ entry.product.code }} — {{ entry.product.name }}</td>
+        <td class="p-4"><strong>{{ entry.get_kind_display }}</strong><br>{{ entry.presentation_count|number_co }} × {{ entry.get_presentation_display }}{% if entry.base_unit != 'UNIT' %} de {{ entry.content_per_presentation|quantity_co:entry.base_unit }}{% endif %}</td>
+        <td class="p-4">{{ entry.quantity|quantity_co:entry.base_unit }}</td>
+        <td class="p-4">{{ entry.total_cost|money_co }}</td><td class="p-4">{{ entry.cost_per_presentation|money_co }}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <div class="p-4 flex justify-between text-sm">
+    <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+    <div class="flex gap-4">{% if page.has_previous %}<a class="text-secondary" href="?page={{ page.previous_page_number }}">Anterior</a>{% endif %}{% if page.has_next %}<a class="text-secondary" href="?page={{ page.next_page_number }}">Siguiente</a>{% endif %}</div>
+  </div>
+{% else %}<p class="p-10 text-center text-on-surface-variant">No hay entradas de inventario registradas.</p>{% endif %}
+</div>
+{% endblock %}

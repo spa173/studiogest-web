@@ -19,10 +19,12 @@
   </a>
 
   <!-- 4: Ventas -->
-  <a href="#" class="flex flex-col items-center justify-center px-3 py-1 rounded-xl text-on-surface-variant hover:text-secondary transition-all">
+  {% if request.user.is_authenticated and request.user.is_admin %}
+  <a href="{% url 'sales:index' %}" {% if request.resolver_match.app_name == 'sales' %}aria-current="page"{% endif %} class="flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all {% if request.resolver_match.app_name == 'sales' %}text-secondary bg-secondary/10 font-bold{% else %}text-on-surface-variant hover:text-secondary{% endif %}">
     <span class="material-symbols-outlined text-[22px]">point_of_sale</span>
     <span class="font-label-xs text-[11px] mt-0.5">Ventas</span>
   </a>
+  {% endif %}
 
   <!-- 5: Perfil / Salir -->
   {% if request.user.is_authenticated %}

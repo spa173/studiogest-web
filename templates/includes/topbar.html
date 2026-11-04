@@ -4,6 +4,9 @@
   
   <!-- Left Side: Mobile Logo / Sede & Dynamic Date -->
   <div class="flex items-center gap-3 sm:gap-5">
+    <button type="button" data-open-dialog="mobile-menu" aria-controls="mobile-menu" aria-expanded="false" aria-haspopup="dialog" class="lg:hidden p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low" aria-label="Abrir menú de navegación">
+      <span class="material-symbols-outlined text-[22px]" aria-hidden="true">menu</span>
+    </button>
     <!-- Mobile Brand Display (visible only on mobile) -->
     <a href="{% url 'dashboard:index' %}" class="flex lg:hidden items-center gap-2">
       <img src="{% static 'img/logo_studiogest.svg' %}" alt="StudioGest" class="h-8 w-auto">
@@ -16,7 +19,7 @@
     </div>
 
     <!-- Fecha Dinámica de Colombia -->
-    <div class="flex items-center gap-1.5 text-on-surface-variant font-body-md text-body-md border-l border-outline-variant/30 pl-3 sm:pl-4">
+    <div class="hidden xl:flex items-center gap-1.5 text-on-surface-variant font-body-md text-body-md border-l border-outline-variant/30 pl-3 sm:pl-4">
       <span class="material-symbols-outlined text-[18px] text-secondary">calendar_month</span>
       <span class="hidden md:inline font-medium text-on-surface">Hoy:</span>
       <span class="font-medium text-on-surface capitalize">{% now "l, j \d\e F \d\e Y" %}</span>
@@ -34,9 +37,8 @@
 
     <!-- Notificaciones / Ayuda -->
     <div class="relative">
-      <button type="button" class="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Notificaciones">
-        <span class="material-symbols-outlined text-[20px]">notifications</span>
-        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary rounded-full ring-2 ring-surface-container-lowest"></span>
+      <button type="button" data-open-dialog="notifications-panel" aria-controls="notifications-panel" aria-expanded="false" aria-haspopup="dialog" class="p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors" title="Notificaciones" aria-label="Abrir notificaciones">
+        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">notifications</span>
       </button>
     </div>
   </div>

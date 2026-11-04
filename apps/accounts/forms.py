@@ -1,5 +1,7 @@
+import re
+
 from django import forms
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 
 
 class LoginForm(forms.Form):
@@ -61,3 +63,49 @@ class LoginForm(forms.Form):
 
     def get_user(self):
         return getattr(self, 'user_cache', None)
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = get_user_model()
+        fields = ['first_name', 'last_name', 'email', 'phone']
+        labels = {'first_name': 'Nombres', 'last_name': 'Apellidos',
+                  'email': 'Correo electrónico', 'phone': 'Teléfono'}
+        widgets = {
+            'first_name': forms.TextInput(attrs={'autocomplete': 'given-name'}),
+            'last_name': forms.TextInput(attrs={'autocomplete': 'family-name'}),
+            'email': forms.EmailInput(attrs={'autocomplete': 'email'}),
+            'phone': forms.TextInput(attrs={'type': 'tel', 'autocomplete': 'tel'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].required = True
+        self.fields['phone'].help_text = 'Opcional. Entre 7 y 15 dígitos; admite +, espacios, paréntesis y guiones.'
+        for field in self.fields.values():
+            field.widget.attrs['class'] = (
+                'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant '
+                'rounded-xl text-on-surface focus:outline-none focus:border-secondary '
+                'focus:ring-4 focus:ring-secondary/10 transition-all text-sm'
+            )
+
+    def clean_first_name(self):
+        return ' '.join(self.cleaned_data['first_name'].split())
+
+    def clean_last_name(self):
+        return ' '.join(self.cleaned_data['last_name'].split())
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if self._meta.model.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Este correo electrónico ya está registrado por otro usuario.')
+        return email
+
+    def clean_phone(self):
+        phone = ' '.join((self.cleaned_data.get('phone') or '').split())
+        if not phone:
+            return None
+        digits = re.sub(r'\D', '', phone)
+        if not re.fullmatch(r'[0-9 +()\-]+', phone) or not 7 <= len(digits) <= 15:
+            raise forms.ValidationError('Escribe un teléfono válido de entre 7 y 15 dígitos.')
+        return phone

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Registro de Inventario - StudioGest{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto w-full space-y-5">
+  <div class="pb-3 border-b border-outline-variant/30">
+    <a href="{% url 'inventory:list' %}" class="text-sm font-semibold text-secondary hover:underline">Volver a Inventario</a>
+    <h1 class="mt-2 font-headline text-2xl sm:text-3xl font-bold text-on-surface">{% if mode == 'edit' %}Editar producto y precios{% elif product %}Registrar entrada{% else %}Registrar producto{% endif %}</h1>
+    <p class="mt-1 text-sm text-on-surface-variant">{% if mode == 'edit' %}Actualiza datos y precios sin cambiar las existencias.{% elif product %}Esta entrada posterior se conserva en el historial.{% else %}Da de alta el producto y establece sus existencias iniciales. El saldo inicial se registra una sola vez y no es una compra comercial.{% endif %}</p>
+  </div>
+  <form method="post" novalidate id="inventory-registration" data-mode="{{ mode }}" class="p-5 sm:p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-5">
+    {% csrf_token %}
+    {{ form.operation_token }}
+    {% if form.errors %}
+    <div role="alert" class="p-3 rounded-xl bg-error-container text-on-error-container text-sm">
+      <p class="font-semibold">Revisa los campos antes de guardar.</p>{{ form.non_field_errors }}{{ form.operation_token.errors }}
+    </div>
+    {% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for field in form.visible_fields %}
+      <div data-field="{{ field.name }}" class="space-y-1 {% if field.name == 'description' %}sm:col-span-2{% endif %}">
+        {% if field.name == 'is_active' %}
+        <label for="{{ field.id_for_label }}" class="flex items-center gap-2 text-sm font-semibold">{{ field }} {{ field.label }}</label>
+        {% else %}
+        <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}
+        {% endif %}
+        {% if field.help_text %}<p class="text-xs text-on-surface-variant">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="text-sm text-error">{{ error }}</p>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="p-4 rounded-xl bg-secondary/10 space-y-2 text-sm" aria-live="polite" aria-atomic="true" id="purchase-preview">
+      <h2 class="font-headline font-bold">Cálculos automáticos</h2>
+      <p id="preview-hint">Completa cantidades, costo total y precio de venta para ver los valores calculados.</p>
+      {% if mode != 'edit' %}
+      <p>Costo por presentación: <strong id="preview-package-cost">—</strong></p>
+      <p>{% if mode == 'new' %}Existencia inicial{% else %}Cantidad a ingresar{% endif %}: <strong id="preview-quantity">—</strong></p>
+      <p data-divisible>Costo por <span data-unit>ml/g</span>: <strong id="preview-unit-cost">—</strong></p>
+      {% endif %}
+      <p data-divisible>Precio proporcional por <span data-unit>ml/g</span>: <strong id="preview-proportional">—</strong></p>
+      <p data-divisible>Precio aplicado por <span data-unit>ml/g</span>: <strong id="preview-usage">—</strong></p>
+      <p class="text-xs text-on-surface-variant">Vista previa redondeada. Al guardar, el servidor verifica los importes y usa hasta ocho decimales por unidad base.</p>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-end gap-3">
+      <a href="{% url 'inventory:list' %}" class="px-4 py-2.5 rounded-xl text-sm text-center text-on-surface-variant hover:bg-surface-container-low">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95">{% if mode == 'edit' %}Guardar datos y precios{% elif product %}Guardar entrada{% else %}Guardar producto{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/inventory-registration.js' %}" defer></script>{% endblock %}

@@ -123,12 +123,15 @@
 
     <!-- Barra de navegación inferior para móvil -->
     {% include 'includes/bottom_nav.html' %}
+    {% include 'includes/mobile_menu.html' %}
+    {% include 'includes/notifications.html' %}
   {% endblock %}
 
   <!-- Diálogos Modales -->
   {% block modal %}{% endblock %}
 
   <!-- Scripts Adicionales -->
+  <script src="{% static 'js/navigation.js' %}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>
