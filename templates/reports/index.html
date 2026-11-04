@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Reportes - StudioGest{% endblock %}
+
+{% block content %}
+<div class="pb-2 border-b border-outline-variant/30">
+  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Reportes</h1>
+  <p class="text-sm text-on-surface-variant mt-1">Resumen de las citas registradas y los servicios solicitados.</p>
+</div>
+
+<form action="{% url 'reports:index' %}" method="get" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
+  <p class="text-sm text-on-surface-variant">Filtra por fecha de la cita. Ambos límites se incluyen; deja las fechas vacías para consultar todo el historial.</p>
+  {% if form.errors %}
+  <div role="alert" class="p-3 rounded-xl bg-error-container text-on-error-container text-sm">
+    <p class="font-semibold">Revisa el filtro de fechas para consultar los reportes.</p>
+    {{ form.non_field_errors }}
+    {% for field in form %}{{ field.errors }}{% endfor %}
+  </div>
+  {% endif %}
+  <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+    {% for field in form %}
+    <div class="flex-1">
+      <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-on-surface mb-1">{{ field.label }}</label>
+      {{ field }}
+    </div>
+    {% endfor %}
+    <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95">Aplicar filtro</button>
+    <a href="{% url 'reports:index' %}" class="px-4 py-2.5 rounded-xl text-sm text-center text-on-surface-variant hover:bg-surface-container-low">Limpiar</a>
+  </div>
+</form>
+
+{% if summary %}
+<p class="text-sm text-on-surface-variant">
+  {% if start_date or end_date %}
+    Período: {% if start_date %}desde {{ start_date|date:'d/m/Y' }}{% endif %} {% if end_date %}hasta {{ end_date|date:'d/m/Y' }}{% endif %}.
+  {% else %}Período: todo el historial.{% endif %}
+</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+    <h2 class="text-sm font-semibold text-on-surface-variant">Total de citas</h2>
+    <p class="mt-2 font-headline text-3xl font-bold text-on-surface">{{ summary.total }}</p>
+    <p class="mt-1 text-xs text-on-surface-variant">Incluye todos los estados.</p>
+  </div>
+  <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+    <h2 class="text-sm font-semibold text-on-surface-variant">Citas completadas</h2>
+    <p class="mt-2 font-headline text-3xl font-bold text-secondary">{{ summary.completed }}</p>
+  </div>
+  <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+    <h2 class="text-sm font-semibold text-on-surface-variant">Citas canceladas</h2>
+    <p class="mt-2 font-headline text-3xl font-bold text-error">{{ summary.cancelled }}</p>
+  </div>
+  <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+    <h2 class="text-sm font-semibold text-on-surface-variant">Ingresos estimados</h2>
+    <p class="mt-2 font-headline text-xl font-bold text-secondary break-words">{{ summary.estimated_income_formatted }}</p>
+    <p class="mt-1 text-xs text-on-surface-variant">Solo citas completadas.</p>
+  </div>
+</div>
+<p class="p-4 rounded-xl bg-secondary/10 text-sm text-on-surface">Los ingresos estimados suman el valor registrado en las citas completadas. No representan pagos efectivamente recibidos ni un saldo de caja.</p>
+
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  <div class="p-5 border-b border-outline-variant/30">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Servicios más solicitados</h2>
+    <p class="mt-1 text-sm text-on-surface-variant">Ordenados por cantidad de citas registradas en el período, incluidas las canceladas. Cada cita cuenta como una solicitud.</p>
+  </div>
+  {% if popular_services %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant">
+        <tr>
+          <th scope="col" class="px-5 py-3 font-semibold">Servicio</th>
+          <th scope="col" class="px-5 py-3 font-semibold text-right">Citas registradas</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for service in popular_services %}
+        <tr class="hover:bg-surface-container-low/60">
+          <td class="px-5 py-3 text-sm font-semibold text-on-surface">{{ service.service__name }}</td>
+          <td class="px-5 py-3 text-sm text-on-surface text-right">{{ service.total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">bar_chart</span>
+    <p class="mt-2 font-semibold text-on-surface">No hay citas registradas en el período seleccionado.</p>
+    <p class="mt-1 text-sm text-on-surface-variant">No hay información para mostrar servicios solicitados. Prueba otro rango de fechas o limpia el filtro.</p>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

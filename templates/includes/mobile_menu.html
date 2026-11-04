@@ -1,0 +1,19 @@
+<dialog id="mobile-menu" aria-labelledby="mobile-menu-title" class="w-[calc(100%-2rem)] max-w-sm max-h-[85vh] overflow-y-auto p-5 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest text-on-surface shadow-2xl backdrop:bg-primary/50">
+  <div class="flex items-center justify-between gap-3 pb-3 border-b border-outline-variant/30">
+    <h2 id="mobile-menu-title" class="font-headline text-xl font-bold">Menú de StudioGest</h2>
+    <button type="button" data-close-dialog="mobile-menu" aria-label="Cerrar menú" class="p-2 rounded-xl hover:bg-surface-container-low"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+  </div>
+  <nav aria-label="Navegación móvil completa" class="mt-3 space-y-1">
+    <a href="{% url 'dashboard:index' %}" {% if request.resolver_match.app_name == 'dashboard' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'dashboard' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Inicio</a>
+    <a href="{% url 'appointments:calendar' %}" {% if request.resolver_match.app_name == 'appointments' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'appointments' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Agenda</a>
+    <a href="{% url 'customers:list' %}" {% if request.resolver_match.app_name == 'customers' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'customers' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Clientes</a>
+    <a href="{% url 'services:list' %}" {% if request.resolver_match.view_name == 'services:list' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.view_name == 'services:list' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Servicios</a>
+    <a href="{% url 'services:professionals_list' %}" {% if request.resolver_match.view_name == 'services:professionals_list' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.view_name == 'services:professionals_list' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Profesionales</a>
+    <a href="{% url 'inventory:list' %}" {% if request.resolver_match.app_name == 'inventory' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'inventory' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Inventario</a>
+    {% if request.user.is_authenticated and request.user.is_admin %}
+    <a href="{% url 'sales:index' %}" {% if request.resolver_match.app_name == 'sales' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'sales' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Ventas y caja</a>
+    <a href="{% url 'reports:index' %}" {% if request.resolver_match.app_name == 'reports' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.app_name == 'reports' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Reportes</a>
+    {% endif %}
+    <a href="{% url 'accounts:settings' %}" {% if request.resolver_match.view_name == 'accounts:settings' %}aria-current="page"{% endif %} class="block px-4 py-3 rounded-xl hover:bg-surface-container-low {% if request.resolver_match.view_name == 'accounts:settings' %}bg-secondary/10 text-secondary font-semibold{% endif %}">Configuración</a>
+  </nav>
+</dialog>

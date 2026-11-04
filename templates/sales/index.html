@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Ventas y caja - StudioGest{% endblock %}
+
+{% block content %}
+<div class="pb-3 border-b border-outline-variant/30">
+  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Ventas y caja</h1>
+  <p class="mt-1 text-sm text-on-surface-variant">Espacio para organizar las ventas de productos, los cobros por servicios y los movimientos de caja.</p>
+</div>
+
+<p class="p-4 rounded-xl bg-secondary/10 text-sm text-on-surface">Esta sección está en preparación. El registro de operaciones todavía no está habilitado.</p>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+  <section aria-labelledby="product-sales-title" class="p-5 sm:p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
+    <span class="material-symbols-outlined text-3xl text-secondary" aria-hidden="true">shopping_bag</span>
+    <h2 id="product-sales-title" class="font-headline text-lg font-bold text-on-surface">Ventas de productos</h2>
+    <p class="text-sm text-on-surface-variant">Aquí podrás registrar las ventas directas de productos y consultar su detalle.</p>
+    <p class="p-3 rounded-xl bg-surface-container-low text-sm text-on-surface-variant">El registro de ventas todavía no está habilitado.</p>
+    <a href="{% url 'inventory:list' %}" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">Consultar inventario <span class="material-symbols-outlined text-base" aria-hidden="true">arrow_forward</span></a>
+  </section>
+
+  <section aria-labelledby="service-payments-title" class="p-5 sm:p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
+    <span class="material-symbols-outlined text-3xl text-secondary" aria-hidden="true">content_cut</span>
+    <h2 id="service-payments-title" class="font-headline text-lg font-bold text-on-surface">Cobros por servicios</h2>
+    <p class="text-sm text-on-surface-variant">Este espacio reunirá los cobros relacionados con la atención de citas.</p>
+    <p class="p-3 rounded-xl bg-surface-container-low text-sm text-on-surface-variant">El registro de cobros todavía no está habilitado. Una cita completada no acredita un pago recibido.</p>
+    <a href="{% url 'appointments:calendar' %}" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">Consultar agenda <span class="material-symbols-outlined text-base" aria-hidden="true">arrow_forward</span></a>
+  </section>
+
+  <section aria-labelledby="cash-movements-title" class="p-5 sm:p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
+    <span class="material-symbols-outlined text-3xl text-secondary" aria-hidden="true">point_of_sale</span>
+    <h2 id="cash-movements-title" class="font-headline text-lg font-bold text-on-surface">Movimientos de caja</h2>
+    <p class="text-sm text-on-surface-variant">Aquí se incorporarán las entradas, salidas y cierres de caja.</p>
+    <p class="p-3 rounded-xl bg-surface-container-low text-sm text-on-surface-variant">El registro de movimientos y el saldo de caja todavía no están disponibles.</p>
+  </section>
+</div>
+{% endblock %}

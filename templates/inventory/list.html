@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load inventory_format %}
+
+{% block title %}Inventario - StudioGest{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-outline-variant/30">
+  <div>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Inventario</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Catálogo compartido de productos y disponibilidad.</p>
+  </div>
+  {% if request.user.is_admin %}
+  <div class="flex flex-col sm:flex-row gap-2">
+    <a href="{% url 'inventory:create' %}" class="px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm text-center font-semibold hover:opacity-95">Registrar producto</a>
+    <a href="{% url 'inventory:history' %}" class="px-4 py-2.5 rounded-xl border border-outline-variant text-sm text-center font-semibold hover:bg-surface-container-low">Historial de entradas</a>
+  </div>
+  {% endif %}
+</div>
+
+<p class="p-4 rounded-xl bg-secondary/10 text-sm text-on-surface">El alta establece el saldo inicial una sola vez. Editar datos y precios no modifica las existencias. El stock y su mínimo se expresan en unidades, ml o g; no representan la cantidad de envases cerrados.</p>
+
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  {% if products %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <caption class="sr-only">Productos, cantidades, tarifas en COP por unidad base y estado</caption>
+      <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase">
+        <tr>
+          <th scope="col" class="px-4 py-3">Código</th>
+          <th scope="col" class="px-4 py-3">Producto</th>
+          <th scope="col" class="px-4 py-3">Presentación</th>
+          <th scope="col" class="px-4 py-3">Unidad base</th>
+          <th scope="col" class="px-4 py-3 text-right">Existencia</th>
+          <th scope="col" class="px-4 py-3 text-right">Stock mínimo</th>
+          {% if request.user.is_admin %}<th scope="col" class="px-4 py-3 text-right">Costo adquisición (COP)</th>{% endif %}
+          <th scope="col" class="px-4 py-3 text-right">Venta directa (COP)</th>
+          <th scope="col" class="px-4 py-3 text-right">Venta presentación (COP)</th>
+          <th scope="col" class="px-4 py-3 text-right">Uso en servicio (COP)</th>
+          <th scope="col" class="px-4 py-3">Estado</th>
+          {% if request.user.is_admin %}<th scope="col" class="px-4 py-3">Acciones</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for product in products %}
+        <tr class="hover:bg-surface-container-low/60 text-sm">
+          <td class="px-4 py-3 text-on-surface whitespace-nowrap">{{ product.code }}</td>
+          <td class="px-4 py-3 min-w-[180px]">
+            <p class="font-semibold text-on-surface">{{ product.name }}</p>
+            <p class="text-xs text-on-surface-variant whitespace-pre-line break-words">{{ product.description|default:'Sin descripción' }}</p>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            {% if product.presentation %}{{ product.get_presentation_display }}{% if product.base_unit != 'UNIT' %}<br>{{ product.content_per_presentation|quantity_co:product.base_unit }}{% endif %}{% else %}<span class="text-xs text-on-surface-variant">Sin configurar (producto anterior)</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">{{ product.get_base_unit_display }}</td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">{{ product.stock|quantity_co:product.base_unit }}</td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">{{ product.minimum_stock|quantity_co:product.base_unit }}</td>
+          {% if request.user.is_admin %}<td class="px-4 py-3 text-right whitespace-nowrap">{{ product.acquisition_cost|money_co }}<br><span class="text-xs text-on-surface-variant">Por {{ product.unit_symbol }}{% if product.has_entries %}, último registro{% endif %}</span></td>{% endif %}
+          <td class="px-4 py-3 text-right whitespace-nowrap">{{ product.sale_price|money_co }}<br><span class="text-xs text-on-surface-variant">Por {{ product.unit_symbol }}</span></td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">{% if product.presentation_sale_price != None %}{{ product.presentation_sale_price|money_co }}{% else %}Sin configurar{% endif %}</td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">{{ product.service_usage_price|money_co }}<br><span class="text-xs text-on-surface-variant">Por {{ product.unit_symbol }}</span></td>
+          <td class="px-4 py-3">
+            {% if product.is_active %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold">Activo</span>
+            {% else %}
+            <span class="inline-flex px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Inactivo</span>
+            {% endif %}
+          </td>
+          {% if request.user.is_admin %}
+          <td class="px-4 py-3 whitespace-nowrap text-xs space-y-2">
+            <a href="{% url 'inventory:update' product.pk %}" class="block text-secondary font-semibold hover:underline">Editar datos y precios</a>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">inventory_2</span>
+    <p class="mt-2 font-semibold text-on-surface">No hay productos registrados</p>
+    <p class="mt-1 text-sm text-on-surface-variant">Los productos aparecerán aquí cuando un administrador los registre.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

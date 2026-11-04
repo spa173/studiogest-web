@@ -128,14 +128,14 @@
               {% csrf_token %}
               {% if p.is_active %}
               <button type="submit"
-                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold hover:bg-secondary/20 transition-colors"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold hover:bg-secondary/20 transition-colors cursor-pointer"
                       title="Haz clic para desactivar en la agenda">
                 <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
                 Activo
               </button>
               {% else %}
               <button type="submit"
-                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold hover:bg-surface-container-high transition-colors"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
                       title="Haz clic para activar en la agenda">
                 <span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>
                 Inactivo

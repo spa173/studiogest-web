@@ -51,27 +51,31 @@
         <span>Profesionales</span>
       </a>
 
-      <!-- 6. Inventario (Próximamente) -->
-      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface transition-colors duration-150 opacity-80">
-        <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+      <!-- 6. Inventario -->
+      <a href="{% url 'inventory:list' %}" {% if request.resolver_match.app_name == 'inventory' %}aria-current="page"{% endif %} class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md transition-colors duration-150 {% if request.resolver_match.app_name == 'inventory' %}bg-secondary/10 text-secondary font-semibold{% else %}text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface{% endif %}">
+        <span class="material-symbols-outlined text-[20px]" {% if request.resolver_match.app_name == 'inventory' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>inventory_2</span>
         <span>Inventario</span>
       </a>
 
-      <!-- 7. Ventas y caja (Próximamente) -->
-      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface transition-colors duration-150 opacity-80">
-        <span class="material-symbols-outlined text-[20px]">point_of_sale</span>
+      <!-- 7. Ventas y caja (solo administradores) -->
+      {% if request.user.is_authenticated and request.user.is_admin %}
+      <a href="{% url 'sales:index' %}" {% if request.resolver_match.app_name == 'sales' %}aria-current="page"{% endif %} class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md transition-colors duration-150 {% if request.resolver_match.app_name == 'sales' %}bg-secondary/10 text-secondary font-semibold{% else %}text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface{% endif %}">
+        <span class="material-symbols-outlined text-[20px]" {% if request.resolver_match.app_name == 'sales' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>point_of_sale</span>
         <span>Ventas y caja</span>
       </a>
+      {% endif %}
 
-      <!-- 8. Reportes (Próximamente) -->
-      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface transition-colors duration-150 opacity-80">
-        <span class="material-symbols-outlined text-[20px]">bar_chart</span>
+      <!-- 8. Reportes (solo administradores) -->
+      {% if request.user.is_authenticated and request.user.is_admin %}
+      <a href="{% url 'reports:index' %}" {% if request.resolver_match.app_name == 'reports' %}aria-current="page"{% endif %} class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md transition-colors duration-150 {% if request.resolver_match.app_name == 'reports' %}bg-secondary/10 text-secondary font-semibold{% else %}text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface{% endif %}">
+        <span class="material-symbols-outlined text-[20px]" {% if request.resolver_match.app_name == 'reports' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>bar_chart</span>
         <span>Reportes</span>
       </a>
+      {% endif %}
 
       <!-- 9. Configuración -->
-      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface transition-colors duration-150">
-        <span class="material-symbols-outlined text-[20px]">settings</span>
+      <a href="{% url 'accounts:settings' %}" {% if request.resolver_match.view_name == 'accounts:settings' %}aria-current="page"{% endif %} class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-label-md text-label-md transition-colors duration-150 {% if request.resolver_match.view_name == 'accounts:settings' %}bg-secondary/10 text-secondary font-semibold{% else %}text-on-surface-variant font-medium hover:bg-surface-container-low hover:text-on-surface{% endif %}">
+        <span class="material-symbols-outlined text-[20px]" {% if request.resolver_match.view_name == 'accounts:settings' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>settings</span>
         <span>Configuración</span>
       </a>
     </nav>
