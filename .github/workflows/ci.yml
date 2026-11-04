@@ -9,6 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DB_ENGINE: sqlite
+      DEBUG: 'True'
+      SECRET_KEY: 'ci-secret-key-studiogest-testing'
 
     steps:
     - name: Descargar repositorio
@@ -25,7 +29,9 @@ jobs:
         pip install -r requirements.txt
 
     - name: Variables de entorno de prueba
-      run: cp .env.example .env
+      run: |
+        cp .env.example .env
+        sed -i 's/^DB_ENGINE=.*/DB_ENGINE=sqlite/' .env
 
     - name: Migraciones de prueba
       run: python manage.py migrate
@@ -34,4 +40,3 @@ jobs:
       run: |
         python manage.py check
         python manage.py test
-
