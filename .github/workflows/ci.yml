@@ -39,4 +39,4 @@ jobs:
     - name: Ejecutar pruebas automáticas
       run: |
         python manage.py check
-        python manage.py test
+        python manage.py test accounts customers services appointments dashboard reports inventory sales
