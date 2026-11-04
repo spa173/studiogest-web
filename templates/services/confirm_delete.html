@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar servicio - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto w-full">
+  <div class="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4 text-center">
+    <span class="material-symbols-outlined text-5xl text-error" aria-hidden="true">warning</span>
+    <h1 class="font-headline text-xl font-bold text-on-surface">¿Eliminar el servicio «{{ service.name }}»?</h1>
+    <p class="text-sm text-on-surface-variant">{{ service.duration_minutes }} min · {{ service.price_cop_formatted }}</p>
+    {% if appointment_count %}
+    <div role="alert" class="p-3 rounded-xl bg-error-container text-on-error-container text-sm">
+      <p>{{ protected_message }}</p>
+      <p class="mt-2 font-semibold">Citas asociadas: {{ appointment_count }}.</p>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-center gap-3">
+      <a href="{% url 'services:list' %}" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low">Cancelar</a>
+      <a href="{% url 'services:update' service.pk %}" class="px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95">Editar para desactivar</a>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">Esta acción eliminará el servicio del catálogo y no se puede deshacer.</p>
+    <form method="post" class="flex flex-col-reverse sm:flex-row justify-center gap-3">
+      {% csrf_token %}
+      <a href="{% url 'services:list' %}" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-error text-on-error text-sm font-semibold hover:opacity-95">Sí, eliminar servicio</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto w-full space-y-5">
+  <div class="pb-3 border-b border-outline-variant/30">
+    <a href="{% url 'services:list' %}" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">
+      <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span> Volver a servicios
+    </a>
+    <h1 class="mt-2 font-headline text-2xl sm:text-3xl font-bold text-on-surface">{{ title }}</h1>
+    <p class="mt-1 text-sm text-on-surface-variant">{% if service %}Los cambios se aplican al catálogo. Los precios y horarios registrados en las citas se conservan.{% else %}Completa los datos del servicio para añadirlo al catálogo.{% endif %}</p>
+  </div>
+  <form method="post" novalidate class="p-5 sm:p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-5">
+    {% csrf_token %}
+    {% if form.errors %}
+    <div role="alert" class="p-3 rounded-xl bg-error-container text-on-error-container text-sm">
+      <p class="font-semibold">Revisa los campos indicados antes de guardar.</p>{{ form.non_field_errors }}
+    </div>
+    {% endif %}
+    {% for field in form %}
+    <div class="space-y-1.5">
+      {% if field.name == 'is_active' %}
+      <label for="{{ field.id_for_label }}" class="flex items-center gap-2 text-sm font-semibold text-on-surface">{{ field }} {{ field.label }}</label>
+      <p class="text-xs text-on-surface-variant">Un servicio inactivo permanece en el historial y deja de ofrecerse al crear nuevas citas.</p>
+      {% else %}
+      <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</label>
+      {{ field }}
+      {% if field.help_text %}<p class="text-xs text-on-surface-variant">{{ field.help_text }}</p>{% endif %}
+      {% endif %}
+      {% for error in field.errors %}<p class="text-sm font-medium text-error">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+      <a href="{% url 'services:list' %}" class="px-4 py-2.5 rounded-xl text-center text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95 shadow-sm">Guardar servicio</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
