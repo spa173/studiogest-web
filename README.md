@@ -35,7 +35,7 @@ y caja, y reportes.
 - Python 3.10 o superior
 - Git
 - Conexión a internet (Tailwind CSS se carga desde un CDN)
-- PostgreSQL (opcional; por defecto se usa SQLite)
+- MySQL 8.0 o superior (motor de base de datos del proyecto; si no se configura, se usa SQLite)
 
 ## Instalación y ejecución
 
@@ -88,14 +88,71 @@ Se configuran en el archivo `.env` (que no se sube al repositorio). El archivo
 |---|---|
 | `DEBUG` | `True` en desarrollo, `False` en producción |
 | `SECRET_KEY` | Clave secreta de Django |
-| `USE_POSTGRES` | `True` para usar PostgreSQL; `False` usa SQLite |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Datos de conexión a PostgreSQL |
+| `DB_ENGINE` | `mysql`, `postgresql` o `sqlite` (por defecto) |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Datos de conexión a la base de datos (MySQL usa el puerto 3306) |
 
-### Usar PostgreSQL
+### Configurar MySQL
 
-1. Crear la base de datos: `CREATE DATABASE studiogest_db;`
-2. En `.env`, poner `USE_POSTGRES=True` y completar los datos de conexión.
-3. Ejecutar `python manage.py migrate`.
+1. **Instalar MySQL** (MySQL Community Server 8.0 o superior; XAMPP con MariaDB también sirve) y
+   comprobar que el servicio está iniciado.
+2. **Crear la base de datos y el usuario.** Abrir el cliente de MySQL (MySQL Command Line Client o
+   Workbench) y ejecutar:
+
+   ```sql
+   CREATE DATABASE studiogest_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'studiogest'@'localhost' IDENTIFIED BY 'una_contraseña_segura';
+   GRANT ALL PRIVILEGES ON studiogest_db.* TO 'studiogest'@'localhost';
+   -- Necesario solo para ejecutar las pruebas automáticas (Django crea una base temporal):
+   GRANT ALL PRIVILEGES ON `test\_studiogest\_db`.* TO 'studiogest'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+3. **Configurar `.env`** con los mismos datos:
+
+   ```
+   DB_ENGINE=mysql
+   DB_NAME=studiogest_db
+   DB_USER=studiogest
+   DB_PASSWORD=una_contraseña_segura
+   DB_HOST=localhost
+   DB_PORT=3306
+   ```
+
+4. **Crear las tablas y cargar datos de prueba:**
+
+   ```bash
+   python manage.py migrate
+   python manage.py create_initial_users
+   python manage.py seed_initial_catalog
+   ```
+
+5. **Verificar la conexión y los registros guardados:**
+
+   ```bash
+   python manage.py check_database
+   ```
+
+   El comando muestra el motor, la versión del servidor, si hay migraciones pendientes y cuántos
+   registros tiene cada modelo.
+
+**Comprobar que los datos persisten:** crear un registro desde la interfaz, detener el servidor
+(`Ctrl + C`), volver a ejecutar `python manage.py runserver` y comprobar que el registro sigue ahí.
+
+**Si `pip install mysqlclient` falla en Windows** (pide compilar con Microsoft C++ Build Tools), usar
+la alternativa PyMySQL:
+
+```bash
+pip install pymysql
+```
+
+y agregar estas líneas en `config/__init__.py`:
+
+```python
+import pymysql
+
+pymysql.version_info = (2, 2, 1, 'final', 0)
+pymysql.install_as_MySQLdb()
+```
 
 ## Estructura del proyecto
 
