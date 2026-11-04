@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.db.models import Count
 from django.test import TestCase
 from django.urls import reverse
 
+from appointments.models import Appointment
 from customers.models import Customer
 
 User = get_user_model()
@@ -87,3 +89,27 @@ class ClientesTests(TestCase):
         self.entrar(self.admin)
         self.client.post(reverse('customers:delete', args=[con_citas.pk]))
         self.assertTrue(Customer.objects.filter(pk=con_citas.pk).exists())
+
+    def test_cliente_con_solo_citas_canceladas_si_se_elimina(self):
+        call_command('seed_initial_catalog', verbosity=0)
+        cliente = Customer.objects.filter(appointments__isnull=False).first()
+        cliente.appointments.update(status=Appointment.Status.CANCELLED)
+        self.entrar(self.admin)
+        r = self.client.get(reverse('customers:delete', args=[cliente.pk]))
+        self.assertContains(r, 'También se eliminarán')
+        r = self.client.post(reverse('customers:delete', args=[cliente.pk]))
+        self.assertRedirects(r, reverse('customers:list'))
+        self.assertFalse(Customer.objects.filter(pk=cliente.pk).exists())
+        self.assertFalse(Appointment.objects.filter(customer_id=cliente.pk).exists())
+
+    def test_cliente_con_una_cita_cancelada_y_otra_vigente_no_se_elimina(self):
+        call_command('seed_initial_catalog', verbosity=0)
+        cliente = Customer.objects.annotate(n=Count('appointments')).filter(n__gte=2).first()
+        self.assertIsNotNone(cliente)
+        primera = cliente.appointments.first()
+        primera.status = Appointment.Status.CANCELLED
+        primera.save(update_fields=['status'])
+        self.entrar(self.admin)
+        self.client.post(reverse('customers:delete', args=[cliente.pk]))
+        self.assertTrue(Customer.objects.filter(pk=cliente.pk).exists())
+        self.assertEqual(cliente.appointments.count(), 2)
