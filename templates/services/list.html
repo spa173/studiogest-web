@@ -3,9 +3,16 @@
 {% block title %}Servicios - StudioGest{% endblock %}
 
 {% block content %}
-<div class="pb-2 border-b border-outline-variant/30">
-  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Servicios</h1>
-  <p class="font-body-md text-sm text-on-surface-variant mt-1">Consulta el catálogo de servicios de la barbería.</p>
+<div class="pb-2 border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Servicios</h1>
+    <p class="font-body-md text-sm text-on-surface-variant mt-1">Consulta el catálogo de servicios de la barbería.</p>
+  </div>
+  {% if request.user.is_admin %}
+  <a href="{% url 'services:create' %}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95 shadow-sm">
+    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span> Nuevo servicio
+  </a>
+  {% endif %}
 </div>
 
 <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
@@ -19,6 +26,7 @@
           <th scope="col" class="px-4 py-3 font-semibold">Duración</th>
           <th scope="col" class="px-4 py-3 font-semibold text-right">Precio</th>
           <th scope="col" class="px-4 py-3 font-semibold">Estado</th>
+          {% if request.user.is_admin %}<th scope="col" class="px-4 py-3 font-semibold">Acciones</th>{% endif %}
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant/20">
@@ -35,6 +43,14 @@
             <span class="inline-flex px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">Inactivo</span>
             {% endif %}
           </td>
+          {% if request.user.is_admin %}
+          <td class="px-4 py-3 whitespace-nowrap">
+            <div class="flex gap-2">
+              <a href="{% url 'services:update' service.pk %}" aria-label="Editar {{ service.name }}" class="px-3 py-2 rounded-lg text-secondary font-semibold text-sm hover:bg-secondary/10">Editar</a>
+              <a href="{% url 'services:delete' service.pk %}" aria-label="Eliminar {{ service.name }}" class="px-3 py-2 rounded-lg text-error font-semibold text-sm hover:bg-error-container/30">Eliminar</a>
+            </div>
+          </td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
