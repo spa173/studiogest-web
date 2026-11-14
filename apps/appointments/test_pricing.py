@@ -45,10 +45,12 @@ def _book(client, data):
 def test_catalog_price_automatically_creates_pricing_snapshot(client, pricing_booking):
     service, data, _, _ = pricing_booking
     appointment = _book(client, data)
-    assert appointment.catalog_price_cop == appointment.adjusted_price_cop == service.price_cop
+    assert appointment.catalog_price_cop == service.price_cop
+    assert appointment.adjusted_price_cop == service.price_cop
     assert appointment.price_cop == 250000
     assert appointment.discount_type == 'NONE'
-    assert appointment.discount_value == appointment.discount_amount_cop == 0
+    assert appointment.discount_value == 0
+    assert appointment.discount_amount_cop == 0
     assert appointment.end_time == time(11, 30)
 
 
@@ -70,7 +72,8 @@ def test_personalized_price_and_discounts_are_persisted(client, pricing_booking,
     assert appointment.pricing_reason == 'Necesidades del cliente'
     assert appointment.end_time == time(12)
     service.refresh_from_db()
-    assert service.price_cop == 250000 and service.duration_minutes == 90
+    assert service.price_cop == 250000
+    assert service.duration_minutes == 90
 
 
 @pytest.mark.parametrize('base,percent,discount,total', [
@@ -127,7 +130,8 @@ def test_worker_keeps_booking_permission_without_pricing_controls(client, pricin
     assert 'adjusted_price_cop' not in response.context['form'].fields
     assert 'id="pricingEditor"' not in response.content.decode()
     appointment = _book(client, {**data, 'duration_minutes': '30'})
-    assert appointment.price_cop == 250000 and appointment.end_time == time(10, 30)
+    assert appointment.price_cop == 250000
+    assert appointment.end_time == time(10, 30)
 
 
 def test_superuser_with_worker_role_can_adjust_pricing(client, pricing_booking):
@@ -179,8 +183,10 @@ def test_legacy_price_and_unknown_details_are_preserved(client, pricing_booking,
     assert client.post(reverse('appointments:complete', args=[appointment.pk])).status_code == 302
     appointment.refresh_from_db()
     assert appointment.price_cop == original
-    assert appointment.catalog_price_cop is None and appointment.adjusted_price_cop is None
-    assert appointment.discount_type is None and appointment.discount_value is None
+    assert appointment.catalog_price_cop is None
+    assert appointment.adjusted_price_cop is None
+    assert appointment.discount_type is None
+    assert appointment.discount_value is None
     assert appointment.discount_amount_cop is None
 
 
@@ -189,7 +195,9 @@ def test_zero_catalog_price_is_not_treated_as_missing(client, pricing_booking):
     service.price_cop = 0
     service.save()
     appointment = _book(client, data)
-    assert appointment.price_cop == appointment.catalog_price_cop == appointment.adjusted_price_cop == 0
+    assert appointment.price_cop == 0
+    assert appointment.catalog_price_cop == 0
+    assert appointment.adjusted_price_cop == 0
 
 
 def test_final_price_is_used_once_by_reports_and_dashboard(client, pricing_booking):
@@ -265,4 +273,25 @@ def test_staff_worker_cannot_edit_prices_in_django_admin(client, pricing_booking
     })
     assert response.status_code == 302
     appointment.refresh_from_db()
-    assert appointment.price_cop == appointment.adjusted_price_cop == 250000
+    assert appointment.price_cop == 250000
+    assert appointment.adjusted_price_cop == 250000
+
+
+@pytest.mark.parametrize('role', ['admin', 'worker', 'superuser'])
+def test_admin_readonly_fields_and_columns_preserve_role_contract(rf, pricing_booking, role):
+    from django.contrib import admin as django_admin
+    from .admin import AppointmentAdmin
+
+    _, _, admin_user, worker = pricing_booking
+    user = admin_user if role == 'admin' else worker
+    if role == 'superuser':
+        user.is_superuser = True
+    request = rf.get('/admin/appointments/appointment/')
+    request.user = user
+    model_admin = AppointmentAdmin(Appointment, django_admin.site)
+    readonly = model_admin.get_readonly_fields(request)
+    assert isinstance(readonly, list)
+    assert readonly == (list(FINANCIAL) if role == 'worker' else [])
+    assert model_admin.list_display == (
+        'date', 'start_time', 'end_time', 'customer', 'service', 'professional', 'status', 'price_cop',
+    )

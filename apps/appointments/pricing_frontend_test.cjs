@@ -1,9 +1,5 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
-const path = require('node:path');
-const sourcePath = path.join(__dirname, '../../static/js/appointment-pricing.js');
-const {calculateAppointmentPricing} = require(sourcePath);
+const {calculateAppointmentPricing, updateAppointmentPricing} = require('../../static/js/appointment-pricing.js');
 
 const cases = [
   ['320000', 'NONE', '0', 0n, 320000n],
@@ -31,37 +27,35 @@ const nodes = {
   pricingError: {textContent: ''}, discountAmountDisplay: {value: ''},
   totalPriceDisplay: {value: ''}, appointmentForm: {dataset: {hasErrors: 'false'}},
 };
-const context = vm.createContext({
-  document: {getElementById: id => nodes[id], addEventListener() {}},
-  servicesData: {'1': {price_cop: '250000'}},
-});
-vm.runInContext(fs.readFileSync(sourcePath, 'utf8'), context);
-context.updateAppointmentPricing();
+const documentStub = {getElementById: id => nodes[id]};
+const serviceCatalog = {'1': {price_cop: '250000'}};
+const updatePricing = () => updateAppointmentPricing(false, documentStub, serviceCatalog);
+updatePricing();
 assert.equal(nodes.adjusted_price_cop.value, '250000');
 nodes.adjusted_price_cop.value = '320000';
 nodes.discount_type.value = 'PERCENT';
 nodes.discount_value.value = '10';
-context.updateAppointmentPricing();
+updatePricing();
 assert.match(nodes.totalPriceDisplay.value, /288[.,]000/);
 nodes.appointmentForm.dataset.hasErrors = 'true';
-context.updateAppointmentPricing();
+updatePricing();
 assert.equal(nodes.adjusted_price_cop.value, '320000');
 assert.equal(nodes.discount_value.value, '10');
 nodes.discount_value.value = '100';
-context.updateAppointmentPricing();
+updatePricing();
 assert.equal(nodes.totalPriceDisplay.value, '$0 COP');
 nodes.discount_value.value = '101';
-context.updateAppointmentPricing();
+updatePricing();
 assert.ok(nodes.pricingError.textContent);
 assert.equal(nodes.totalPriceDisplay.value, '');
 nodes.discount_type.value = 'NONE';
 nodes.discount_value.value = '0';
 nodes.adjusted_price_cop.value = '0';
-context.updateAppointmentPricing();
+updatePricing();
 assert.equal(nodes.totalPriceDisplay.value, '$0 COP');
 delete nodes.adjusted_price_cop;
 delete nodes.discount_type;
 delete nodes.discount_value;
-context.updateAppointmentPricing();
+updatePricing();
 assert.match(nodes.totalPriceDisplay.value, /250[.,]000/);
 console.log('Pricing frontend: 8 calculation cases, 9 invalid cases and DOM behavior passed.');

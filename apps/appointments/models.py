@@ -70,6 +70,7 @@ class Appointment(models.Model):
     # NULL means unknown for legacy rows; never reconstruct from today's catalog.
     catalog_price_cop = models.DecimalField('Precio de catálogo al registrar', max_digits=12, decimal_places=0, null=True, blank=True)
     adjusted_price_cop = models.DecimalField('Precio personalizado (COP)', max_digits=12, decimal_places=0, null=True, blank=True)
+    # NULL is unknown legacy history; NONE is a known absence of discount.
     discount_type = models.CharField('Tipo de descuento', max_length=7, choices=DiscountType.choices, null=True, blank=True)
     discount_value = models.DecimalField('Descuento solicitado', max_digits=14, decimal_places=2, null=True, blank=True)
     discount_amount_cop = models.DecimalField('Valor descontado (COP)', max_digits=12, decimal_places=0, null=True, blank=True)
@@ -98,6 +99,11 @@ class Appointment(models.Model):
 
     def clean(self):
         super().clean()
+        self._validate_pricing()
+        self._validate_interval()
+        self._validate_conflicts()
+
+    def _validate_pricing(self):
         if self.price_cop is not None:
             validate_cop(self.price_cop, 'price_cop')
         financial = (
@@ -112,12 +118,14 @@ class Appointment(models.Model):
             if self.discount_amount_cop != amount or self.price_cop != total:
                 raise ValidationError('El descuento y el total no coinciden con el precio personalizado.')
 
+    def _validate_interval(self):
         if self.start_time and self.end_time:
             if self.end_time <= self.start_time:
                 raise ValidationError({
                     'end_time': 'La hora de finalización debe ser posterior a la hora de inicio.'
                 })
 
+    def _validate_conflicts(self):
         # Regla de Oro: Validación de Solapamientos (Conflict Detection)
         if self.professional_id and self.date and self.start_time and self.end_time:
             conflicts = Appointment.objects.filter(

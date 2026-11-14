@@ -30,20 +30,20 @@ function calculateAppointmentPricing(baseText, kind, valueText) {
   return {discount: amount, total: base - amount};
 }
 
-function updateAppointmentPricing(resetPrice = false) {
-  const selected = document.getElementById('serviceSelect').value;
-  const service = servicesData[selected];
-  const error = document.getElementById('pricingError');
-  const discountDisplay = document.getElementById('discountAmountDisplay');
-  const totalDisplay = document.getElementById('totalPriceDisplay');
+function updateAppointmentPricing(resetPrice = false, documentRoot = document, serviceCatalog = servicesData) {
+  const selected = documentRoot.getElementById('serviceSelect').value;
+  const service = serviceCatalog[selected];
+  const error = documentRoot.getElementById('pricingError');
+  const discountDisplay = documentRoot.getElementById('discountAmountDisplay');
+  const totalDisplay = documentRoot.getElementById('totalPriceDisplay');
   error.textContent = '';
   discountDisplay.value = '';
   totalDisplay.value = '';
   if (!service) return;
-  const adjusted = document.getElementById('adjusted_price_cop');
-  const kind = document.getElementById('discount_type');
-  const value = document.getElementById('discount_value');
-  const hasErrors = document.getElementById('appointmentForm').dataset.hasErrors === 'true';
+  const adjusted = documentRoot.getElementById('adjusted_price_cop');
+  const kind = documentRoot.getElementById('discount_type');
+  const value = documentRoot.getElementById('discount_value');
+  const hasErrors = documentRoot.getElementById('appointmentForm').dataset.hasErrors === 'true';
   if (adjusted && (resetPrice || (adjusted.value === '' && !hasErrors))) adjusted.value = service.price_cop;
   if (value) value.step = kind.value === 'FIXED' ? '1' : '0.01';
   try {
@@ -68,4 +68,4 @@ if (typeof document !== 'undefined') {
     updateAppointmentPricing();
   });
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = {calculateAppointmentPricing};
+if (typeof module !== 'undefined' && module.exports) module.exports = {calculateAppointmentPricing, updateAppointmentPricing};
