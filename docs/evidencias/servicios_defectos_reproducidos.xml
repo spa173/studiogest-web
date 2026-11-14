@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="10" time="1.130" timestamp="2026-11-13T11:21:25.864922-05:00" hostname="equipo-pruebas"><testcase classname="apps.services.test_regressions" name="test_model_validation_rejects_invalid_service_values[duration_minutes-0]" time="0.481"><failure message="Failed: DID NOT RAISE ValidationError">apps\services\test_regressions.py:35: in test_model_validation_rejects_invalid_service_values
+    with pytest.raises(ValidationError) as error:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValidationError</failure></testcase><testcase classname="apps.services.test_regressions" name="test_model_validation_rejects_invalid_service_values[price_cop--1]" time="0.003"><failure message="Failed: DID NOT RAISE ValidationError">apps\services\test_regressions.py:35: in test_model_validation_rejects_invalid_service_values
+    with pytest.raises(ValidationError) as error:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValidationError</failure></testcase><testcase classname="apps.services.test_regressions" name="test_direct_save_rejects_invalid_service_values[duration_minutes-0]" time="0.004"><failure message="Failed: DID NOT RAISE ValidationError">apps\services\test_regressions.py:45: in test_direct_save_rejects_invalid_service_values
+    with pytest.raises(ValidationError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValidationError</failure></testcase><testcase classname="apps.services.test_regressions" name="test_direct_save_rejects_invalid_service_values[price_cop--1]" time="0.003"><failure message="Failed: DID NOT RAISE ValidationError">apps\services\test_regressions.py:45: in test_direct_save_rejects_invalid_service_values
+    with pytest.raises(ValidationError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValidationError</failure></testcase><testcase classname="apps.services.test_regressions" name="test_form_and_crud_reject_invalid_values_without_partial_writes[duration_minutes-0]" time="0.144" /><testcase classname="apps.services.test_regressions" name="test_form_and_crud_reject_invalid_values_without_partial_writes[price_cop--1]" time="0.035" /><testcase classname="apps.services.test_regressions" name="test_minimum_positive_duration_and_free_price_remain_allowed" time="0.016" /><testcase classname="apps.services.test_regressions" name="test_unrepresentable_duration_does_not_cause_server_error[1440-10:00]" time="0.044"><failure message="assert 500 == 200&#10; +  where 500 = &lt;HttpResponseServerError status_code=500, &quot;text/html; charset=utf-8&quot;&gt;.status_code">apps\services\test_regressions.py:119: in test_unrepresentable_duration_does_not_cause_server_error
+    assert response.status_code == 200
+E   assert 500 == 200
+E    +  where 500 = &lt;HttpResponseServerError status_code=500, "text/html; charset=utf-8"&gt;.status_code</failure></testcase><testcase classname="apps.services.test_regressions" name="test_unrepresentable_duration_does_not_cause_server_error[90-23:30]" time="0.032"><failure message="assert 500 == 200&#10; +  where 500 = &lt;HttpResponseServerError status_code=500, &quot;text/html; charset=utf-8&quot;&gt;.status_code">apps\services\test_regressions.py:119: in test_unrepresentable_duration_does_not_cause_server_error
+    assert response.status_code == 200
+E   assert 500 == 200
+E    +  where 500 = &lt;HttpResponseServerError status_code=500, "text/html; charset=utf-8"&gt;.status_code</failure></testcase><testcase classname="apps.services.test_regressions" name="test_saved_appointment_preserves_full_service_duration" time="0.033"><failure message="assert datetime.timedelta(seconds=3600) == datetime.timedelta(days=1, seconds=3600)&#10; +  where datetime.timedelta(days=1, seconds=3600) = timedelta(minutes=1500)&#10; +    where 1500 = &lt;Service: Servicio de regresion - $35.000 COP&gt;.duration_minutes">apps\services\test_regressions.py:143: in test_saved_appointment_preserves_full_service_duration
+    assert elapsed == timedelta(minutes=service.duration_minutes)
+E   assert datetime.timedelta(seconds=3600) == datetime.timedelta(days=1, seconds=3600)
+E    +  where datetime.timedelta(days=1, seconds=3600) = timedelta(minutes=1500)
+E    +    where 1500 = &lt;Service: Servicio de regresion - $35.000 COP&gt;.duration_minutes</failure></testcase></testsuite></testsuites>

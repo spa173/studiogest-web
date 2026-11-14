@@ -40,7 +40,7 @@ def calendar_view(request):
     # Manejar creación de cita desde el modal (POST)
     modal_has_errors = False
     if request.method == 'POST':
-        form = AppointmentForm(request.POST)
+        form = AppointmentForm(request.POST, user=request.user)
         if form.is_valid():
             cita = form.save(commit=False)
             cita.created_by = request.user
@@ -51,7 +51,7 @@ def calendar_view(request):
             modal_has_errors = True
             messages.error(request, "No se pudo registrar la cita. Revisa los datos ingresados en el formulario.")
     else:
-        form = AppointmentForm(initial={'date': current_date.isoformat()})
+        form = AppointmentForm(initial={'date': current_date.isoformat()}, user=request.user)
 
     # Horarios estándar de operación: 8 AM a 8 PM (en bloques de 1 hora)
     time_slots = [datetime.time(hour=h, minute=0) for h in range(8, 20)]
