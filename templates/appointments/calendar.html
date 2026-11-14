@@ -243,7 +243,7 @@
     {% endif %}
 
     <!-- Formulario de la Cita (2 Columnas) -->
-    <form action="{% url 'appointments:calendar' %}" method="POST" class="p-6 space-y-4" id="appointmentForm">
+    <form action="{% url 'appointments:calendar' %}" method="POST" class="p-6 space-y-4" id="appointmentForm" data-has-errors="{{ modal_has_errors|yesno:'true,false' }}">
       {% csrf_token %}
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -330,13 +330,19 @@
             </div>
 
             <div>
-              <label class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
-                Duración Estimada
+              <label for="durationInput" class="block font-label-sm text-xs font-semibold text-on-surface mb-1">
+                Duración planificada (min)
               </label>
               <div class="relative">
-                <input type="text" id="durationDisplay" readonly value="45 min" class="w-full py-2.5 px-3 bg-surface-container-low border border-outline-variant rounded-xl font-body-md text-xs font-bold text-on-surface text-center">
+                {{ form.duration_minutes }}
               </div>
             </div>
+          </div>
+
+          <p class="text-xs text-on-surface-variant">{{ form.duration_minutes.help_text }}</p>
+          <div>
+            <label for="endTimeDisplay" class="block text-xs font-semibold text-on-surface mb-1">Hora de finalización</label>
+            <input type="text" id="endTimeDisplay" readonly class="w-full py-2.5 px-3 bg-surface-container-low border border-outline-variant rounded-xl text-sm text-on-surface">
           </div>
 
           <!-- Precio Estimado en COP -->
@@ -346,10 +352,29 @@
             </label>
             <div class="relative">
               <span class="material-symbols-outlined absolute left-3 top-2.5 text-lg text-secondary">payments</span>
-              <input type="text" id="priceDisplay" readonly value="$ 65.000 COP" class="w-full pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl font-headline font-bold text-secondary text-sm">
+              <input type="text" id="priceDisplay" readonly value="" class="w-full pl-9 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl font-headline font-bold text-secondary text-sm">
             </div>
             <span class="text-[11px] text-on-surface-variant mt-1 block">Tarifa estándar de lista · Sede Principal</span>
           </div>
+
+          {% if form.can_adjust_pricing %}
+          <div id="pricingEditor" class="space-y-3">
+            <div>
+              <label for="adjusted_price_cop" class="block text-xs font-semibold mb-1">{{ form.adjusted_price_cop.label }}</label>
+              {{ form.adjusted_price_cop }}
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><label for="discount_type" class="block text-xs font-semibold mb-1">{{ form.discount_type.label }}</label>{{ form.discount_type }}</div>
+              <div><label for="discount_value" class="block text-xs font-semibold mb-1">{{ form.discount_value.label }}</label>{{ form.discount_value }}</div>
+            </div>
+            <div><label for="pricing_reason" class="block text-xs font-semibold mb-1">{{ form.pricing_reason.label }}</label>{{ form.pricing_reason }}</div>
+          </div>
+          {% endif %}
+          <div class="grid grid-cols-2 gap-2">
+            <div><label for="discountAmountDisplay" class="block text-xs font-semibold mb-1">Valor descontado (COP)</label><input id="discountAmountDisplay" readonly class="w-full px-3 py-2.5 rounded-xl bg-surface-container-low text-sm"></div>
+            <div><label for="totalPriceDisplay" class="block text-xs font-semibold mb-1">Total final (COP)</label><input id="totalPriceDisplay" readonly class="w-full px-3 py-2.5 rounded-xl bg-surface-container-low text-sm font-bold"></div>
+          </div>
+          <p id="pricingError" role="alert" class="text-xs text-error"></p>
 
           <!-- Observaciones y Preferencias -->
           <div>
@@ -396,21 +421,44 @@
     {% for s in services_list %}
       "{{ s.id }}": {
         "price": "{{ s.price_cop_formatted }}",
-        "duration": "{{ s.duration_minutes }} min"
+        "price_cop": "{{ s.price_cop|stringformat:'d' }}",
+        "duration": {{ s.duration_minutes|stringformat:'d' }}
       },
     {% endfor %}
   };
 
-  function updateServiceDetails() {
+  function updatePlannedEndTime() {
+    const duration = Number(document.getElementById('durationInput').value);
+    const start = document.getElementById('timeInput').value;
+    const display = document.getElementById('endTimeDisplay');
+    if (!start || !Number.isInteger(duration) || duration <= 0) {
+      display.value = '';
+      return;
+    }
+    const parts = start.split(':').map(Number);
+    const endSeconds = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0) + duration * 60;
+    if (endSeconds >= 86400) {
+      display.value = 'Debe terminar el mismo día';
+      return;
+    }
+    display.value = String(Math.floor(endSeconds / 3600)).padStart(2, '0') + ':' +
+      String(Math.floor(endSeconds % 3600 / 60)).padStart(2, '0');
+  }
+
+  function updateServiceDetails(resetDuration = false) {
     const serviceSelect = document.getElementById('serviceSelect');
     const priceDisplay = document.getElementById('priceDisplay');
-    const durationDisplay = document.getElementById('durationDisplay');
+    const durationInput = document.getElementById('durationInput');
     const selectedId = serviceSelect.value;
 
     if (servicesData[selectedId]) {
       priceDisplay.value = servicesData[selectedId].price;
-      durationDisplay.value = servicesData[selectedId].duration;
+      if (resetDuration || (!durationInput.value && {% if modal_has_errors %}false{% else %}true{% endif %})) {
+        durationInput.value = servicesData[selectedId].duration;
+      }
     }
+    updatePlannedEndTime();
+    updateAppointmentPricing(resetDuration);
   }
 
   function openAppointmentModal() {
@@ -452,10 +500,13 @@
 
   // Ejecutar al cargar la página si el modal tiene errores
   document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('durationInput').addEventListener('input', updatePlannedEndTime);
+    document.getElementById('timeInput').addEventListener('input', updatePlannedEndTime);
     updateServiceDetails();
     {% if modal_has_errors %}
       openAppointmentModal();
     {% endif %}
   });
 </script>
+<script src="{% static 'js/appointment-pricing.js' %}" defer></script>
 {% endblock %}

@@ -47,3 +47,20 @@ staticfiles/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Secrets and private/local MySQL operations (keep these files on disk).
+.env.*
+!.env.example
+/backups/
+/StudioGestBackups/
+**/studiogest_db*.sql
+*.dump
+*.sql.gz
+*.sql.zip
+/docs/ensayo_mysql_resultado.md
+/docs/preparacion_mysql_precios.md
+/docs/reporte_pruebas_servicios.md
+/docs/evidencias/mysql_ensayo_resultado.json
+/tools/backup_mysql_private.py
+/tools/ensayar_migracion_mysql.py
+/tools/test_ensayo_sql.py
