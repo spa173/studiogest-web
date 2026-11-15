@@ -35,28 +35,53 @@
     </section>
   </div>
 
-  {% if open_sessions %}
   <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
-    <h2 class="font-headline text-lg font-bold text-on-surface">Sesiones de caja abiertas</h2>
-    <ul class="space-y-2">
-      {% for session in open_sessions %}
-      <li class="flex items-center justify-between text-sm">
-        <span>{{ session.opened_at }} - {{ session.opened_by }}</span>
-        <a href="{% url 'sales:cash_close' session.pk %}" class="text-secondary font-semibold hover:underline">Cerrar caja</a>
-      </li>
-      {% endfor %}
-    </ul>
+    <div class="flex items-center justify-between gap-3">
+      <h2 class="font-headline text-lg font-bold text-on-surface">Sesiones de caja</h2>
+      <a href="{% url 'sales:cash_history' %}" class="text-secondary font-semibold text-sm hover:underline">Ver historial</a>
+    </div>
+    {% if open_sessions %}
+    <div class="space-y-2">
+      <p class="text-sm text-on-surface-variant">Abiertas</p>
+      <ul class="space-y-2">
+        {% for session in open_sessions %}
+        <li class="flex items-center justify-between text-sm">
+          <span>{{ session.opened_at }} - {{ session.opened_by }}</span>
+          <a href="{% url 'sales:cash_close' session.pk %}" class="text-secondary font-semibold hover:underline">Cerrar caja</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No hay sesiones de caja abiertas. Consulta el historial para ver sesiones cerradas y su arqueo.</p>
+    {% endif %}
   </section>
-  {% endif %}
 
   {% if recent_sales %}
   <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
     <h2 class="font-headline text-lg font-bold text-on-surface">Ventas recientes</h2>
     <ul class="space-y-2">
       {% for sale in recent_sales %}
-      <li class="flex items-center justify-between text-sm">
-        <span>Venta #{{ sale.pk }} - {{ sale.get_payment_method_display }} - ${{ sale.total }}</span>
-        <span class="text-on-surface-variant">{{ sale.created_at }}</span>
+      <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm py-2 border-b border-outline-variant/20 last:border-b-0">
+        <div>
+          <span class="font-medium">Comprobante {{ sale.receipt_number }}</span>
+          <span class="text-on-surface-variant">- Venta #{{ sale.pk }} - {{ sale.get_payment_method_display }} - ${{ sale.total }}</span>
+          {% if sale.status == 'ANULADA' %}
+          <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-surface-container-high text-on-surface-variant">Anulada</span>
+          {% else %}
+          <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-secondary/10 text-secondary">Registrada</span>
+          {% endif %}
+          <div class="text-on-surface-variant mt-0.5">{{ sale.created_at }}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url 'sales:receipt' sale.pk %}" class="px-3 py-1.5 rounded-lg border border-outline-variant/50 text-on-surface font-semibold text-xs hover:bg-surface-container-low transition-colors">Ver recibo</a>
+          {% if sale.status == 'REGISTRADA' %}
+          <form method="post" action="{% url 'sales:cancel' sale.pk %}" onsubmit="return confirm('¿Anular el comprobante {{ sale.receipt_number }} (venta #{{ sale.pk }})? Esta acción restaurará el stock de productos vendidos y permitirá volver a cobrar la cita si aplica.');">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-1.5 rounded-lg border border-error/40 text-error font-semibold text-xs hover:bg-error/5 transition-colors">Anular venta</button>
+          </form>
+          {% endif %}
+        </div>
       </li>
       {% endfor %}
     </ul>

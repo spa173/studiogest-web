@@ -1,0 +1,99 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Solicitudes de cita pendientes - StudioGest{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-outline-variant/30">
+  <div>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Solicitudes de cita pendientes</h1>
+    <p class="font-body-md text-sm text-on-surface-variant mt-1">
+      Reservas recibidas desde el formulario público, pendientes de confirmación o rechazo interno.
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'appointments:calendar' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/50 bg-surface-container-lowest text-sm font-semibold hover:bg-surface-container-low transition-colors">
+      <span class="material-symbols-outlined text-lg">calendar_month</span>
+      Volver a agenda
+    </a>
+  </div>
+</div>
+
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  <div class="p-4 border-b border-outline-variant/30 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100 text-amber-700">
+        <span class="material-symbols-outlined text-lg">pending_actions</span>
+      </span>
+      <div>
+        <p class="font-semibold text-on-surface">Pendientes por gestionar</p>
+        <p class="text-xs text-on-surface-variant">{{ pending_count }} solicitud{{ pending_count|pluralize:"es" }} en estado pendiente</p>
+      </div>
+    </div>
+  </div>
+
+  {% if pending_appointments %}
+  <div class="divide-y divide-outline-variant/20">
+    {% for item in pending_appointments %}
+    {% with app=item.obj %}
+    <div class="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <div class="space-y-2 min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">{{ app.get_status_display }}</span>
+          <span class="px-2 py-0.5 rounded text-xs font-medium bg-surface-container text-on-surface-variant">Origen: Reserva pública</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          <p><span class="font-semibold text-on-surface">Cliente:</span> {{ app.customer.name }}</p>
+          <p><span class="font-semibold text-on-surface">Contacto:</span> {{ app.customer.phone|default:"No registrado" }}</p>
+          <p><span class="font-semibold text-on-surface">Servicio:</span> {{ app.service.name }}</p>
+          <p><span class="font-semibold text-on-surface">Profesional:</span> {{ app.professional.name }}</p>
+          <p><span class="font-semibold text-on-surface">Fecha:</span> {{ app.date|date:"d/m/Y" }}</p>
+          <p><span class="font-semibold text-on-surface">Hora:</span> {{ app.start_time|time:"H:i" }} - {{ app.end_time|time:"H:i" }}</p>
+          <p class="sm:col-span-2"><span class="font-semibold text-on-surface">Registrada:</span> {{ app.created_at|date:"d/m/Y H:i" }}</p>
+        </div>
+        <div class="text-sm">
+          <p class="font-semibold text-on-surface mb-0.5">Notas / observaciones</p>
+          {% if app.notes %}
+          <p class="text-on-surface-variant whitespace-pre-line bg-surface-container-low rounded-xl p-3 border border-outline-variant/20">{{ app.notes }}</p>
+          {% else %}
+          <p class="text-on-surface-variant">Sin observaciones.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="flex flex-row lg:flex-col gap-2 shrink-0">
+        {% if item.can_manage %}
+        <form action="{% url 'appointments:confirm_pending' app.pk %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'appointments:pending_requests' %}">
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-700 text-white text-sm font-semibold hover:opacity-95 transition-all" onclick="return confirm('¿Confirmar esta solicitud de cita?');">
+            <span class="material-symbols-outlined text-base">task_alt</span>
+            Confirmar
+          </button>
+        </form>
+        <form action="{% url 'appointments:reject_pending' app.pk %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'appointments:pending_requests' %}">
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-error/30 text-error text-sm font-semibold hover:bg-error-container/20 transition-all" onclick="return confirm('¿Rechazar esta solicitud de cita? Pasará a cancelada.');">
+            <span class="material-symbols-outlined text-base">block</span>
+            Rechazar
+          </button>
+        </form>
+        {% else %}
+        <div class="text-xs text-on-surface-variant bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 max-w-xs">
+          Puedes ver esta solicitud, pero solo un administrador o el profesional asignado puede confirmarla o rechazarla.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <span class="material-symbols-outlined text-4xl text-outline">event_available</span>
+    <p class="mt-2 font-semibold text-on-surface">No hay solicitudes pendientes</p>
+    <p class="text-sm text-on-surface-variant mt-1">Las reservas públicas pendientes de gestión aparecerán aquí.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

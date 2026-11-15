@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+﻿from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
@@ -6,6 +6,8 @@ from django.db import IntegrityError, OperationalError
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
+
+from accounts.permissions import can_manage_inventory, can_view_inventory_costs, can_view_inventory_history
 
 from .forms import ProductRegistrationForm
 from .models import Product, StockEntry
@@ -16,7 +18,7 @@ from .services import operation_token, request_fingerprint, save_registration, v
 @require_GET
 def product_list(request):
     products = Product.objects.annotate(has_entries=Exists(StockEntry.objects.filter(product_id=OuterRef('pk'))))
-    if not request.user.is_admin:
+    if not can_view_inventory_costs(request.user):
         products = products.defer('acquisition_cost')
     return render(request, 'inventory/list.html', {'products': products})
 
@@ -24,7 +26,7 @@ def product_list(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def register_product(request, pk=None, mode='new'):
-    if not request.user.is_admin:
+    if not can_manage_inventory(request.user):
         raise PermissionDenied('Solo los administradores pueden registrar productos y actualizar sus datos y precios.')
     product = None
     if pk:
@@ -98,7 +100,10 @@ def _handle_registration_post(request, form, product, mode):
 @login_required
 @require_GET
 def entry_history(request):
-    if not request.user.is_admin:
-        raise PermissionDenied('El historial de inventario está reservado para administradores.')
+    if not can_view_inventory_history(request.user):
+        raise PermissionDenied('No tienes permisos para ver el historial de inventario.')
     entries = StockEntry.objects.select_related('product', 'created_by')
-    return render(request, 'inventory/history.html', {'page': Paginator(entries, 25).get_page(request.GET.get('page'))})
+    return render(request, 'inventory/history.html', {
+        'page': Paginator(entries, 25).get_page(request.GET.get('page')),
+        'can_view_inventory_costs': can_view_inventory_costs(request.user),
+    })

@@ -1,4 +1,4 @@
-import re
+﻿import re
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from appointments.models import Appointment
 from sales.models import Sale
+from accounts.permissions import can_delete_customers, can_view_customer_sales_history
 
 from .forms import CustomerForm
 from .models import Customer
@@ -50,6 +51,7 @@ def customer_list(request):
         'solo_vip': solo_vip,
         'total_clientes': Customer.objects.count(),
         'total_vip': Customer.objects.filter(is_vip=True).count(),
+        'can_delete_customers': can_delete_customers(request.user),
     }
     return render(request, 'customers/list.html', contexto)
 
@@ -58,12 +60,18 @@ def customer_list(request):
 @require_GET
 def customer_detail(request, pk):
     cliente = get_object_or_404(Customer, pk=pk)
-    appointments = cliente.appointments.select_related('service', 'professional', 'professional__user').order_by('-date', '-start_time')
-    sales = Sale.objects.filter(customer=cliente).select_related('user', 'cash_session').prefetch_related('details').order_by('-created_at')
+    appointments = cliente.appointments.select_related(
+        'service', 'professional', 'professional__user').order_by('-date', '-start_time')
+    show_sales_history = can_view_customer_sales_history(request.user)
+    sales = []
+    if show_sales_history:
+        sales = Sale.objects.filter(customer=cliente).select_related(
+            'user', 'cash_session').prefetch_related('details').order_by('-created_at')
     contexto = {
         'cliente': cliente,
         'appointments': appointments,
         'sales': sales,
+        'can_view_sales_history': show_sales_history,
         'whatsapp': _enlace_whatsapp(cliente.phone),
     }
     return render(request, 'customers/detail.html', contexto)
@@ -73,13 +81,13 @@ def customer_detail(request, pk):
 @require_http_methods(GET_POST)
 def customer_create(request):
     if request.method == 'POST':
-        form = CustomerForm(request.POST)
+        form = CustomerForm(request.POST, user=request.user)
         if form.is_valid():
             cliente = form.save()
             messages.success(request, f'Cliente «{cliente.name}» registrado correctamente.')
             return redirect(URL_LISTA)
     else:
-        form = CustomerForm()
+        form = CustomerForm(user=request.user)
     return render(request, 'customers/form.html', {'form': form, 'titulo': 'Nuevo cliente'})
 
 
@@ -88,13 +96,13 @@ def customer_create(request):
 def customer_update(request, pk):
     cliente = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
-        form = CustomerForm(request.POST, instance=cliente)
+        form = CustomerForm(request.POST, instance=cliente, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Los datos de «{cliente.name}» se actualizaron.')
             return redirect(URL_LISTA)
     else:
-        form = CustomerForm(instance=cliente)
+        form = CustomerForm(instance=cliente, user=request.user)
     return render(request, 'customers/form.html',
                   {'form': form, 'titulo': 'Editar cliente', 'cliente': cliente})
 
@@ -105,7 +113,7 @@ def customer_delete(request, pk):
     cliente = get_object_or_404(Customer, pk=pk)
 
     # Solo el administrador puede eliminar clientes
-    if not request.user.is_admin:
+    if not can_delete_customers(request.user):
         messages.error(request, 'Solo un administrador puede eliminar clientes.')
         return redirect(URL_LISTA)
 

@@ -65,6 +65,11 @@
                 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>VIP
               </span>
               {% endif %}
+              {% if c.data_consent %}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-semibold" title="Autorización de datos vigente{% if c.data_consent_at %} ({{ c.data_consent_at|date:'Y-m-d' }}){% endif %}">
+                <span class="material-symbols-outlined text-[14px]">verified_user</span>Datos OK
+              </span>
+              {% endif %}
             </div>
             {% if c.notes %}<p class="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{{ c.notes }}</p>{% endif %}
           </td>

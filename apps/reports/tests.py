@@ -1,9 +1,11 @@
 import datetime
 from decimal import Decimal
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from openpyxl import load_workbook
 
 from appointments.models import Appointment
 from customers.models import Customer
@@ -20,6 +22,8 @@ class ReportTests(TestCase):
         cls.worker = User.objects.create_user(
             username='report-worker', email='worker@reports.test',
             role=User.Role.WORKER, is_staff=True)
+        cls.cashier = User.objects.create_user(
+            username='report-cashier', email='cashier@reports.test', role=User.Role.CASHIER)
         cls.superuser = User.objects.create_user(
             username='report-super', email='super@reports.test',
             role=User.Role.WORKER, is_superuser=True)
@@ -58,7 +62,7 @@ class ReportTests(TestCase):
     def test_staff_worker_cannot_access_or_see_menu_link(self):
         self.client.force_login(self.worker)
         response = self.client.get(self.url)
-        self.assertContains(response, 'Solo los administradores', status_code=403)
+        self.assertContains(response, 'No tienes permisos para consultar los reportes.', status_code=403)
         self.assertNotContains(response, 'Ingresos estimados', status_code=403)
         self.assertNotContains(response, 'href="/reports/"', status_code=403)
 
@@ -156,3 +160,149 @@ class ReportTests(TestCase):
         before = Appointment.objects.count()
         self.assertEqual(self.client.post(self.url).status_code, 405)
         self.assertEqual(Appointment.objects.count(), before)
+
+    def test_admin_can_export_csv(self):
+        response = self.client.get(self.url, {'export': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('attachment; filename="reporte_studiogest.csv"', response['Content-Disposition'])
+        content = response.content.decode('utf-8-sig')
+        for text in ['Reporte StudioGest', 'Resumen de citas', 'Servicios más solicitados',
+                     'Ventas registradas', 'Productos más vendidos', 'Productos con stock bajo',
+                     'Total de citas', 'Ingresos estimados (citas completadas, COP)']:
+            self.assertIn(text, content)
+        self.assertIn('Corte', content)
+        self.assertIn('Barba', content)
+
+    def test_export_csv_respects_date_filters(self):
+        response = self.client.get(self.url, {
+            'start_date': '2026-11-01', 'end_date': '2026-11-06', 'export': 'csv',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('reporte_studiogest_desde_20261101_hasta_20261106.csv', response['Content-Disposition'])
+        content = response.content.decode('utf-8-sig')
+        self.assertIn('Desde 01/11/2026 hasta 06/11/2026', content)
+        # Total citas en ese rango es 6 (según test existente)
+        self.assertIn('Total de citas,6', content)
+
+    def test_worker_cannot_export_csv(self):
+        self.client.force_login(self.worker)
+        response = self.client.get(self.url, {'export': 'csv'})
+        self.assertContains(response, 'No tienes permisos para consultar los reportes.', status_code=403)
+        self.assertNotEqual(response.get('Content-Type'), 'text/csv; charset=utf-8')
+
+    def test_invalid_filter_does_not_export_csv(self):
+        response = self.client.get(self.url, {'start_date': 'no-es-fecha', 'export': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors)
+        self.assertNotEqual(response.get('Content-Type'), 'text/csv; charset=utf-8')
+        self.assertContains(response, 'Revisa el filtro de fechas')
+
+    def test_export_csv_with_empty_data(self):
+        Appointment.objects.all().delete()
+        response = self.client.get(self.url, {'export': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8-sig')
+        self.assertIn('Total de citas,0', content)
+        self.assertIn('Sin datos,0', content)
+        self.assertIn('Sin ventas registradas,0,0', content)
+
+    def test_cashier_can_access_reports_and_see_menu_link(self):
+        self.client.force_login(self.cashier)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('summary', response.context)
+        self.assertContains(response, 'href="/reports/" aria-current="page"')
+
+    def test_cashier_can_export_csv(self):
+        self.client.force_login(self.cashier)
+        response = self.client.get(self.url, {'export': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+
+    def _load_xlsx(self, response):
+        return load_workbook(BytesIO(response.content), data_only=True)
+
+    def test_admin_can_export_xlsx(self):
+        response = self.client.get(self.url, {'export': 'xlsx'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('attachment; filename="reporte_studiogest.xlsx"', response['Content-Disposition'])
+        wb = self._load_xlsx(response)
+        self.assertEqual(
+            wb.sheetnames,
+            ['Resumen citas', 'Servicios', 'Ventas', 'Productos vendidos', 'Stock bajo'],
+        )
+        ws = wb['Resumen citas']
+        self.assertEqual(ws['A1'].value, 'Reporte StudioGest')
+        self.assertEqual(ws['A2'].value, 'Período')
+        self.assertEqual(ws['B2'].value, 'Todo el historial')
+        self.assertEqual(ws['A5'].value, 'Total de citas')
+        self.assertEqual(ws['B5'].value, 7)
+        self.assertEqual(ws['A6'].value, 'Citas completadas')
+        self.assertEqual(ws['B6'].value, 3)
+        self.assertEqual(ws['A7'].value, 'Citas canceladas')
+        self.assertEqual(ws['B7'].value, 1)
+        self.assertEqual(ws['A8'].value, 'Ingresos estimados (citas completadas, COP)')
+        self.assertEqual(Decimal(str(ws['B8'].value)), Decimal('120000'))
+        services = wb['Servicios']
+        self.assertEqual(services['A5'].value, 'Corte')
+        self.assertEqual(services['B5'].value, 4)
+        self.assertEqual(services['A6'].value, 'Barba')
+        self.assertEqual(services['B6'].value, 3)
+
+    def test_export_xlsx_respects_date_filters(self):
+        response = self.client.get(self.url, {
+            'start_date': '2026-11-01', 'end_date': '2026-11-06', 'export': 'xlsx',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'reporte_studiogest_desde_20261101_hasta_20261106.xlsx',
+            response['Content-Disposition'],
+        )
+        wb = self._load_xlsx(response)
+        self.assertEqual(wb['Resumen citas']['B2'].value, 'Desde 01/11/2026 hasta 06/11/2026')
+        self.assertEqual(wb['Resumen citas']['B5'].value, 6)
+
+    def test_worker_cannot_export_xlsx(self):
+        self.client.force_login(self.worker)
+        response = self.client.get(self.url, {'export': 'xlsx'})
+        self.assertContains(response, 'No tienes permisos para consultar los reportes.', status_code=403)
+        self.assertNotEqual(
+            response.get('Content-Type'),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+    def test_cashier_can_export_xlsx(self):
+        self.client.force_login(self.cashier)
+        response = self.client.get(self.url, {'export': 'xlsx'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+    def test_invalid_filter_does_not_export_xlsx(self):
+        response = self.client.get(self.url, {'start_date': 'no-es-fecha', 'export': 'xlsx'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors)
+        self.assertNotEqual(
+            response.get('Content-Type'),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertContains(response, 'Revisa el filtro de fechas')
+
+    def test_export_xlsx_with_empty_data(self):
+        Appointment.objects.all().delete()
+        response = self.client.get(self.url, {'export': 'xlsx'})
+        self.assertEqual(response.status_code, 200)
+        wb = self._load_xlsx(response)
+        self.assertEqual(wb['Resumen citas']['B5'].value, 0)
+        self.assertEqual(wb['Servicios']['A5'].value, 'Sin datos')
+        self.assertEqual(wb['Servicios']['B5'].value, 0)
+        self.assertEqual(wb['Ventas']['A9'].value, 'Sin ventas registradas')
+        self.assertEqual(wb['Ventas']['B9'].value, 0)
+        self.assertEqual(wb['Ventas']['C9'].value, 0)

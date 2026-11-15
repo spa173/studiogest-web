@@ -22,13 +22,48 @@
 
     {% for campo in form %}
       {% if campo.name == 'data_consent' %}
-      <label for="{{ campo.id_for_label }}" class="flex items-start gap-2.5 cursor-pointer text-sm font-medium text-on-surface">
-        <input type="checkbox" name="{{ campo.html_name }}" id="{{ campo.id_for_label }}" {% if campo.value %}checked{% endif %}
-               class="mt-0.5 rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer">
-        {{ campo.label }}{% if campo.field.required %} <span class="text-error">*</span>{% endif %}
-      </label>
-      {% if campo.help_text %}<p class="text-xs text-on-surface-variant ml-6.5">{{ campo.help_text }}</p>{% endif %}
-      {% for error in campo.errors %}<p class="text-sm text-error font-medium ml-6.5">{{ error }}</p>{% endfor %}
+      <div class="space-y-3 rounded-xl border border-outline-variant/40 bg-surface-container-low/40 p-4">
+        <p class="text-sm font-semibold text-on-surface">Tratamiento de datos personales</p>
+        <p class="text-sm text-on-surface-variant">
+          Antes de marcar la autorización, informa a la persona qué datos se registran (nombre, teléfono, correo,
+          notas e historial de citas y compras) y para qué se usarán en StudioGest: agendar, contactar y gestionar su atención.
+        </p>
+        <label for="{{ campo.id_for_label }}" class="flex items-start gap-2.5 cursor-pointer text-sm font-medium text-on-surface">
+          <input type="checkbox" name="{{ campo.html_name }}" id="{{ campo.id_for_label }}" {% if campo.value %}checked{% endif %}
+                 class="mt-0.5 rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer"
+                 aria-describedby="{{ campo.id_for_label }}_help">
+          <span>{{ campo.label }}{% if campo.field.required %} <span class="text-error">*</span>{% endif %}</span>
+        </label>
+        {% if campo.help_text %}<p id="{{ campo.id_for_label }}_help" class="text-xs text-on-surface-variant ml-6.5">{{ campo.help_text }}</p>{% endif %}
+        {% for error in campo.errors %}<p class="text-sm text-error font-medium ml-6.5">{{ error }}</p>{% endfor %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="space-y-1.5">
+            <label for="{{ form.data_consent_method.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ form.data_consent_method.label }}</label>
+            {{ form.data_consent_method }}
+            {% if form.data_consent_method.help_text %}<p class="text-xs text-on-surface-variant">{{ form.data_consent_method.help_text }}</p>{% endif %}
+            {% for error in form.data_consent_method.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="space-y-1.5 sm:col-span-2">
+            <label for="{{ form.data_consent_notes.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ form.data_consent_notes.label }}</label>
+            {{ form.data_consent_notes }}
+            {% if form.data_consent_notes.help_text %}<p class="text-xs text-on-surface-variant">{{ form.data_consent_notes.help_text }}</p>{% endif %}
+            {% for error in form.data_consent_notes.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+
+        <div class="text-xs text-on-surface-variant space-y-1 border-t border-outline-variant/30 pt-2">
+          <p>El sistema registra evidencia básica operativa: estado vigente, fecha/hora al otorgar, medio, observaciones y usuario que registró (cuando aplica).</p>
+          {% if cliente and cliente.data_consent_at %}
+          <p><span class="font-semibold text-on-surface">Última evidencia de otorgamiento:</span> {{ cliente.data_consent_at|date:"Y-m-d H:i" }}{% if cliente.data_consent_method %} · {{ cliente.get_data_consent_method_display }}{% endif %}{% if cliente.data_consent_recorded_by %} · registrado por {{ cliente.data_consent_recorded_by.get_username }}{% endif %}.</p>
+          {% endif %}
+          {% if cliente and not cliente.data_consent and cliente.data_consent_at %}
+          <p>El estado actual es no vigente/revocado, pero se conserva la evidencia del último otorgamiento para trazabilidad básica.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% elif campo.name == 'data_consent_method' or campo.name == 'data_consent_notes' %}
+      {# Renderizados dentro del bloque de tratamiento de datos personales #}
       {% elif campo.name == 'is_vip' %}
       <label for="{{ campo.id_for_label }}" class="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-on-surface">
         <input type="checkbox" name="{{ campo.html_name }}" id="{{ campo.id_for_label }}" {% if campo.value %}checked{% endif %}

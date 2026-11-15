@@ -2,13 +2,23 @@
 URL configuration for StudioGest project.
 """
 from django.contrib import admin
-from django.urls import path, include
 from django.shortcuts import redirect
+from django.urls import include, path
+
+
+def _admin_has_permission(request):
+    return request.user.is_active and getattr(request.user, 'is_admin', False)
+
+
+# Restringe /admin/ a usuarios con rol ADMIN de negocio (o superuser).
+admin.site.has_permission = _admin_has_permission
+
 
 def root_redirect(request):
     if request.user.is_authenticated:
         return redirect('dashboard:index')
     return redirect('accounts:login')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

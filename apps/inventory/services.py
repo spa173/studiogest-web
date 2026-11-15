@@ -158,3 +158,27 @@ def consume_stock(*, product, quantity, user=None):
 
     locked.refresh_from_db(fields=['stock'])
     return locked
+
+
+@transaction.atomic
+def restore_stock(*, product, quantity, user=None):
+    """Restaura stock de forma atómica, utilizado al anular ventas."""
+    product_id = getattr(product, 'pk', product)
+    quantity = Decimal(str(quantity))
+    if quantity <= 0:
+        raise ValidationError('La cantidad a restaurar debe ser mayor que cero.')
+
+    locked = Product.objects.select_for_update().get(pk=product_id)
+    if not locked.is_active:
+        raise ValidationError('No se puede restaurar stock de un producto inactivo.')
+    if locked.stock + quantity > MAX_STOCK:
+        raise ValidationError('La restauración supera el límite de existencias del producto.')
+
+    updated = Product.objects.filter(
+        pk=locked.pk, stock__lte=MAX_STOCK - quantity
+    ).update(stock=F('stock') + quantity)
+    if updated != 1:
+        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+
+    locked.refresh_from_db(fields=['stock'])
+    return locked

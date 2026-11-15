@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,11 +26,17 @@ jobs:
     steps:
     - name: Descargar repositorio
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Configurar Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.txt
+          requirements-dev.txt
 
     - name: Instalar dependencias
       run: |
@@ -34,6 +47,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
 
     - name: Instalar dependencias de Tailwind CSS
       run: npm ci
@@ -44,11 +59,14 @@ jobs:
     - name: Comprobar configuración de pruebas
       run: python manage.py check --settings=config.settings_test
 
+    - name: Comprobar migraciones pendientes
+      run: python manage.py makemigrations --check --dry-run --settings=config.settings_test
+
     - name: Ejecutar pruebas automáticas con cobertura
       run: python -m pytest --cov=apps --cov-report=term-missing --cov-report=xml
 
     - name: Ejecutar pruebas de frontend (Node)
-      run: node --test apps/inventory/frontend_test.cjs apps/sales/navigation_test.cjs apps/appointments/pricing_frontend_test.cjs
+      run: npm run test:frontend
 
     - name: Subir reporte de cobertura
       uses: actions/upload-artifact@v4

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.out.css",
-    "dev:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.out.css --watch"
+    "dev:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.out.css --watch",
+    "test:frontend": "node --test apps/appointments/pricing_frontend_test.cjs apps/inventory/frontend_test.cjs apps/sales/navigation_test.cjs"
   }
 }

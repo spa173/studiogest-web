@@ -14,14 +14,14 @@
       <thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant"><tr>
         <th scope="col" class="p-4">Fecha / responsable</th><th scope="col" class="p-4">Producto</th>
         <th scope="col" class="p-4">Tipo / presentaciones</th><th scope="col" class="p-4">Cantidad ingresada</th>
-        <th scope="col" class="p-4">Costo total (COP)</th><th scope="col" class="p-4">Costo por presentación (COP)</th>
+        {% if can_view_inventory_costs %}<th scope="col" class="p-4">Costo total (COP)</th><th scope="col" class="p-4">Costo por presentación (COP)</th>{% endif %}
       </tr></thead>
       <tbody class="divide-y divide-outline-variant/20">{% for entry in page %}<tr>
         <td class="p-4 whitespace-nowrap">{{ entry.created_at|date:'d/m/Y H:i' }}<br>{{ entry.created_by.get_full_name|default:entry.created_by.username }}<br><span class="text-xs text-on-surface-variant">Entrada #{{ entry.pk }}</span></td>
         <td class="p-4">{{ entry.product.code }} — {{ entry.product.name }}</td>
         <td class="p-4"><strong>{{ entry.get_kind_display }}</strong><br>{{ entry.presentation_count|number_co }} × {{ entry.get_presentation_display }}{% if entry.base_unit != 'UNIT' %} de {{ entry.content_per_presentation|quantity_co:entry.base_unit }}{% endif %}</td>
         <td class="p-4">{{ entry.quantity|quantity_co:entry.base_unit }}</td>
-        <td class="p-4">{{ entry.total_cost|money_co }}</td><td class="p-4">{{ entry.cost_per_presentation|money_co }}</td>
+        {% if can_view_inventory_costs %}<td class="p-4">{{ entry.total_cost|money_co }}</td><td class="p-4">{{ entry.cost_per_presentation|money_co }}</td>{% endif %}
       </tr>{% endfor %}</tbody>
     </table>
   </div>

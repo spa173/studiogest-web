@@ -488,6 +488,58 @@ class ProfessionalCRUDTests(TestCase):
         self.prof1.refresh_from_db()
         self.assertTrue(self.prof1.is_active)
 
+    def test_admin_can_create_professional_with_work_schedule(self):
+        self.client.force_login(self.admin)
+        payload = {
+            'first_name': 'Laura',
+            'last_name': 'Gomez',
+            'email': 'laura@studiogest.co',
+            'phone': '3001234567',
+            'specialty': 'Estilista',
+            'color_tag': '#7C3AED',
+            'password': 'custompassword123',
+            'is_active': 'on',
+            'work_start_time': '09:00',
+            'work_end_time': '18:00',
+        }
+        response = self.client.post(self.create_url, payload)
+        self.assertRedirects(response, self.list_url)
+        prof = Professional.objects.get(user__email='laura@studiogest.co')
+        self.assertEqual(prof.work_start_time, datetime.time(9, 0))
+        self.assertEqual(prof.work_end_time, datetime.time(18, 0))
+        self.assertEqual(prof.work_schedule_display, '09:00 - 18:00')
+
+    def test_admin_can_update_professional_work_schedule(self):
+        self.client.force_login(self.admin)
+        update_url = reverse('services:professional_update', args=[self.prof1.pk])
+        payload = {
+            'first_name': 'Juan',
+            'last_name': 'Barbero',
+            'email': 'worker@test.com',
+            'phone': '3129876543',
+            'specialty': 'Cortes Clasicos',
+            'color_tag': '#0D9488',
+            'is_active': 'on',
+            'password': '',
+            'work_start_time': '08:30',
+            'work_end_time': '17:30',
+        }
+        response = self.client.post(update_url, payload)
+        self.assertRedirects(response, self.list_url)
+        self.prof1.refresh_from_db()
+        self.assertEqual(self.prof1.work_start_time, datetime.time(8, 30))
+        self.assertEqual(self.prof1.work_end_time, datetime.time(17, 30))
+
+    def test_professional_list_shows_work_schedule(self):
+        self.prof1.work_start_time = datetime.time(9)
+        self.prof1.work_end_time = datetime.time(18)
+        self.prof1.save()
+        self.client.force_login(self.admin)
+        response = self.client.get(self.list_url)
+        self.assertContains(response, 'Horario laboral')
+        self.assertContains(response, '09:00 - 18:00')
+        self.assertContains(response, 'Sin restricci', msg_prefix='Professionals without schedule should show unrestricted label')
+
 
 class ProfessionalFormTests(TestCase):
     def setUp(self):
@@ -523,3 +575,31 @@ class ProfessionalFormTests(TestCase):
         form = ProfessionalForm(data=self.form_data(password=''))
         self.assertFalse(form.is_valid())
         self.assertIn('password', form.errors)
+
+    def test_work_schedule_fields_are_optional_when_both_empty(self):
+        form = ProfessionalForm(data=self.form_data(email='new.prof@profform.test'))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data['work_start_time'])
+        self.assertIsNone(form.cleaned_data['work_end_time'])
+
+    def test_work_schedule_requires_both_times(self):
+        form = ProfessionalForm(data=self.form_data(email='new.prof@profform.test', work_start_time='09:00'))
+        self.assertFalse(form.is_valid())
+        self.assertIn('work_start_time', form.errors)
+        self.assertIn('work_end_time', form.errors)
+
+    def test_work_schedule_end_must_be_after_start(self):
+        form = ProfessionalForm(data=self.form_data(
+            email='new.prof@profform.test', work_start_time='18:00', work_end_time='09:00',
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('work_end_time', form.errors)
+
+    def test_professional_model_rejects_partial_or_invalid_schedule(self):
+        self.prof.work_start_time = datetime.time(9)
+        self.prof.work_end_time = None
+        with self.assertRaises(Exception):
+            self.prof.save()
+        self.prof.refresh_from_db()
+        self.assertIsNone(self.prof.work_start_time)
+        self.assertIsNone(self.prof.work_end_time)

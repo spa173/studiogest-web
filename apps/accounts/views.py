@@ -40,6 +40,7 @@ def login_view(request):
     })
 
 
+@require_http_methods(['POST'])
 def logout_view(request):
     if request.user.is_authenticated:
         nombre = request.user.first_name or request.user.username

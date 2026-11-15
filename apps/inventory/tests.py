@@ -101,15 +101,21 @@ class InventoryTests(TestCase):
         self.assertEqual(self.product.name, 'Champú')
         self.assertEqual(self.product.stock, Decimal('25.125'))
 
-    def test_worker_admin_access_denied_even_with_django_permissions(self):
+    def test_worker_cannot_access_inventory_admin_even_with_django_permissions(self):
         self.worker.user_permissions.add(*Permission.objects.filter(content_type__app_label='inventory'))
         self.client.force_login(self.worker)
+        login_url = reverse('admin:login')
         for name, args in [('admin:inventory_product_changelist', []),
                            ('admin:inventory_product_add', []),
                            ('admin:inventory_product_change', [self.product.pk])]:
-            self.assertEqual(self.client.get(reverse(name, args=args)).status_code, 403)
-        self.assertEqual(self.client.post(reverse('admin:inventory_product_add'),
-                                         self.product_data()).status_code, 403)
+            response = self.client.get(reverse(name, args=args))
+            self.assertIn(response.status_code, (302, 403))
+            if response.status_code == 302:
+                self.assertIn(login_url, response.url)
+        response = self.client.post(reverse('admin:inventory_product_add'), self.product_data())
+        self.assertIn(response.status_code, (302, 403))
+        if response.status_code == 302:
+            self.assertIn(login_url, response.url)
         self.assertFalse(Product.objects.filter(code='NEW-001').exists())
 
     def test_code_is_unique_and_normalized_by_validation(self):
@@ -179,6 +185,43 @@ class ConsumeStockTests(TestCase):
             consume_stock(product=self.product, quantity=Decimal('0'))
 
 
+class RestoreStockTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = Product.objects.create(
+            code='REST-001', name='Gel', description='',
+            base_unit=Product.BaseUnit.UNIT, stock=Decimal('3'),
+            minimum_stock=Decimal('1'), acquisition_cost=Decimal('10'),
+            sale_price=Decimal('20'), service_usage_price=Decimal('5'))
+
+    def test_restore_stock_increases_stock(self):
+        from .services import restore_stock
+        updated = restore_stock(product=self.product, quantity=Decimal('2'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('5'))
+        self.assertEqual(updated.stock, Decimal('5'))
+
+    def test_restore_stock_rejects_non_positive_quantity(self):
+        from .services import restore_stock
+        with self.assertRaises(ValidationError):
+            restore_stock(product=self.product, quantity=Decimal('0'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('3'))
+
+    def test_restore_stock_rejects_inactive_product(self):
+        from .services import restore_stock
+        inactive = Product.objects.create(
+            code='REST-INA', name='Inactivo', description='',
+            base_unit=Product.BaseUnit.UNIT, stock=Decimal('1'),
+            minimum_stock=Decimal('0'), acquisition_cost=Decimal('1'),
+            sale_price=Decimal('2'), service_usage_price=Decimal('2'),
+            is_active=False)
+        with self.assertRaises(ValidationError):
+            restore_stock(product=inactive, quantity=Decimal('1'))
+        inactive.refresh_from_db()
+        self.assertEqual(inactive.stock, Decimal('1'))
+
+
 class PurchaseValuesTests(TestCase):
     def test_rejects_invalid_presentation_count(self):
         with self.assertRaises(ValueError):
@@ -197,3 +240,58 @@ class PurchaseValuesTests(TestCase):
     def test_rejects_amounts_above_max_stock(self):
         with self.assertRaises(ValueError):
             purchase_values(2, Decimal('1000000000000000'), Decimal('100'), Decimal('100'), Decimal('50'))
+
+
+class InventoryRBACAdditionalTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username='inv-admin-r', email='inv-admin-r@test.co', role=User.Role.ADMIN)
+        cls.cashier = User.objects.create_user(
+            username='inv-cashier-r', email='inv-cashier-r@test.co', role=User.Role.CASHIER)
+        cls.worker = User.objects.create_user(
+            username='inv-worker-r', email='inv-worker-r@test.co', role=User.Role.WORKER)
+        cls.product = Product.objects.create(
+            code='RBAC-001', name='Producto RBAC', description='',
+            base_unit=Product.BaseUnit.UNIT, minimum_stock=Decimal('1'),
+            acquisition_cost=Decimal('9.50'), sale_price=Decimal('12.00'),
+            service_usage_price=Decimal('10.00'))
+
+    def test_cashier_sees_acquisition_cost_in_inventory_list(self):
+        self.client.force_login(self.cashier)
+        response = self.client.get(reverse('inventory:list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Costo adquisición (COP)')
+
+    def test_inventory_history_accessible_to_all_roles(self):
+        for user in (self.admin, self.cashier, self.worker):
+            self.client.force_login(user)
+            response = self.client.get(reverse('inventory:history'))
+            self.assertEqual(response.status_code, 200, user)
+
+    def test_inventory_history_hides_costs_for_worker_but_shows_for_cashier(self):
+        # Crear una entrada para que se renderice la tabla con encabezados.
+        from .models import StockEntry
+        StockEntry.objects.create(
+            kind=StockEntry.Kind.INITIAL,
+            product=self.product,
+            operation_key='11111111-1111-1111-1111-111111111111',
+            request_fingerprint='rbac-fp',
+            presentation_count=1,
+            content_per_presentation=Decimal('1.000'),
+            base_unit=self.product.base_unit,
+            quantity=Decimal('1.000'),
+            total_cost=Decimal('10.00'),
+            presentation_sale_price=Decimal('12.00'),
+            usage_price=Decimal('10.00000000'),
+            presentation=self.product.presentation or Product.Presentation.BOTTLE,
+            created_by=self.admin,
+        )
+        self.client.force_login(self.worker)
+        response = self.client.get(reverse('inventory:history'))
+        self.assertNotContains(response, 'Costo total (COP)')
+        self.assertNotContains(response, 'Costo por presentación (COP)')
+        self.client.force_login(self.cashier)
+        response = self.client.get(reverse('inventory:history'))
+        self.assertContains(response, 'Costo total (COP)')
+        self.assertContains(response, 'Costo por presentación (COP)')

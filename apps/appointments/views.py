@@ -1,14 +1,16 @@
-import datetime
+﻿import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.views.decorators.http import require_POST
+from django.db import transaction
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods, require_POST
 from .models import Appointment
-from .forms import AppointmentForm
+from .forms import AppointmentForm, PublicBookingForm
 from services.models import Service, Professional
 from customers.models import Customer
+from accounts.permissions import can_change_appointment_status, can_create_appointments, can_view_agenda
 
 
 @login_required
@@ -41,7 +43,10 @@ def calendar_view(request):
 
     # Manejar creación de cita desde el modal (POST)
     modal_has_errors = False
+    can_create = can_create_appointments(request.user)
     if request.method == 'POST':
+        if not can_create:
+            raise PermissionDenied('No tienes permisos para crear citas.')
         form = AppointmentForm(request.POST, user=request.user)
         if form.is_valid():
             cita = form.save(commit=False)
@@ -73,6 +78,9 @@ def calendar_view(request):
     prev_week = (current_date - datetime.timedelta(days=7)).isoformat()
     next_week = (current_date + datetime.timedelta(days=7)).isoformat()
 
+    can_view_pending = can_view_agenda(request.user)
+    pending_count = Appointment.objects.filter(status=Appointment.Status.PENDING).count() if can_view_pending else 0
+
     context = {
         'form': form,
         'current_date': current_date,
@@ -87,29 +95,121 @@ def calendar_view(request):
         'selected_professional': prof_id or '',
         'modal_has_errors': modal_has_errors,
         'total_week_appointments': appointments_qs.count(),
+        'can_create_appointments': can_create,
+        'can_view_pending_requests': can_view_pending,
+        'pending_requests_count': pending_count,
     }
     return render(request, 'appointments/calendar.html', context)
+
+
+def _management_note(appointment, action, user):
+    actor = getattr(user, 'get_username', lambda: str(user))()
+    stamp = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    note = f"[Gestión interna] {action} por {actor} el {stamp}."
+    current = (appointment.notes or '').strip()
+    return f"{current}\n{note}".strip() if current else note
+
+
+def _transition_appointment(request, pk, allowed_statuses, target_status, action_label, success_level='success'):
+    appointment = get_object_or_404(Appointment, pk=pk)
+    if not can_change_appointment_status(request.user, appointment):
+        raise PermissionDenied
+    with transaction.atomic():
+        current = Appointment.objects.select_for_update().get(pk=pk)
+        if current.status not in allowed_statuses:
+            messages.error(
+                request,
+                f"No se pudo {action_label} la cita de {current.customer.name}: su estado actual es {current.get_status_display()}."
+            )
+            return redirect(request.POST.get('next') or 'appointments:calendar')
+        current.status = target_status
+        # Solo registra auditoría ligera en transiciones de solicitudes pendientes.
+        if Appointment.Status.PENDING in allowed_statuses:
+            current.notes = _management_note(current, action_label.capitalize(), request.user)
+        current.save()
+    getattr(messages, success_level)(request, f"La cita de {current.customer.name} fue {action_label}.")
+    return redirect(request.POST.get('next') or 'appointments:calendar')
 
 
 @login_required
 @require_POST
 def cancel_appointment(request, pk):
-    appointment = get_object_or_404(Appointment, pk=pk)
-    if not request.user.is_admin and appointment.professional.user_id != request.user.id:
-        raise PermissionDenied
-    appointment.status = Appointment.Status.CANCELLED
-    appointment.save()
-    messages.info(request, f"La cita de {appointment.customer.name} ha sido cancelada.")
-    return redirect('appointments:calendar')
+    # Cancelación operativa: no permite cancelar lo ya cancelado/completado.
+    return _transition_appointment(
+        request, pk,
+        allowed_statuses={Appointment.Status.PENDING, Appointment.Status.CONFIRMED, Appointment.Status.IN_PROGRESS},
+        target_status=Appointment.Status.CANCELLED,
+        action_label='cancelada',
+        success_level='info',
+    )
 
 
 @login_required
 @require_POST
 def complete_appointment(request, pk):
-    appointment = get_object_or_404(Appointment, pk=pk)
-    if not request.user.is_admin and appointment.professional.user_id != request.user.id:
-        raise PermissionDenied
-    appointment.status = Appointment.Status.COMPLETED
-    appointment.save()
-    messages.success(request, f"Cita completada. Cobro registrado: {appointment.price_cop_formatted}.")
-    return redirect('appointments:calendar')
+    # Completar: solo citas activas/confirmadas o en atención.
+    return _transition_appointment(
+        request, pk,
+        allowed_statuses={Appointment.Status.CONFIRMED, Appointment.Status.IN_PROGRESS},
+        target_status=Appointment.Status.COMPLETED,
+        action_label='completada',
+        success_level='success',
+    )
+
+
+@login_required
+@require_POST
+def confirm_pending_appointment(request, pk):
+    return _transition_appointment(
+        request, pk,
+        allowed_statuses={Appointment.Status.PENDING},
+        target_status=Appointment.Status.CONFIRMED,
+        action_label='confirmada',
+        success_level='success',
+    )
+
+
+@login_required
+@require_POST
+def reject_pending_appointment(request, pk):
+    return _transition_appointment(
+        request, pk,
+        allowed_statuses={Appointment.Status.PENDING},
+        target_status=Appointment.Status.CANCELLED,
+        action_label='rechazada',
+        success_level='info',
+    )
+
+
+@login_required
+def pending_requests(request):
+    if not can_view_agenda(request.user):
+        raise PermissionDenied('No tienes permisos para ver solicitudes de agenda.')
+    pending_qs = Appointment.objects.filter(
+        status=Appointment.Status.PENDING
+    ).select_related('customer', 'service', 'professional', 'professional__user').order_by('date', 'start_time', 'created_at')
+    appointments = []
+    for appointment in pending_qs:
+        appointments.append({
+            'obj': appointment,
+            'can_manage': can_change_appointment_status(request.user, appointment),
+        })
+    return render(request, 'appointments/pending_requests.html', {
+        'pending_appointments': appointments,
+        'pending_count': pending_qs.count(),
+    })
+
+
+@require_http_methods(['GET', 'POST'])
+def public_booking(request):
+    """Reserva pública de cita (RF-14, MVP): sin autenticación."""
+    if request.method == 'POST':
+        form = PublicBookingForm(request.POST)
+        if form.is_valid():
+            appointment = form.save()
+            return render(request, 'appointments/public_booking_success.html', {
+                'appointment': appointment,
+            })
+    else:
+        form = PublicBookingForm()
+    return render(request, 'appointments/public_booking.html', {'form': form})

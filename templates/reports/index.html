@@ -30,11 +30,30 @@
 </form>
 
 {% if summary %}
-<p class="text-sm text-on-surface-variant">
-  {% if start_date or end_date %}
-    Período: {% if start_date %}desde {{ start_date|date:'d/m/Y' }}{% endif %} {% if end_date %}hasta {{ end_date|date:'d/m/Y' }}{% endif %}.
-  {% else %}Período: todo el historial.{% endif %}
-</p>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <p class="text-sm text-on-surface-variant">
+    {% if start_date or end_date %}
+      Período: {% if start_date %}desde {{ start_date|date:'d/m/Y' }}{% endif %} {% if end_date %}hasta {{ end_date|date:'d/m/Y' }}{% endif %}.
+    {% else %}Período: todo el historial.{% endif %}
+  </p>
+  <div class="flex flex-wrap gap-2 print:hidden">
+    <a href="{% url 'reports:index' %}?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&{% endif %}{% if end_date %}end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=csv"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-sm font-semibold hover:bg-surface-container border border-outline-variant/40 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
+      Exportar CSV
+    </a>
+    <a href="{% url 'reports:index' %}?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&{% endif %}{% if end_date %}end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=xlsx"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-sm font-semibold hover:bg-surface-container border border-outline-variant/40 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">table_view</span>
+      Exportar Excel
+    </a>
+    <button type="button" onclick="window.print()"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">print</span>
+      Imprimir / PDF
+    </button>
+  </div>
+</div>
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
   <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
     <h2 class="text-sm font-semibold text-on-surface-variant">Total de citas</h2>

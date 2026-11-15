@@ -50,11 +50,23 @@
       </select>
     </form>
 
+    {% if can_view_pending_requests %}
+    <a href="{% url 'appointments:pending_requests' %}" class="inline-flex items-center gap-2 bg-surface-container-lowest text-on-surface border border-outline-variant/50 py-2.5 px-4 rounded-xl font-headline text-sm font-semibold hover:bg-surface-container-low transition-all shadow-sm">
+      <span class="material-symbols-outlined text-lg text-amber-600">pending_actions</span>
+      <span>Solicitudes pendientes</span>
+      {% if pending_requests_count %}
+      <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">{{ pending_requests_count }}</span>
+      {% endif %}
+    </a>
+    {% endif %}
+
+    {% if can_create_appointments %}
     <!-- Botón Principal: + Nueva Cita -->
     <button type="button" onclick="openAppointmentModal()" class="flex items-center gap-2 bg-secondary text-on-secondary py-2.5 px-4 rounded-xl font-headline text-sm font-semibold hover:opacity-95 active:scale-[0.98] transition-all shadow-sm cursor-pointer">
       <span class="material-symbols-outlined text-lg">add_circle</span>
       <span>+ Nueva Cita</span>
     </button>
+    {% endif %}
   </div>
 </div>
 
@@ -79,7 +91,8 @@
     </div>
     <div class="hidden sm:block h-8 w-px bg-outline-variant/40"></div>
     <div class="hidden sm:flex items-center gap-2 text-xs text-on-surface-variant">
-      <span class="w-2.5 h-2.5 rounded-full bg-secondary"></span> <span>Confirmada</span>
+      <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> <span>Pendiente</span>
+      <span class="w-2.5 h-2.5 rounded-full bg-secondary ml-2"></span> <span>Confirmada</span>
       <span class="w-2.5 h-2.5 rounded-full bg-tertiary ml-2"></span> <span>Completada</span>
     </div>
   </div>
@@ -113,14 +126,14 @@
       {% if appointments %}
         {% for app in appointments %}
         <!-- Tarjeta de Cita -->
-        <div class="group relative p-3 rounded-xl border bg-surface-container-lowest shadow-sm hover:shadow-md transition-all duration-150 {% if app.status == 'COMPLETADA' %}border-tertiary/40 bg-tertiary-container/10{% else %}border-secondary/30 hover:border-secondary{% endif %}">
+        <div class="group relative p-3 rounded-xl border bg-surface-container-lowest shadow-sm hover:shadow-md transition-all duration-150 {% if app.status == 'COMPLETADA' %}border-tertiary/40 bg-tertiary-container/10{% elif app.status == 'PENDIENTE' %}border-amber-300 bg-amber-50/60{% else %}border-secondary/30 hover:border-secondary{% endif %}">
           
           <!-- Horario & Estado -->
           <div class="flex items-center justify-between text-xs mb-1">
-            <span class="font-bold {% if app.status == 'COMPLETADA' %}text-on-tertiary-container{% else %}text-secondary{% endif %}">
+            <span class="font-bold {% if app.status == 'COMPLETADA' %}text-on-tertiary-container{% elif app.status == 'PENDIENTE' %}text-amber-700{% else %}text-secondary{% endif %}">
               {{ app.start_time|time:"H:i" }} - {{ app.end_time|time:"H:i" }}
             </span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold {% if app.status == 'COMPLETADA' %}bg-tertiary/20 text-on-tertiary-container{% else %}bg-secondary/15 text-secondary{% endif %}">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold {% if app.status == 'COMPLETADA' %}bg-tertiary/20 text-on-tertiary-container{% elif app.status == 'PENDIENTE' %}bg-amber-100 text-amber-800{% else %}bg-secondary/15 text-secondary{% endif %}">
               {{ app.get_status_display }}
             </span>
           </div>
@@ -143,9 +156,23 @@
           <div class="mt-2 pt-2 border-t border-outline-variant/20 flex items-center justify-between text-xs">
             <span class="font-bold text-on-surface">{{ app.price_cop_formatted }}</span>
             
-            <!-- Acciones rápidas (Completar / Cancelar) -->
+            <!-- Acciones rápidas -->
             <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-              {% if app.status != 'COMPLETADA' %}
+              {% if request.user.is_admin or app.professional.user_id == request.user.id %}
+                {% if app.status == 'PENDIENTE' %}
+              <form action="{% url 'appointments:confirm_pending' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Confirmar esta solicitud de cita?');">
+                {% csrf_token %}
+                <button type="submit" class="p-1 rounded text-green-700 hover:bg-green-100 transition-colors" title="Confirmar solicitud" aria-label="Confirmar solicitud">
+                  <span class="material-symbols-outlined text-base" aria-hidden="true">task_alt</span>
+                </button>
+              </form>
+              <form action="{% url 'appointments:reject_pending' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Rechazar esta solicitud de cita?');">
+                {% csrf_token %}
+                <button type="submit" class="p-1 rounded text-error hover:bg-error-container/20 transition-colors" title="Rechazar solicitud" aria-label="Rechazar solicitud">
+                  <span class="material-symbols-outlined text-base" aria-hidden="true">block</span>
+                </button>
+              </form>
+                {% elif app.status != 'COMPLETADA' and app.status != 'CANCELADA' %}
               <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas que esta cita ha sido atendida y completada?');">
                 {% csrf_token %}
                 <button type="submit" class="p-1 rounded text-secondary hover:bg-secondary/10 transition-colors" title="Marcar como Atendida" aria-label="Marcar cita como atendida">
@@ -158,6 +185,7 @@
                   <span class="material-symbols-outlined text-base" aria-hidden="true">cancel</span>
                 </button>
               </form>
+                {% endif %}
               {% endif %}
             </div>
           </div>
@@ -172,11 +200,13 @@
         </div>
       {% endif %}
 
+      {% if can_create_appointments %}
       <!-- Botón Rápido de Agendar en este día -->
       <button type="button" onclick="openAppointmentModalWithDate('{{ day|date:'Y-m-d' }}')" class="w-full mt-auto py-2 rounded-xl border border-dashed border-outline-variant/60 hover:border-secondary hover:bg-secondary/5 text-on-surface-variant hover:text-secondary text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer">
         <span class="material-symbols-outlined text-sm">add</span>
         <span>Agendar</span>
       </button>
+      {% endif %}
 
     </div>
     {% endfor %}
@@ -186,6 +216,7 @@
 {% endblock %}
 
 {% block modal %}
+{% if can_create_appointments %}
 <!-- ========================================================================= -->
 <!-- MODAL: REGISTRAR NUEVA CITA (Fiel al diseño Stitch)                       -->
 <!-- ========================================================================= -->
@@ -412,6 +443,7 @@
 
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -427,86 +459,90 @@
     {% endfor %}
   };
 
-  function updatePlannedEndTime() {
-    const duration = Number(document.getElementById('durationInput').value);
-    const start = document.getElementById('timeInput').value;
-    const display = document.getElementById('endTimeDisplay');
-    if (!start || !Number.isInteger(duration) || duration <= 0) {
-      display.value = '';
-      return;
-    }
-    const parts = start.split(':').map(Number);
-    const endSeconds = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0) + duration * 60;
-    if (endSeconds >= 86400) {
-      display.value = 'Debe terminar el mismo día';
-      return;
-    }
-    display.value = String(Math.floor(endSeconds / 3600)).padStart(2, '0') + ':' +
-      String(Math.floor(endSeconds % 3600 / 60)).padStart(2, '0');
-  }
+  (function() {
+    const modal = document.getElementById('appointmentModal');
+    if (!modal) return;
 
-  function updateServiceDetails(resetDuration = false) {
-    const serviceSelect = document.getElementById('serviceSelect');
-    const priceDisplay = document.getElementById('priceDisplay');
-    const durationInput = document.getElementById('durationInput');
-    const selectedId = serviceSelect.value;
-
-    if (servicesData[selectedId]) {
-      priceDisplay.value = servicesData[selectedId].price;
-      if (resetDuration || (!durationInput.value && {% if modal_has_errors %}false{% else %}true{% endif %})) {
-        durationInput.value = servicesData[selectedId].duration;
+    function updatePlannedEndTime() {
+      const duration = Number(document.getElementById('durationInput').value);
+      const start = document.getElementById('timeInput').value;
+      const display = document.getElementById('endTimeDisplay');
+      if (!display) return;
+      if (!start || !Number.isInteger(duration) || duration <= 0) {
+        display.value = '';
+        return;
       }
+      const parts = start.split(':').map(Number);
+      const endSeconds = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0) + duration * 60;
+      if (endSeconds >= 86400) {
+        display.value = 'Debe terminar el mismo día';
+        return;
+      }
+      display.value = String(Math.floor(endSeconds / 3600)).padStart(2, '0') + ':' +
+        String(Math.floor(endSeconds % 3600 / 60)).padStart(2, '0');
     }
-    updatePlannedEndTime();
-    updateAppointmentPricing(resetDuration);
-  }
 
-  function openAppointmentModal() {
-    const modal = document.getElementById('appointmentModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.classList.add('overflow-hidden');
-    updateServiceDetails();
-  }
+    function updateServiceDetails(resetDuration = false) {
+      const serviceSelect = document.getElementById('serviceSelect');
+      const priceDisplay = document.getElementById('priceDisplay');
+      const durationInput = document.getElementById('durationInput');
+      if (!serviceSelect || !priceDisplay || !durationInput) return;
+      const selectedId = serviceSelect.value;
 
-  function openAppointmentModalWithDate(dateStr) {
-    const dateInput = document.getElementById('dateInput');
-    if (dateInput) {
-      dateInput.value = dateStr;
+      if (servicesData[selectedId]) {
+        priceDisplay.value = servicesData[selectedId].price;
+        if (resetDuration || (!durationInput.value && {% if modal_has_errors %}false{% else %}true{% endif %})) {
+          durationInput.value = servicesData[selectedId].duration;
+        }
+      }
+      updatePlannedEndTime();
+      if (typeof updateAppointmentPricing === 'function') updateAppointmentPricing(resetDuration);
     }
-    openAppointmentModal();
-  }
 
-  function closeAppointmentModal() {
-    const modal = document.getElementById('appointmentModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.body.classList.remove('overflow-hidden');
-  }
+    window.openAppointmentModal = function() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+      updateServiceDetails();
+    };
 
-  // Cerrar al hacer clic en el fondo oscuro
-  document.getElementById('appointmentModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeAppointmentModal();
-    }
-  });
+    window.openAppointmentModalWithDate = function(dateStr) {
+      const dateInput = document.getElementById('dateInput');
+      if (dateInput) {
+        dateInput.value = dateStr;
+      }
+      window.openAppointmentModal();
+    };
 
-  // Cerrar con tecla Escape
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeAppointmentModal();
-    }
-  });
+    window.closeAppointmentModal = function() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+    };
 
-  // Ejecutar al cargar la página si el modal tiene errores
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('durationInput').addEventListener('input', updatePlannedEndTime);
-    document.getElementById('timeInput').addEventListener('input', updatePlannedEndTime);
-    updateServiceDetails();
-    {% if modal_has_errors %}
-      openAppointmentModal();
-    {% endif %}
-  });
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        window.closeAppointmentModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.closeAppointmentModal();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const durationInput = document.getElementById('durationInput');
+      const timeInput = document.getElementById('timeInput');
+      if (durationInput) durationInput.addEventListener('input', updatePlannedEndTime);
+      if (timeInput) timeInput.addEventListener('input', updatePlannedEndTime);
+      updateServiceDetails();
+      {% if modal_has_errors %}
+        window.openAppointmentModal();
+      {% endif %}
+    });
+  })();
 </script>
 <script src="{% static 'js/appointment-pricing.js' %}" defer></script>
 {% endblock %}

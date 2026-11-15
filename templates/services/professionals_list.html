@@ -61,6 +61,7 @@
         <tr>
           <th scope="col" class="px-4 py-3 font-semibold">Profesional</th>
           <th scope="col" class="px-4 py-3 font-semibold hidden md:table-cell">Contacto</th>
+          <th scope="col" class="px-4 py-3 font-semibold hidden md:table-cell">Horario laboral</th>
           <th scope="col" class="px-4 py-3 font-semibold text-center hidden lg:table-cell">Color en Agenda</th>
           <th scope="col" class="px-4 py-3 font-semibold text-center hidden sm:table-cell">Citas</th>
           <th scope="col" class="px-4 py-3 font-semibold text-center">Estado</th>
@@ -103,6 +104,18 @@
               <span class="text-sm text-on-surface-variant/60">—</span>
             {% endif %}
             <p class="text-xs text-on-surface-variant truncate">{{ p.user.email }}</p>
+          </td>
+
+          <!-- Horario laboral -->
+          <td class="px-4 py-3 hidden md:table-cell">
+            {% if p.has_work_schedule %}
+              <span class="inline-flex items-center gap-1.5 text-sm font-medium text-on-surface">
+                <span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+                {{ p.work_start_time|time:"H:i" }} - {{ p.work_end_time|time:"H:i" }}
+              </span>
+            {% else %}
+              <span class="text-sm text-on-surface-variant">Sin restricción</span>
+            {% endif %}
           </td>
 
           <!-- Color identificador -->
