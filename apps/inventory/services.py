@@ -112,11 +112,14 @@ def _record_entry(product, data, user, key, fingerprint, mode, values):
         presentation=product.presentation, created_by=user)
 
 
+STOCK_UPDATE_ERROR = 'No se pudo actualizar el stock de forma segura.'
+
+
 def _increase_stock(product, quantity):
     updated = Product.objects.filter(pk=product.pk, stock__lte=MAX_STOCK-quantity).update(
         stock=F('stock') + quantity)
     if updated != 1:
-        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+        raise ValidationError(STOCK_UPDATE_ERROR)
 
 
 @transaction.atomic
@@ -154,7 +157,7 @@ def consume_stock(*, product, quantity, user=None):
         pk=locked.pk, stock__gte=quantity
     ).update(stock=F('stock') - quantity)
     if updated != 1:
-        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+        raise ValidationError(STOCK_UPDATE_ERROR)
 
     locked.refresh_from_db(fields=['stock'])
     return locked
@@ -178,7 +181,7 @@ def restore_stock(*, product, quantity, user=None):
         pk=locked.pk, stock__lte=MAX_STOCK - quantity
     ).update(stock=F('stock') + quantity)
     if updated != 1:
-        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+        raise ValidationError(STOCK_UPDATE_ERROR)
 
     locked.refresh_from_db(fields=['stock'])
     return locked

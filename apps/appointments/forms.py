@@ -217,12 +217,15 @@ class AppointmentForm(forms.ModelForm):
         return appointment
 
 
+PUBLIC_INPUT_CLASS = 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm'
+
+
 class PublicBookingForm(forms.Form):
     customer_name = forms.CharField(
         label='Nombre completo',
         max_length=150,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
+            'class': PUBLIC_INPUT_CLASS,
             'placeholder': 'Tu nombre',
             'autocomplete': 'name',
         }),
@@ -231,7 +234,7 @@ class PublicBookingForm(forms.Form):
         label='Teléfono / WhatsApp',
         max_length=20,
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
+            'class': PUBLIC_INPUT_CLASS,
             'placeholder': 'Ej. 3001234567',
             'autocomplete': 'tel',
             'inputmode': 'tel',
@@ -240,29 +243,25 @@ class PublicBookingForm(forms.Form):
     service = forms.ModelChoiceField(
         label='Servicio',
         queryset=Service.objects.filter(is_active=True).order_by('name'),
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
-        }),
+        widget=forms.Select(attrs={'class': PUBLIC_INPUT_CLASS}),
     )
     professional = forms.ModelChoiceField(
         label='Profesional',
         queryset=Professional.objects.filter(is_active=True).select_related('user').order_by('user__first_name', 'user__last_name', 'user__username'),
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
-        }),
+        widget=forms.Select(attrs={'class': PUBLIC_INPUT_CLASS}),
     )
     date = forms.DateField(
         label='Fecha',
         widget=forms.DateInput(attrs={
             'type': 'date',
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
+            'class': PUBLIC_INPUT_CLASS,
         }),
     )
     start_time = forms.TimeField(
         label='Hora de inicio',
         widget=forms.TimeInput(attrs={
             'type': 'time',
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm',
+            'class': PUBLIC_INPUT_CLASS,
         }),
     )
     notes = forms.CharField(
@@ -270,7 +269,7 @@ class PublicBookingForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={
             'rows': 3,
-            'class': 'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm resize-none',
+            'class': f'{PUBLIC_INPUT_CLASS} resize-none',
             'placeholder': 'Comentario adicional para tu cita',
         }),
     )
@@ -295,6 +294,49 @@ class PublicBookingForm(forms.Form):
             raise forms.ValidationError('Escribe un teléfono válido (mínimo 7 dígitos).')
         return phone
 
+    def _public_candidate(self, cleaned, end_time):
+        candidate = Appointment(
+            customer=Customer(
+                name=cleaned.get('customer_name') or 'Reserva',
+                phone=cleaned.get('customer_phone') or '',
+            ),
+            service=cleaned['service'],
+            professional=cleaned['professional'],
+            date=cleaned['date'],
+            start_time=cleaned['start_time'],
+            end_time=end_time,
+            status=Appointment.Status.PENDING,
+            price_cop=cleaned['service'].price_cop,
+            notes=cleaned.get('notes', ''),
+            send_whatsapp=False,
+        )
+        candidate.professional_id = cleaned['professional'].pk
+        candidate.customer_id = None
+        return candidate
+
+    def _add_validation_error(self, error):
+        if hasattr(error, 'message_dict'):
+            for field, msgs in error.message_dict.items():
+                target = field if field in self.fields else None
+                for msg in msgs:
+                    self.add_error(target, msg)
+            return
+        for msg in error.messages:
+            self.add_error(None, msg)
+
+    def _validate_public_availability(self, cleaned, end_time):
+        candidate = self._public_candidate(cleaned, end_time)
+        candidate._validate_interval()
+        candidate._validate_work_schedule()
+        conflicts = Appointment.objects.filter(
+            professional=cleaned['professional'],
+            date=cleaned['date'],
+            start_time__lt=end_time,
+            end_time__gt=cleaned['start_time'],
+        ).exclude(status=Appointment.Status.CANCELLED)
+        if conflicts.exists():
+            raise ValidationError('El horario seleccionado no está disponible. Elige otra hora o profesional.')
+
     def clean(self):
         cleaned = super().clean()
         service = cleaned.get('service')
@@ -310,46 +352,10 @@ class PublicBookingForm(forms.Form):
             return cleaned
         cleaned['end_time'] = end_time
 
-        # Validar reglas de negocio de la cita (horario laboral, solapamientos, etc.)
-        # sin filtrar por cliente existente para no exponer datos.
-        candidate = Appointment(
-            customer=Customer(name=cleaned.get('customer_name') or 'Reserva', phone=cleaned.get('customer_phone') or ''),
-            service=service,
-            professional=professional,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
-            status=Appointment.Status.PENDING,
-            price_cop=service.price_cop,
-            notes=cleaned.get('notes', ''),
-            send_whatsapp=False,
-        )
         try:
-            # Solo validaciones que no dependen de persistencia del cliente.
-            candidate._validate_interval()
-            candidate._validate_work_schedule()
-            # Conflictos reales contra citas existentes.
-            candidate.customer_id = None
-            candidate._validate_conflicts = Appointment._validate_conflicts.__get__(candidate, Appointment)
-            # Para conflictos usamos una instancia temporal con professional_id ya resuelto.
-            candidate.professional_id = professional.pk
-            conflicts = Appointment.objects.filter(
-                professional=professional,
-                date=date,
-                start_time__lt=end_time,
-                end_time__gt=start_time,
-            ).exclude(status=Appointment.Status.CANCELLED)
-            if conflicts.exists():
-                raise ValidationError('El horario seleccionado no está disponible. Elige otra hora o profesional.')
+            self._validate_public_availability(cleaned, end_time)
         except ValidationError as error:
-            if hasattr(error, 'message_dict'):
-                for field, msgs in error.message_dict.items():
-                    target = field if field in self.fields else None
-                    for msg in msgs:
-                        self.add_error(target, msg)
-            else:
-                for msg in error.messages:
-                    self.add_error(None, msg)
+            self._add_validation_error(error)
         return cleaned
 
     def save(self):

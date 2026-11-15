@@ -82,6 +82,22 @@ def sale_create(request):
 SaleDetailFormSet = formset_factory(SaleDetailForm, extra=1, can_delete=True)
 
 
+def _collect_sale_details(formset):
+    details = []
+    for detail_form in formset:
+        cleaned = detail_form.cleaned_data
+        if not cleaned or cleaned.get('DELETE'):
+            continue
+        details.append({
+            'type': cleaned['detail_type'],
+            'service': cleaned.get('service'),
+            'product': cleaned.get('product'),
+            'quantity': cleaned['quantity'],
+            'unit_price': cleaned['unit_price'],
+        })
+    return details
+
+
 @login_required
 @require_POST
 def sale_store(request):
@@ -90,20 +106,11 @@ def sale_store(request):
     if not CashRegisterSession.objects.filter(status=CashRegisterSession.Status.OPEN).exists():
         messages.warning(request, 'Debes abrir una sesión de caja antes de registrar ventas.')
         return redirect('sales:cash_open')
+
     form = SaleForm(request.POST)
     formset = SaleDetailFormSet(request.POST, prefix='details')
     if form.is_valid() and formset.is_valid():
-        details = []
-        for detail_form in formset:
-            if not detail_form.cleaned_data or detail_form.cleaned_data.get('DELETE'):
-                continue
-            details.append({
-                'type': detail_form.cleaned_data['detail_type'],
-                'service': detail_form.cleaned_data.get('service'),
-                'product': detail_form.cleaned_data.get('product'),
-                'quantity': detail_form.cleaned_data['quantity'],
-                'unit_price': detail_form.cleaned_data['unit_price'],
-            })
+        details = _collect_sale_details(formset)
         if not details:
             form.add_error(None, 'Agrega al menos un detalle a la venta.')
         else:
@@ -121,6 +128,7 @@ def sale_store(request):
                 return redirect('sales:index')
             except Exception as exc:
                 form.add_error(None, str(exc))
+
     # Re-render with errors
     formset = SaleDetailFormSet(request.POST, prefix='details')
     return render(request, 'sales/sale_form.html', {

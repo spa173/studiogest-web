@@ -103,38 +103,50 @@ def create_sale(*, user, payment_method, details, customer=None, appointment=Non
     return sale
 
 
-@transaction.atomic
-def cancel_sale(*, sale, user, reason=''):
+def _require_cancel_sale_permission(user):
     if not user or not getattr(user, 'is_authenticated', False):
         raise ValidationError('Debes iniciar sesión para anular una venta.')
     if not _can_manage_sales(user):
         raise ValidationError('Solo los administradores y el personal de caja/recepción pueden anular ventas.')
 
-    sale_id = getattr(sale, 'pk', sale)
-    locked_sale = Sale.objects.select_for_update().select_related('appointment').get(pk=sale_id)
 
+def _validate_cancelable_sale(locked_sale):
     if locked_sale.status == SaleStatus.CANCELLED:
         raise ValidationError('La venta ya está anulada.')
     if locked_sale.status != SaleStatus.REGISTERED:
         raise ValidationError('Solo se pueden anular ventas registradas.')
 
+
+def _restore_sale_products(locked_sale, user):
     for detail in locked_sale.details.select_related('product', 'service'):
         if detail.detail_type == SaleDetailType.PRODUCT and detail.product_id:
             restore_stock(product=detail.product, quantity=detail.quantity, user=user)
 
-    locked_sale.status = SaleStatus.CANCELLED
+
+def _apply_cancellation_metadata(locked_sale, reason):
     update_fields = ['status']
     # Desvincular la cita para permitir un nuevo cobro sin violar OneToOne.
     if locked_sale.appointment_id is not None:
         locked_sale.appointment = None
         update_fields.append('appointment')
-    if reason:
-        reason = str(reason).strip()
-        if reason:
-            prefix = (locked_sale.notes or '').rstrip()
-            note = f'Motivo de anulación: {reason}'
-            locked_sale.notes = f'{prefix}\n{note}'.strip() if prefix else note
-            update_fields.append('notes')
+    reason_text = str(reason or '').strip()
+    if reason_text:
+        prefix = (locked_sale.notes or '').rstrip()
+        note = f'Motivo de anulación: {reason_text}'
+        locked_sale.notes = f'{prefix}\n{note}'.strip() if prefix else note
+        update_fields.append('notes')
+    return update_fields
 
+
+@transaction.atomic
+def cancel_sale(*, sale, user, reason=''):
+    _require_cancel_sale_permission(user)
+    sale_id = getattr(sale, 'pk', sale)
+    locked_sale = Sale.objects.select_for_update().select_related('appointment').get(pk=sale_id)
+    _validate_cancelable_sale(locked_sale)
+    _restore_sale_products(locked_sale, user)
+
+    locked_sale.status = SaleStatus.CANCELLED
+    update_fields = _apply_cancellation_metadata(locked_sale, reason)
     locked_sale.save(update_fields=update_fields)
     return locked_sale

@@ -11,15 +11,18 @@ class BusinessAdminAccessMixin:
         return self._is_business_admin(request)
 
     def has_view_permission(self, request, obj=None):
+        del obj
         return self._is_business_admin(request)
 
     def has_add_permission(self, request):
         return self._is_business_admin(request)
 
     def has_change_permission(self, request, obj=None):
+        del obj
         return self._is_business_admin(request)
 
     def has_delete_permission(self, request, obj=None):
+        del obj
         return self._is_business_admin(request)
 
 
