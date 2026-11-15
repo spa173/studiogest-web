@@ -15,7 +15,7 @@ CLASE_INPUT = (
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = ['name', 'phone', 'email', 'notes', 'is_vip']
+        fields = ['name', 'phone', 'email', 'notes', 'is_vip', 'data_consent']
         widgets = {
             'name': forms.TextInput(attrs={'class': CLASE_INPUT, 'placeholder': 'Ej. Carlos Pérez', 'autofocus': True}),
             'phone': forms.TextInput(attrs={'class': CLASE_INPUT, 'placeholder': '310 123 4567', 'inputmode': 'tel'}),
@@ -23,6 +23,7 @@ class CustomerForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': CLASE_INPUT + ' resize-none', 'rows': 3,
                                            'placeholder': 'Alergias, estilo preferido o notas especiales'}),
             'is_vip': forms.CheckboxInput(attrs={'class': 'rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer'}),
+        'data_consent': forms.CheckboxInput(attrs={'class': 'rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer'}),
         }
 
     def clean_name(self):

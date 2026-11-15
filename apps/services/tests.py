@@ -11,7 +11,7 @@ from django.urls import reverse
 from appointments.forms import AppointmentForm
 from appointments.models import Appointment
 from customers.models import Customer
-from .forms import ServiceForm
+from .forms import ProfessionalForm, ServiceForm
 from .models import Professional, Service
 
 User = get_user_model()
@@ -487,3 +487,39 @@ class ProfessionalCRUDTests(TestCase):
         self.assertRedirects(res_post2, self.list_url)
         self.prof1.refresh_from_db()
         self.assertTrue(self.prof1.is_active)
+
+
+class ProfessionalFormTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='prof-form-admin', email='admin@profform.test', password='testpassword123', first_name='Admin', last_name='Sistema', role=User.Role.ADMIN)
+        self.worker_user = User.objects.create_user(username='prof-form-worker', email='worker@profform.test', password='testpassword123', first_name='Juan', last_name='Barbero', role=User.Role.WORKER)
+        self.prof = Professional.objects.create(user=self.worker_user, specialty='Cortes Clásicos', color_tag='#0D9488', is_active=True)
+
+    def form_data(self, **changes):
+        data = {
+            'first_name': 'Juan', 'last_name': 'Barbero', 'email': 'worker@profform.test',
+            'phone': '3129876543', 'password': 'Secret#123', 'specialty': 'Barba',
+            'color_tag': '#2563EB', 'is_active': 'on',
+        }
+        data.update(changes)
+        return data
+
+    def test_short_first_name_is_rejected(self):
+        form = ProfessionalForm(data=self.form_data(first_name='J'))
+        self.assertFalse(form.is_valid())
+        self.assertIn('first_name', form.errors)
+
+    def test_short_last_name_is_rejected(self):
+        form = ProfessionalForm(data=self.form_data(last_name='P'))
+        self.assertFalse(form.is_valid())
+        self.assertIn('last_name', form.errors)
+
+    def test_invalid_color_uses_default_when_valid(self):
+        form = ProfessionalForm(data=self.form_data(specialty='Barba', color_tag='XYZ', email='new.prof@profform.test'))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['color_tag'], '#0D9488')
+
+    def test_password_required_when_creating_professional(self):
+        form = ProfessionalForm(data=self.form_data(password=''))
+        self.assertFalse(form.is_valid())
+        self.assertIn('password', form.errors)

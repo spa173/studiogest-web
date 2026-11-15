@@ -21,7 +21,15 @@
     {% endif %}
 
     {% for campo in form %}
-      {% if campo.name == 'is_vip' %}
+      {% if campo.name == 'data_consent' %}
+      <label for="{{ campo.id_for_label }}" class="flex items-start gap-2.5 cursor-pointer text-sm font-medium text-on-surface">
+        <input type="checkbox" name="{{ campo.html_name }}" id="{{ campo.id_for_label }}" {% if campo.value %}checked{% endif %}
+               class="mt-0.5 rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer">
+        {{ campo.label }}{% if campo.field.required %} <span class="text-error">*</span>{% endif %}
+      </label>
+      {% if campo.help_text %}<p class="text-xs text-on-surface-variant ml-6.5">{{ campo.help_text }}</p>{% endif %}
+      {% for error in campo.errors %}<p class="text-sm text-error font-medium ml-6.5">{{ error }}</p>{% endfor %}
+      {% elif campo.name == 'is_vip' %}
       <label for="{{ campo.id_for_label }}" class="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-on-surface">
         <input type="checkbox" name="{{ campo.html_name }}" id="{{ campo.id_for_label }}" {% if campo.value %}checked{% endif %}
                class="rounded border-outline text-secondary focus:ring-secondary h-4 w-4 cursor-pointer">

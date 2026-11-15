@@ -3,11 +3,16 @@ from decimal import Decimal
 from html.parser import HTMLParser
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import resolve, reverse
 
 from appointments.models import Appointment
+from customers.models import Customer
 from inventory.models import Product, StockEntry
+from services.models import Service
+from .models import PaymentMethod, Sale, SaleDetail, SaleDetailType, CashRegisterSession
+from .services import create_sale
 
 User = get_user_model()
 
@@ -53,7 +58,6 @@ class SalesNavigationTests(TestCase):
         self.assertTemplateUsed(response, 'base.html')
         self.assertTemplateUsed(response, 'sales/index.html')
         for text in ['Ventas de productos', 'Cobros por servicios', 'Movimientos de caja',
-                     'El registro de ventas todavía no está habilitado',
                      'Una cita completada no acredita un pago recibido']:
             self.assertContains(response, text)
         self.assertNotContains(response, 'href="#"')
@@ -123,3 +127,42 @@ class SalesNavigationTests(TestCase):
         self.assertContains(response, 'function openAppointmentModal()')
         self.assertContains(response, '/static/js/navigation.js')
         self.assertEqual(Appointment.objects.count(), before)
+
+
+class CreateSaleTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(username='sale-admin', email='admin@sale.test', role=User.Role.ADMIN, is_staff=True)
+        cls.customer = Customer.objects.create(name='Cliente Venta', phone='3001234567')
+        cls.service = Service.objects.create(name='Corte', price_cop=25000, duration_minutes=30)
+        cls.product = Product.objects.create(code='P-1', name='Pomada', base_unit=Product.BaseUnit.UNIT,
+                                            stock=Decimal('10'), acquisition_cost=Decimal('5'),
+                                            sale_price=Decimal('15'), service_usage_price=Decimal('15'))
+
+    def test_create_sale_registers_total_and_discounts_stock(self):
+        sale = create_sale(
+            user=self.admin,
+            payment_method=PaymentMethod.CASH,
+            customer=self.customer,
+            details=[
+                {'type': SaleDetailType.SERVICE, 'service': self.service, 'quantity': 1, 'unit_price': 25000},
+                {'type': SaleDetailType.PRODUCT, 'product': self.product, 'quantity': 2, 'unit_price': 15},
+            ],
+        )
+        self.assertEqual(sale.total, Decimal('25030'))
+        self.assertEqual(sale.details.count(), 2)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('8'))
+
+    def test_create_sale_rejects_insufficient_stock(self):
+        with self.assertRaises(ValidationError):
+            create_sale(
+                user=self.admin,
+                payment_method=PaymentMethod.CASH,
+                customer=self.customer,
+                details=[
+                    {'type': SaleDetailType.PRODUCT, 'product': self.product, 'quantity': 100, 'unit_price': 15},
+                ],
+            )
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('10'))

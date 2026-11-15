@@ -7,6 +7,11 @@ class Customer(models.Model):
     email = models.EmailField('Correo Electrónico', blank=True, null=True)
     notes = models.TextField('Notas y Preferencias', blank=True, help_text='Alergias, estilos preferidos o notas especiales')
     is_vip = models.BooleanField('Cliente VIP', default=False)
+    data_consent = models.BooleanField(
+        'Autorización para tratamiento de datos personales (Ley 1581)',
+        default=False,
+        help_text='El cliente autoriza el tratamiento de sus datos personales.',
+    )
     created_at = models.DateTimeField('Fecha de Registro', auto_now_add=True)
 
     class Meta:

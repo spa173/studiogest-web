@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from appointments.models import Appointment
 from services.models import Professional, Service
 from customers.models import Customer
+from inventory.models import Product
+from django.db.models import F
 
 
 @login_required
@@ -36,30 +38,24 @@ def dashboard_view(request):
     # 5. Clientes registrados
     total_customers = Customer.objects.count()
 
-    # 6. Alertas de inventario (Estructura preparada para conectar con módulo de inventario)
-    inventory_alerts = [
-        {
-            'name': 'Pomada Mate Reuzel 100g',
-            'stock': 2,
-            'min_stock': 5,
-            'deficit': '-60%',
-            'critical': True
-        },
-        {
-            'name': 'Tinte Keratina 7.1 Castaño',
-            'stock': 1,
-            'min_stock': 4,
-            'deficit': '-75%',
-            'critical': True
-        },
-        {
-            'name': 'Aceite para Barba Suavecito',
-            'stock': 3,
-            'min_stock': 6,
-            'deficit': '-50%',
-            'critical': False
-        }
-    ]
+    # 6. Alertas de inventario desde la base de datos (RF-09)
+    low_stock_products = Product.objects.filter(
+        is_active=True, stock__lte=F('minimum_stock')
+    ).order_by('stock', 'name')
+    inventory_alerts = []
+    for product in low_stock_products:
+        if product.minimum_stock > 0:
+            deficit_pct = int(round((1 - product.stock / product.minimum_stock) * 100))
+            deficit = f'-{deficit_pct}%'
+        else:
+            deficit = '0%'
+        inventory_alerts.append({
+            'name': product.name,
+            'stock': product.stock,
+            'min_stock': product.minimum_stock,
+            'deficit': deficit,
+            'critical': product.stock == 0 or product.stock * 2 <= product.minimum_stock,
+        })
 
     context = {
         'today': today,

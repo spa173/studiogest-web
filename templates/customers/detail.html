@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cliente.name }} - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'customers:list' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a clientes
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">{{ cliente.name }}</h1>
+    <p class="text-sm text-on-surface-variant">{{ cliente.phone }}{% if cliente.email %} · {{ cliente.email }}{% endif %}</p>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-2">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Datos del cliente</h2>
+    <p class="text-sm text-on-surface-variant">{{ cliente.notes|default:'Sin notas.' }}</p>
+    <p class="text-sm">VIP: {% if cliente.is_vip %}Sí{% else %}No{% endif %} · Consentimiento de datos: {% if cliente.data_consent %}Sí{% else %}No{% endif %}</p>
+    <a href="{{ whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">
+      <span class="material-symbols-outlined text-base">chat</span> WhatsApp
+    </a>
+  </section>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Historial de citas</h2>
+    {% if appointments %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant">
+            <th scope="col" class="py-2 pr-3">Fecha</th>
+            <th scope="col" class="py-2 pr-3">Servicio</th>
+            <th scope="col" class="py-2 pr-3">Profesional</th>
+            <th scope="col" class="py-2 pr-3">Estado</th>
+            <th scope="col" class="py-2 pr-3">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in appointments %}
+          <tr class="border-t border-outline-variant/20">
+            <td class="py-2 pr-3">{{ a.date }} {{ a.start_time }}</td>
+            <td class="py-2 pr-3">{{ a.service.name }}</td>
+            <td class="py-2 pr-3">{{ a.professional.name }}</td>
+            <td class="py-2 pr-3">{{ a.get_status_display }}</td>
+            <td class="py-2 pr-3">{{ a.price_cop_formatted }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">Sin citas registradas.</p>
+    {% endif %}
+  </section>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Historial de compras</h2>
+    {% if sales %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant">
+            <th scope="col" class="py-2 pr-3">Fecha</th>
+            <th scope="col" class="py-2 pr-3">Medio de pago</th>
+            <th scope="col" class="py-2 pr-3">Total</th>
+            <th scope="col" class="py-2 pr-3">Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sales %}
+          <tr class="border-t border-outline-variant/20">
+            <td class="py-2 pr-3">{{ s.created_at }}</td>
+            <td class="py-2 pr-3">{{ s.get_payment_method_display }}</td>
+            <td class="py-2 pr-3">${{ s.total }}</td>
+            <td class="py-2 pr-3">
+              {% for d in s.details.all %}
+                {{ d }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">Sin compras registradas.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

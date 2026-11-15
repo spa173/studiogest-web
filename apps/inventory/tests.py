@@ -8,6 +8,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Product
+from .services import consume_stock
+from .calculations import MAX_STOCK, purchase_values
 
 User = get_user_model()
 
@@ -149,3 +151,49 @@ class InventoryTests(TestCase):
         url = reverse('admin:inventory_product_delete', args=[self.product.pk])
         self.assertEqual(self.client.post(url, {'post': 'yes'}).status_code, 403)
         self.assertTrue(Product.objects.filter(pk=self.product.pk).exists())
+
+
+class ConsumeStockTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.product = Product.objects.create(
+            code='CONS-001', name='Pomada', description='',
+            base_unit=Product.BaseUnit.UNIT, stock=Decimal('5'),
+            minimum_stock=Decimal('2'), acquisition_cost=Decimal('10'),
+            sale_price=Decimal('20'), service_usage_price=Decimal('5'))
+
+    def test_consume_stock_reduces_stock(self):
+        updated = consume_stock(product=self.product, quantity=Decimal('2'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('3'))
+        self.assertEqual(updated.stock, Decimal('3'))
+
+    def test_consume_stock_rejects_insufficient_stock(self):
+        with self.assertRaises(ValidationError):
+            consume_stock(product=self.product, quantity=Decimal('10'))
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, Decimal('5'))
+
+    def test_consume_stock_rejects_non_positive_quantity(self):
+        with self.assertRaises(ValidationError):
+            consume_stock(product=self.product, quantity=Decimal('0'))
+
+
+class PurchaseValuesTests(TestCase):
+    def test_rejects_invalid_presentation_count(self):
+        with self.assertRaises(ValueError):
+            purchase_values(0, Decimal('100'), Decimal('100'), Decimal('100'))
+
+    def test_rejects_negative_or_non_finite_values(self):
+        with self.assertRaises(ValueError):
+            purchase_values(1, Decimal('-1'), Decimal('100'), Decimal('100'))
+        with self.assertRaises(ValueError):
+            purchase_values(1, Decimal('100'), Decimal('100'), Decimal('NaN'))
+
+    def test_rejects_zero_content(self):
+        with self.assertRaises(ValueError):
+            purchase_values(1, Decimal('0'), Decimal('100'), Decimal('100'))
+
+    def test_rejects_amounts_above_max_stock(self):
+        with self.assertRaises(ValueError):
+            purchase_values(2, Decimal('1000000000000000'), Decimal('100'), Decimal('100'), Decimal('50'))

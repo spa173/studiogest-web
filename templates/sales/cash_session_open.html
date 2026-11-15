@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Abrir caja - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'sales:index' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a ventas
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">Abrir caja</h1>
+  </div>
+
+  <form method="post" novalidate class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4" action="{% url 'sales:cash_store' %}">
+    {% csrf_token %}
+    {% for campo in form %}
+    <div class="space-y-1.5">
+      <label for="{{ campo.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+      <a href="{% url 'sales:index' %}" class="px-4 py-2.5 rounded-xl text-center font-semibold text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-sm">
+        Abrir caja
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

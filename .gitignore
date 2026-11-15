@@ -64,3 +64,7 @@ Desktop.ini
 /tools/backup_mysql_private.py
 /tools/ensayar_migracion_mysql.py
 /tools/test_ensayo_sql.py
+
+# Node / Tailwind CSS build
+node_modules/
+

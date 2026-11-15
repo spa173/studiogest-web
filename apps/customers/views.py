@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods
 
 from appointments.models import Appointment
+from sales.models import Sale
 
 from .forms import CustomerForm
 from .models import Customer
@@ -51,6 +52,21 @@ def customer_list(request):
         'total_vip': Customer.objects.filter(is_vip=True).count(),
     }
     return render(request, 'customers/list.html', contexto)
+
+
+@login_required
+@require_GET
+def customer_detail(request, pk):
+    cliente = get_object_or_404(Customer, pk=pk)
+    appointments = cliente.appointments.select_related('service', 'professional', 'professional__user').order_by('-date', '-start_time')
+    sales = Sale.objects.filter(customer=cliente).select_related('user', 'cash_session').prefetch_related('details').order_by('-created_at')
+    contexto = {
+        'cliente': cliente,
+        'appointments': appointments,
+        'sales': sales,
+        'whatsapp': _enlace_whatsapp(cliente.phone),
+    }
+    return render(request, 'customers/detail.html', contexto)
 
 
 @login_required

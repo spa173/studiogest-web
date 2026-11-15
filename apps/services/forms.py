@@ -110,7 +110,7 @@ class ProfessionalForm(forms.ModelForm):
             'placeholder': '••••••••',
             'autocomplete': 'new-password',
         }),
-        help_text='Por defecto: «barbero123» si se deja en blanco al crear. Al editar, déjalo vacío para no cambiarla.'
+        help_text='Obligatoria al crear un profesional. Al editar, déjala vacía para no cambiarla.'
     )
 
     class Meta:
@@ -190,6 +190,13 @@ class ProfessionalForm(forms.ModelForm):
             return 'Barbero Profesional'
         return esp
 
+    def clean_password(self):
+        password = (self.cleaned_data.get('password') or '').strip()
+        if not self.instance or not self.instance.pk:
+            if not password:
+                raise forms.ValidationError('La contraseña es obligatoria al crear un profesional.')
+        return password
+
     @transaction.atomic
     def save(self, commit=True):
         first_name = self.cleaned_data['first_name']
@@ -228,7 +235,7 @@ class ProfessionalForm(forms.ModelForm):
                 phone=phone,
                 role=User.Role.WORKER,
             )
-            user.set_password(password or 'barbero123')
+            user.set_password(password)
             user.save()
 
             prof = super().save(commit=False)

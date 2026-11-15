@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Cerrar caja - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'sales:index' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a ventas
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">Cerrar caja</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Sesión abierta el {{ session.opened_at }}</p>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Arqueo</h2>
+    <div class="flex justify-between text-sm"><span>Base inicial</span><span>${{ session.opening_cash }}</span></div>
+    <div class="flex justify-between text-sm"><span>Efectivo</span><span>${{ totals.cash }}</span></div>
+    <div class="flex justify-between text-sm"><span>Tarjeta</span><span>${{ totals.card }}</span></div>
+    <div class="flex justify-between text-sm"><span>Transferencia</span><span>${{ totals.transfer }}</span></div>
+    <div class="flex justify-between font-bold border-t border-outline-variant/30 pt-2"><span>Total esperado</span><span>${{ grand_total }}</span></div>
+  </section>
+
+  <form method="post" action="{% url 'sales:cash_finalize' session.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-sm">
+      Confirmar cierre
+    </button>
+  </form>
+</div>
+{% endblock %}

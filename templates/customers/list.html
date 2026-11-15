@@ -47,11 +47,11 @@
     <table class="w-full text-left">
       <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wide">
         <tr>
-          <th class="px-4 py-3 font-semibold">Cliente</th>
-          <th class="px-4 py-3 font-semibold">Teléfono</th>
-          <th class="px-4 py-3 font-semibold hidden md:table-cell">Correo</th>
-          <th class="px-4 py-3 font-semibold text-center hidden sm:table-cell">Citas</th>
-          <th class="px-4 py-3 font-semibold text-right">Acciones</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Cliente</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Teléfono</th>
+          <th scope="col" class="px-4 py-3 font-semibold hidden md:table-cell">Correo</th>
+          <th scope="col" class="px-4 py-3 font-semibold text-center hidden sm:table-cell">Citas</th>
+          <th scope="col" class="px-4 py-3 font-semibold text-right">Acciones</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant/20">
@@ -59,7 +59,7 @@
         <tr class="hover:bg-surface-container-low/60 transition-colors">
           <td class="px-4 py-3">
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-on-surface">{{ c.name }}</span>
+              <a href="{% url 'customers:detail' c.pk %}" class="font-semibold text-secondary hover:underline">{{ c.name }}</a>
               {% if c.is_vip %}
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-[11px] font-bold">
                 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>VIP

@@ -2,6 +2,8 @@ import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from .models import Appointment
 from .forms import AppointmentForm
@@ -90,20 +92,24 @@ def calendar_view(request):
 
 
 @login_required
+@require_POST
 def cancel_appointment(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
-    if request.method == 'POST':
-        appointment.status = Appointment.Status.CANCELLED
-        appointment.save()
-        messages.info(request, f"La cita de {appointment.customer.name} ha sido cancelada.")
+    if not request.user.is_admin and appointment.professional.user_id != request.user.id:
+        raise PermissionDenied
+    appointment.status = Appointment.Status.CANCELLED
+    appointment.save()
+    messages.info(request, f"La cita de {appointment.customer.name} ha sido cancelada.")
     return redirect('appointments:calendar')
 
 
 @login_required
+@require_POST
 def complete_appointment(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
-    if request.method == 'POST':
-        appointment.status = Appointment.Status.COMPLETED
-        appointment.save()
-        messages.success(request, f"Cita completada. Cobro registrado: {appointment.price_cop_formatted}.")
+    if not request.user.is_admin and appointment.professional.user_id != request.user.id:
+        raise PermissionDenied
+    appointment.status = Appointment.Status.COMPLETED
+    appointment.save()
+    messages.success(request, f"Cita completada. Cobro registrado: {appointment.price_cop_formatted}.")
     return redirect('appointments:calendar')

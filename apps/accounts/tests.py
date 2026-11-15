@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.core.management import call_command
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from io import StringIO
 
 from .forms import LoginForm, ProfileForm
 
@@ -135,3 +137,66 @@ class ProfileSettingsTests(TestCase):
 
     def test_unsupported_method_is_rejected(self):
         self.assertEqual(self.client.delete(self.url).status_code, 405)
+
+
+class LoginLogoutTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username='login-user', email='login@test.co', password='Clave#12345',
+            first_name='Ana', role=User.Role.WORKER,
+        )
+
+    def test_authenticated_user_is_redirected_from_login(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('accounts:login'))
+        self.assertRedirects(response, reverse('dashboard:index'))
+
+    def test_login_with_email_succeeds(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'login': 'login@test.co', 'password': 'Clave#12345', 'remember_me': 'on',
+        })
+        self.assertRedirects(response, reverse('dashboard:index'))
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def test_login_with_invalid_credentials_fails(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'login': 'login@test.co', 'password': 'wrong',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_login_with_unknown_email_fails(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'login': 'noexiste@test.co', 'password': 'Clave#12345',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_login_with_next_redirects_safely(self):
+        response = self.client.post(
+            reverse('accounts:login') + '?next=' + reverse('accounts:settings'),
+            {'login': 'login@test.co', 'password': 'Clave#12345'},
+        )
+        self.assertRedirects(response, reverse('accounts:settings'))
+
+    def test_logout_redirects_to_login(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('accounts:logout'))
+        self.assertRedirects(response, reverse('accounts:login'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class CreateInitialUsersTests(TestCase):
+    def test_creates_admin_and_worker_with_default_development_passwords(self):
+        from django.core.management import call_command
+        out = StringIO()
+        with override_settings(DEBUG=True):
+            call_command('create_initial_users', stdout=out)
+        admin = User.objects.get(username='admin')
+        worker = User.objects.get(username='julian')
+        self.assertEqual(admin.role, User.Role.ADMIN)
+        self.assertEqual(worker.role, User.Role.WORKER)
+        self.assertTrue(admin.check_password('admin123'))
+        self.assertTrue(worker.check_password('barbero123'))
+        self.assertIn('[OK] Administrador creado', out.getvalue())

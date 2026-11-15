@@ -148,14 +148,14 @@
               {% if app.status != 'COMPLETADA' %}
               <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Confirmas que esta cita ha sido atendida y completada?');">
                 {% csrf_token %}
-                <button type="submit" class="p-1 rounded text-secondary hover:bg-secondary/10 transition-colors" title="Marcar como Atendida">
-                  <span class="material-symbols-outlined text-base">check_circle</span>
+                <button type="submit" class="p-1 rounded text-secondary hover:bg-secondary/10 transition-colors" title="Marcar como Atendida" aria-label="Marcar cita como atendida">
+                  <span class="material-symbols-outlined text-base" aria-hidden="true">check_circle</span>
                 </button>
               </form>
               <form action="{% url 'appointments:cancel' app.pk %}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas cancelar esta cita?');">
                 {% csrf_token %}
-                <button type="submit" class="p-1 rounded text-error hover:bg-error-container/20 transition-colors" title="Cancelar Cita">
-                  <span class="material-symbols-outlined text-base">cancel</span>
+                <button type="submit" class="p-1 rounded text-error hover:bg-error-container/20 transition-colors" title="Cancelar Cita" aria-label="Cancelar cita">
+                  <span class="material-symbols-outlined text-base" aria-hidden="true">cancel</span>
                 </button>
               </form>
               {% endif %}

@@ -14,8 +14,8 @@
   <!-- Material Symbols Outlined -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Tailwind CSS compilado localmente (build: npm run build:css) -->
+  <link rel="stylesheet" href="{% static 'css/tailwind.out.css' %}"/>
 
   <!-- Tailwind Config con Identidad Visual StudioGest (DESIGN.md) -->
   <script id="tailwind-config">
@@ -67,6 +67,20 @@
             "sans": ["Inter", "sans-serif"],
             "headline": ["Plus Jakarta Sans", "sans-serif"],
             "currency": ["Plus Jakarta Sans", "sans-serif"]
+          },
+          fontSize: {
+            "body-md": ["0.875rem", { "lineHeight": "1.25rem" }],
+            "body-sm": ["0.75rem", { "lineHeight": "1rem" }],
+            "label-md": ["0.75rem", { "lineHeight": "1rem" }],
+            "label-xs": ["0.6875rem", { "lineHeight": "0.875rem" }],
+            "headline-sm": ["1.125rem", { "lineHeight": "1.5rem" }]
+          },
+          fontWeight: {
+            "body-md": "400",
+            "body-sm": "400",
+            "label-md": "500",
+            "label-xs": "500",
+            "headline-sm": "600"
           }
         }
       }

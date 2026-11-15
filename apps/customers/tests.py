@@ -45,7 +45,7 @@ class ClientesTests(TestCase):
 
     def test_crear_cliente_valido(self):
         self.entrar(self.worker)
-        r = self.client.post(reverse('customers:create'), {'name': 'Mario  Ruiz', 'phone': '320 555 1212'})
+        r = self.client.post(reverse('customers:create'), {'name': 'Mario  Ruiz', 'phone': '320 555 1212', 'data_consent': 'on'})
         self.assertRedirects(r, reverse('customers:list'))
         self.assertTrue(Customer.objects.filter(name='Mario Ruiz').exists())
 
@@ -64,7 +64,7 @@ class ClientesTests(TestCase):
     def test_editar_cliente(self):
         self.entrar(self.worker)
         r = self.client.post(reverse('customers:update', args=[self.luis.pk]),
-                             {'name': 'Luis P. Pérez', 'phone': '3109998877', 'is_vip': 'on'})
+                             {'name': 'Luis P. Pérez', 'phone': '3109998877', 'is_vip': 'on', 'data_consent': 'on'})
         self.assertRedirects(r, reverse('customers:list'))
         self.luis.refresh_from_db()
         self.assertEqual(self.luis.name, 'Luis P. Pérez')

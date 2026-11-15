@@ -134,3 +134,27 @@ def save_registration(*, data, user, key, fingerprint, product=None, mode='new')
         _record_entry(product, data, user, key, fingerprint, mode, values)
         _increase_stock(product, values['quantity'])
     return product, True
+
+
+@transaction.atomic
+def consume_stock(*, product, quantity, user=None):
+    """Descuenta stock de forma atómica y evita saldos negativos."""
+    product_id = getattr(product, 'pk', product)
+    quantity = Decimal(str(quantity))
+    if quantity <= 0:
+        raise ValidationError('La cantidad a descontar debe ser mayor que cero.')
+
+    locked = Product.objects.select_for_update().get(pk=product_id)
+    if not locked.is_active:
+        raise ValidationError('No se puede consumir stock de un producto inactivo.')
+    if locked.stock < quantity:
+        raise ValidationError('Stock insuficiente para completar la operación.')
+
+    updated = Product.objects.filter(
+        pk=locked.pk, stock__gte=quantity
+    ).update(stock=F('stock') - quantity)
+    if updated != 1:
+        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+
+    locked.refresh_from_db(fields=['stock'])
+    return locked
