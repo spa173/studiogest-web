@@ -9,6 +9,15 @@ from .settings import *  # noqa: F403
 
 # Las pruebas se ejecutan en modo desarrollo para evitar redirecciones HTTPS y hosts restrictivos.
 DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+
+# Desactivar endurecimiento activado por settings base cuando DEBUG llega como False (p. ej. en CI).
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 # Replace all database settings, regardless of the engine selected in .env.
 DB_ENGINE = 'sqlite'
