@@ -4,6 +4,17 @@ function Get-OfficeRegistry {
     Get-Content -LiteralPath (Join-Path $Root 'office/registry.json') -Raw | ConvertFrom-Json
 }
 
+function Get-OfficeRolePrompt {
+    param([Parameter(Mandatory)][pscustomobject] $Role, [Parameter(Mandatory)][string] $Root)
+    if ($Role.prompt -isnot [string] -or [string]::IsNullOrWhiteSpace($Role.prompt)) { throw 'Invalid prompt path.' }
+    if ([IO.Path]::IsPathRooted($Role.prompt)) { throw "Prompt outside root: '$($Role.prompt)'." }
+    $rootPath = [IO.Path]::GetFullPath($Root).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    $promptPath = [IO.Path]::GetFullPath((Join-Path $Root $Role.prompt))
+    if (-not $promptPath.StartsWith($rootPath, [StringComparison]::OrdinalIgnoreCase)) { throw "Prompt outside root: '$($Role.prompt)'." }
+    if (-not (Test-Path -LiteralPath $promptPath -PathType Leaf)) { throw "Missing prompt '$($Role.prompt)'." }
+    [IO.File]::ReadAllText($promptPath, [Text.Encoding]::UTF8)
+}
+
 function Assert-OfficeRegistry {
     param([Parameter(Mandatory)][pscustomobject] $Registry, [Parameter(Mandatory)][string] $Root)
     $profiles = @($Registry.profiles)

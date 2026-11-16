@@ -1,4 +1,4 @@
-param([ValidateSet('Registry', 'Contracts', 'All')][string] $Section = 'All')
+param([ValidateSet('Registry', 'Contracts', 'Roles', 'All')][string] $Section = 'All')
 $ErrorActionPreference = 'Stop'
 $kitRoot = Split-Path -Parent $PSScriptRoot
 function Assert-True($Condition, [string] $Message) { if (-not $Condition) { throw $Message } }
@@ -11,6 +11,103 @@ function Copy-Value($Value) { $Value | ConvertTo-Json -Depth 30 | ConvertFrom-Js
 Assert-True (Test-Path (Join-Path $PSScriptRoot 'Office.Common.ps1')) 'Missing Office.Common.ps1 and canonical office registry.'
 . (Join-Path $PSScriptRoot 'Office.Common.ps1')
 
+if ($Section -in @('Roles', 'All')) {
+    # Literal roster pins identity and ownership: a consistent rename or move is a regression.
+    $expectedRoles = @'
+directora||direccion|orquestación|release
+coord-producto-experiencia|directora|producto-experiencia|producto y experiencia|product
+producto|coord-producto-experiencia|producto-experiencia|alcance|product
+diseno-web|coord-producto-experiencia|producto-experiencia|dirección de arte|design
+ux-accesibilidad|coord-producto-experiencia|producto-experiencia|accesibilidad|design
+seo-growth|coord-producto-experiencia|producto-experiencia|indexación|product
+data-analytics|coord-producto-experiencia|producto-experiencia|métricas|product
+coord-ingenieria-datos|directora|ingenieria-datos|ingeniería y datos|implementation
+arquitectura|coord-ingenieria-datos|ingenieria-datos|contratos técnicos|implementation
+frontend|coord-ingenieria-datos|ingenieria-datos|cliente web|implementation
+backend|coord-ingenieria-datos|ingenieria-datos|servidor|implementation
+mobile|coord-ingenieria-datos|ingenieria-datos|aplicaciones móviles|implementation
+datos-ia|coord-ingenieria-datos|ingenieria-datos|pipelines|implementation
+integraciones|coord-ingenieria-datos|ingenieria-datos|sistemas externos|implementation
+coord-calidad-seguridad|directora|calidad-seguridad|calidad y seguridad|qa
+qa|coord-calidad-seguridad|calidad-seguridad|pruebas|qa
+seguridad|coord-calidad-seguridad|calidad-seguridad|seguridad técnica|security
+auditoria|coord-calidad-seguridad|calidad-seguridad|controles|qa
+rendimiento|coord-calidad-seguridad|calidad-seguridad|rendimiento|qa
+coord-operaciones-entrega|directora|operaciones-entrega|operaciones y entrega|release
+devops|coord-operaciones-entrega|operaciones-entrega|plataforma|release
+sre-observabilidad|coord-operaciones-entrega|operaciones-entrega|fiabilidad|post_deploy
+forensics|coord-operaciones-entrega|operaciones-entrega|incidentes|security
+release|coord-operaciones-entrega|operaciones-entrega|entregas|release
+documentacion|coord-operaciones-entrega|operaciones-entrega|documentación|documentation
+coord-negocio-gobernanza|directora|negocio-gobernanza|negocio y gobernanza|product
+marketing|coord-negocio-gobernanza|negocio-gobernanza|posicionamiento|product
+social-contenido|coord-negocio-gobernanza|negocio-gobernanza|contenido editorial|product
+finanzas|coord-negocio-gobernanza|negocio-gobernanza|presupuestos|product
+legal|coord-negocio-gobernanza|negocio-gobernanza|privacidad legal|security
+experiencia-cliente|coord-negocio-gobernanza|negocio-gobernanza|soporte|product
+'@ | ConvertFrom-Csv -Delimiter '|' -Header id, parent, department, domain, gate
+    $registry = Get-OfficeRegistry -Root $kitRoot
+    Assert-True ((($registry.profiles.id | Sort-Object) -join ',') -ceq (($expectedRoles.id | Sort-Object) -join ',')) 'Canonical role IDs differ.'
+    foreach ($expected in $expectedRoles) {
+        $role = @($registry.profiles | Where-Object id -CEQ $expected.id)[0]
+        Assert-True ([string] $role.parent -ceq $expected.parent -and $role.department -ceq $expected.department) "Canonical parent/department differs for $($expected.id)."
+        $kind = if ($expected.id -eq 'directora') { 'director' } elseif ($expected.parent -eq 'directora') { 'coordinator' } else { 'specialist' }
+        Assert-True ($role.kind -ceq $kind -and $role.prompt -ceq "office/roles/$($expected.id).md") "Canonical kind/prompt differs for $($expected.id)."
+    }
+    $missing = @($registry.profiles | Where-Object { -not (Test-Path -LiteralPath (Join-Path $kitRoot $_.prompt) -PathType Leaf) })
+    Assert-True ($missing.Count -eq 0) "Missing role files: $($missing.prompt -join ', ')."
+    Assert-OfficeRegistry $registry $kitRoot
+    Assert-True ($null -ne (Get-Command Get-OfficeRolePrompt -ErrorAction SilentlyContinue)) 'Missing Get-OfficeRolePrompt.'
+    foreach ($expected in $expectedRoles) {
+        $role = @($registry.profiles | Where-Object id -CEQ $expected.id)[0]
+        $prompt = Get-OfficeRolePrompt $role $kitRoot
+        Assert-True ($prompt -is [string]) "Prompt must be a string for $($role.id)."
+        $escalateTo = if ($expected.parent) { $expected.parent } else { 'humano' }
+        Assert-True ($prompt -match ('(?m)^Departamento: ' + [regex]::Escape($expected.department) + '\r?$')) "Prompt department differs for $($role.id)."
+        Assert-True ($prompt -match ('(?m)^Escalado a: ' + [regex]::Escape($escalateTo) + '\r?$')) "Prompt escalation route differs for $($role.id)."
+        $sections = @{}
+        foreach ($heading in @('Dominio propio', 'Límites', 'Salida esperada', 'Gate', 'Escalado', 'Evidencia')) {
+            $match = [regex]::Match($prompt, '(?ms)^## ' + [regex]::Escape($heading) + '\r?\n(?<body>.+?)(?=^## |\z)')
+            Assert-True ($match.Success -and $match.Groups['body'].Value.Trim().Length -ge 30) "Missing substantive '$heading' for $($role.id)."
+            $sections[$heading] = $match.Groups['body'].Value
+        }
+        Assert-True ($sections['Dominio propio'] -match [regex]::Escape($expected.domain)) "Owned domain differs for $($role.id)."
+        Assert-True ($sections['Límites'] -match '(?i)no ') "Forbidden adjacent domains missing for $($role.id)."
+        Assert-True ($sections['Salida esperada'] -match 'handoff') "Expected handoff output missing for $($role.id)."
+        foreach ($field in @('from', 'to', 'task_id', 'context_summary', 'scope', 'artifacts', 'evidence', 'gate_status', 'risks', 'next_action')) {
+            Assert-True ($sections['Salida esperada'] -match ('\b' + $field + '\b')) "Missing handoff.$field for $($role.id)."
+        }
+        Assert-True ($sections['Gate'] -match ('\b' + $expected.gate + '\b') -and $sections['Gate'] -match 'pending.*pass.*fail.*waived') "Gate policy differs for $($role.id)."
+        Assert-True ($sections['Escalado'] -match 'escalation' -and $sections['Escalado'] -match 'humano') "Human escalation missing for $($role.id)."
+        Assert-True ($sections['Evidencia'] -match 'evidence' -and $sections['Evidencia'] -match 'comando|fuente|artefacto') "Evidence requirement missing for $($role.id)."
+        $route = [regex]::Match($prompt, '(?m)^Delegación permitida: (?<ids>[^\r\n]+)\r?$')
+        Assert-True $route.Success "Missing explicit routing for $($role.id)."
+        $actualChildren = if ($route.Groups['ids'].Value -eq 'ninguna') { @() } else { @($route.Groups['ids'].Value -split ',\s*') }
+        $expectedChildren = @($expectedRoles | Where-Object parent -CEQ $role.id | Select-Object -ExpandProperty id)
+        Assert-True ((($actualChildren | Sort-Object) -join ',') -ceq (($expectedChildren | Sort-Object) -join ',')) "Forbidden delegation route for $($role.id)."
+        foreach ($skill in $role.skills) {
+            Assert-True ($prompt.Contains($skill)) "Missing method skill '$skill' for $($role.id)."
+        }
+    }
+    # Exercise the actual loader boundary, including a caller-supplied root.
+    $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('office-role-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $sandbox | Out-Null
+    try {
+        Set-Content -LiteralPath (Join-Path $sandbox 'role.md') -Value "# Prueba de raíz`nDominio: análisis" -NoNewline -Encoding utf8
+        Assert-True ((Get-OfficeRolePrompt ([pscustomobject]@{ prompt = 'role.md' }) $sandbox) -ceq "# Prueba de raíz`nDominio: análisis") 'Loader must return UTF-8 text from the supplied root.'
+        Assert-Throws { Get-OfficeRolePrompt ([pscustomobject]@{ prompt = '../outside.md' }) $sandbox } 'outside'
+        Assert-Throws { Get-OfficeRolePrompt ([pscustomobject]@{ prompt = (Join-Path $sandbox 'role.md') }) $sandbox } 'outside'
+        Assert-Throws { Get-OfficeRolePrompt ([pscustomobject]@{ prompt = 'missing.md' }) $sandbox } 'Missing prompt'
+        Assert-Throws { Get-OfficeRolePrompt ([pscustomobject]@{ prompt = ' ' }) $sandbox } 'Invalid prompt'
+    } finally {
+        $resolved = [IO.Path]::GetFullPath($sandbox)
+        $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        if (-not $resolved.StartsWith($temp, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe cleanup path.' }
+        Remove-Item -LiteralPath $resolved -Recurse -Force
+    }
+    Write-Output 'PASS: 31 prompts; routing graph valid'
+}
+
 if ($Section -in @('Registry', 'All')) {
     $registry = Get-OfficeRegistry -Root $kitRoot
     Assert-True (@($registry.profiles).Count -eq 31) 'Expected 31 profiles.'
@@ -22,16 +119,11 @@ if ($Section -in @('Registry', 'All')) {
     Assert-True ($permissionFiles.Count -eq 3) 'Expected three permission sets.'
     $readonly = Get-Content -LiteralPath (Join-Path $kitRoot 'office/permission-sets/readonly.json') -Raw | ConvertFrom-Json
     Assert-True ($readonly.permissions.edit -eq 'deny' -and $readonly.permissions.shell -eq 'deny' -and $readonly.permissions.external_write -eq 'deny') 'Readonly must deny editing, general shell and external writes.'
-    # A real temporary filesystem supplies prompts until the roles task lands.
+    # Validate real canonical prompts in an isolated root before mutating registry cases.
     $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('office-core-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $sandbox | Out-Null
     try {
         Copy-Item -LiteralPath (Join-Path $kitRoot 'office') -Destination $sandbox -Recurse
-        foreach ($profile in $registry.profiles) {
-            $path = Join-Path $sandbox $profile.prompt
-            New-Item -ItemType Directory -Path (Split-Path $path) -Force | Out-Null
-            Set-Content -LiteralPath $path -Value '# Test role fixture'
-        }
         Assert-OfficeRegistry $registry $sandbox
         $bad = Copy-Value $registry; $bad.profiles[1].id = 'directora'
         Assert-Throws { Assert-OfficeRegistry $bad $sandbox } 'Duplicate profile ID'
