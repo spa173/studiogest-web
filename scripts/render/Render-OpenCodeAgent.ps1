@@ -36,8 +36,11 @@ function ConvertTo-OpenCodeAgent {
     $inspection = if ($null -ne $policy.inspection_commands) { @($policy.inspection_commands) } else {
         @('git status', 'git diff', 'git log', 'git show', 'rg', 'Get-ChildItem', 'Get-Content', 'Select-String')
     }
+    # A command prefix does not constrain its options: diff can write output,
+    # rg can run preprocessors, and shell reads bypass native credential rules.
+    # Require approval for the full shell command; native read/glob/grep stay usable.
     foreach ($command in $inspection) {
-        $rules.Add([ordered]@{ action = 'shell'; resource = "$command *"; effect = 'allow' })
+        $rules.Add([ordered]@{ action = 'shell'; resource = "$command *"; effect = 'ask' })
     }
     $testCommands = @('npm test', 'npm run test', 'pnpm test', 'yarn test', 'pytest', 'dotnet test', 'cargo test', 'go test')
     if ($policy.test -eq 'allow' -or $policy.test_execution -eq 'task_authorization') {
@@ -53,7 +56,7 @@ function ConvertTo-OpenCodeAgent {
     }
     if ($policy.diagnostics -eq 'allow') {
         foreach ($command in @('Get-Process', 'Get-Service', 'docker ps', 'docker logs', 'kubectl get', 'kubectl describe')) {
-            $rules.Add([ordered]@{ action = 'shell'; resource = "$command *"; effect = 'allow' })
+            $rules.Add([ordered]@{ action = 'shell'; resource = "$command *"; effect = 'ask' })
         }
     }
     $rules.Add([ordered]@{ action = 'subagent'; resource = '*'; effect = 'deny' })

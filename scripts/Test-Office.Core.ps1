@@ -118,9 +118,15 @@ if ($Section -in @('OpenCode', 'All')) {
                 Assert-True ($rule.action -is [string] -and $rule.resource -is [string] -and $rule.effect -cin @('allow', 'deny', 'ask')) 'Invalid V2 permission rule.'
             }
             Assert-True ((Get-OpenCodeEffect $agent.permissions read 'src/main.ps1') -eq 'allow') 'Local reading must be allowed.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions grep 'pattern') -eq 'allow' -and (Get-OpenCodeEffect $agent.permissions glob '*.ps1') -eq 'allow') 'Native search tools must remain available.'
+            # Inspection tools accept options that write files, execute programs or
+            # read secrets; a shell prefix alone cannot prove read-only behavior.
+            $unsafeInspection = @('git diff --output=src/main.ps1', 'rg --pre=./preprocessor.exe pattern README.md', 'Get-Content .env')
+            $unconditionallyAllowed = @($unsafeInspection | Where-Object { (Get-OpenCodeEffect $agent.permissions shell $_) -eq 'allow' })
+            Assert-True ($unconditionallyAllowed.Count -eq 0) "Inspection arguments bypass permissions for $($role.id): $($unconditionallyAllowed -join '; ')."
             $webEffect = if ('web_research' -cin $role.capabilities) { 'allow' } else { 'deny' }
             Assert-True ((Get-OpenCodeEffect $agent.permissions webfetch 'https://example.test') -eq $webEffect -and (Get-OpenCodeEffect $agent.permissions websearch 'references') -eq $webEffect) 'Web access must follow the role capability.'
-            Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'git status --short') -eq 'allow') 'Inspection must be allowed.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'git status --short') -eq 'ask') 'Shell inspection requires approval for its complete arguments.'
             $isReadonly = $role.permission_set -eq 'readonly'
             $externalEffect = if ($isReadonly) { 'deny' } else { 'ask' }
             Assert-True ((Get-OpenCodeEffect $agent.permissions external_directory 'C:/outside/*') -eq $externalEffect) 'Outside-workspace access bypassed policy.'
@@ -140,7 +146,7 @@ if ($Section -in @('OpenCode', 'All')) {
             if ($role.id -eq 'documentacion') { Assert-True ((Get-OpenCodeEffect $agent.permissions edit 'src/main.ps1') -eq 'deny') 'Documentation role may edit only documents.' }
             if ($role.id -eq 'qa') { Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'npm test') -eq 'ask') 'QA suites require task authorization.' }
             if ($role.permission_set -eq 'operator') {
-                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'kubectl get pods') -eq 'allow') 'Operator diagnostics denied.'
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'kubectl get pods') -eq 'ask') 'Shell diagnostics require approval for their complete arguments.'
                 Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'kubectl apply -f prod.yaml') -eq 'ask') 'Infrastructure changes must require authorization.'
             }
         }
