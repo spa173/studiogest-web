@@ -19,6 +19,7 @@ from .forms import ReportDateFilterForm
 REPORT_TITLE = 'Reporte StudioGest'
 PERIOD_LABEL = 'Período'
 TOTAL_COP_LABEL = 'Total (COP)'
+NO_DATA_LABEL = 'Sin datos'
 
 
 def _filter_by_dates(queryset, field, start, end):
@@ -176,12 +177,12 @@ def _export_csv(*, start, end, summary, popular_services, sales_summary, sales_b
             ['Citas canceladas', summary['cancelled']],
             ['Ingresos estimados (citas completadas, COP)', summary['estimated_income']],
         ],
-        ['Sin datos', 0],
+        [NO_DATA_LABEL, 0],
     )
     _csv_table(
         writer, 'Servicios más solicitados', ['Servicio', 'Citas registradas'],
         [[row['service__name'], row['total']] for row in popular_services],
-        ['Sin datos', 0],
+        [NO_DATA_LABEL, 0],
     )
 
     _csv_section(writer, 'Ventas registradas')
@@ -223,12 +224,12 @@ def _export_xlsx(*, start, end, summary, popular_services, sales_summary, sales_
             ['Citas canceladas', summary['cancelled']],
             ['Ingresos estimados (citas completadas, COP)', summary['estimated_income']],
         ],
-        ['Sin datos', 0],
+        [NO_DATA_LABEL, 0],
     )
     _sheet_table(
         wb.create_sheet('Servicios'), 'Servicios', period, ['Servicio', 'Citas registradas'],
         [[row['service__name'], row['total']] for row in popular_services],
-        ['Sin datos', 0],
+        [NO_DATA_LABEL, 0],
     )
 
     ws_sales = wb.create_sheet('Ventas')

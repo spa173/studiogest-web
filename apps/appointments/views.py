@@ -69,6 +69,7 @@ def _appointments_by_day(week_days, appointments_qs):
 
 
 @login_required
+@require_http_methods(['GET', 'POST'])
 def calendar_view(request):
     current_date = _parse_calendar_date(request)
     week_days = _week_days(current_date)
