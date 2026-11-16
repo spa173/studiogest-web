@@ -1,4 +1,28 @@
 # Shared canonical registry and contract validation. No external modules required.
+function Set-ManagedInstructionBlock {
+    param([AllowEmptyString()][string] $Existing, [string] $Block)
+    $start = '<!-- oficina-unificada:inicio -->'
+    $end = '<!-- oficina-unificada:fin -->'
+    $blockText = ($Block -replace "`r`n?", "`n").Trim("`n")
+    foreach ($text in @($Existing, $blockText)) {
+        $starts = [regex]::Matches($text, [regex]::Escape($start)).Count
+        $ends = [regex]::Matches($text, [regex]::Escape($end)).Count
+        if ($starts -ne $ends -or $starts -gt 1 -or ($starts -eq 1 -and $text.IndexOf($end, [StringComparison]::Ordinal) -lt $text.IndexOf($start, [StringComparison]::Ordinal))) {
+            throw 'Invalid managed instruction markers: expected one ordered pair or no markers.'
+        }
+    }
+    if (-not $blockText.StartsWith($start, [StringComparison]::Ordinal) -or -not $blockText.EndsWith($end, [StringComparison]::Ordinal)) {
+        throw 'Invalid block markers: the block must be bounded by the managed markers.'
+    }
+    $startIndex = $Existing.IndexOf($start, [StringComparison]::Ordinal)
+    if ($startIndex -ge 0) {
+        $endIndex = $Existing.IndexOf($end, $startIndex, [StringComparison]::Ordinal) + $end.Length
+        return $Existing.Substring(0, $startIndex) + $blockText + $Existing.Substring($endIndex)
+    }
+    $separator = if ($Existing.Length -eq 0 -or $Existing.EndsWith("`n`n")) { '' } elseif ($Existing.EndsWith("`n")) { "`n" } else { "`n`n" }
+    $Existing + $separator + $blockText + "`n"
+}
+
 function Get-OfficeRegistry {
     param([string] $Root = (Split-Path -Parent $PSScriptRoot))
     Get-Content -LiteralPath (Join-Path $Root 'office/registry.json') -Raw | ConvertFrom-Json

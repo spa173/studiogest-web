@@ -1,4 +1,4 @@
-param([ValidateSet('Registry', 'Contracts', 'Roles', 'OpenCode', 'All')][string] $Section = 'All')
+param([ValidateSet('Registry', 'Contracts', 'Roles', 'OpenCode', 'Codex', 'All')][string] $Section = 'All')
 $ErrorActionPreference = 'Stop'
 $kitRoot = Split-Path -Parent $PSScriptRoot
 function Assert-True($Condition, [string] $Message) { if (-not $Condition) { throw $Message } }
@@ -79,11 +79,8 @@ if ($Section -in @('OpenCode', 'All')) {
         Assert-Throws { & $build -Platform OpenCode -Check } 'drift'
         Assert-True ([IO.File]::ReadAllText($configPath) -ceq $configFixture) 'Check changed configuration.'
         Assert-True ([IO.File]::ReadAllText((Join-Path $agentDir 'diseno.md')) -ceq 'old generated profile') 'Check removed obsolete output.'
-        foreach ($platform in @('Codex', 'Both')) {
-            Assert-Throws { & $build -Platform $platform } 'Codex renderer not implemented yet'
-            Assert-True ([IO.File]::ReadAllText($configPath) -ceq $configFixture) 'Unsupported platform wrote output.'
-        }
         & $build -Platform OpenCode | Out-Null
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $sandbox '.codex')) -and -not (Test-Path -LiteralPath (Join-Path $sandbox 'AGENTS.md'))) 'OpenCode build wrote Codex output.'
         $files = @(Get-ChildItem -LiteralPath $agentDir -File -Filter '*.md' | Where-Object BaseName -CIn $registry.profiles.id)
         Assert-True ($files.Count -eq 31) 'Expected 31 flat OpenCode agents.'
         Assert-True ([IO.File]::ReadAllText($unknown) -ceq 'user-owned: análisis') 'Build pruned an unknown nested file.'
@@ -180,6 +177,123 @@ if ($Section -in @('OpenCode', 'All')) {
     }
     & (Join-Path $PSScriptRoot 'Build-Office.ps1') -Platform OpenCode -Check | Out-Null
     Write-Output 'PASS: 31 OpenCode agents; exact delegation; permission translation; UTF-8; idempotence; zero drift'
+}
+
+if ($Section -in @('Codex', 'All')) {
+    $rendererPath = Join-Path $PSScriptRoot 'render/Render-CodexAgent.ps1'
+    Assert-True (Test-Path -LiteralPath $rendererPath) 'Missing Codex renderer.'
+    . $rendererPath
+    # Read only the generated TOML subset: comments and JSON-escaped basic strings.
+    function Read-CodexAgent([string] $Text) {
+        $fields = @{}
+        foreach ($line in $Text -split "`n") {
+            if ($line -match '^#' -or $line -eq '') { continue }
+            $match = [regex]::Match($line, '^(?<key>name|description|developer_instructions) = (?<value>".*")$')
+            Assert-True ($match.Success -and -not $fields.ContainsKey($match.Groups['key'].Value)) 'Invalid or unexpected Codex TOML field.'
+            $fields[$match.Groups['key'].Value] = $match.Groups['value'].Value | ConvertFrom-Json
+        }
+        Assert-True ($fields.Count -eq 3) 'Expected exactly three Codex fields, with inherited model and permissions.'
+        [pscustomobject] $fields
+    }
+    $start = '<!-- oficina-unificada:inicio -->'
+    $end = '<!-- oficina-unificada:fin -->'
+    $block = "$start`nNuevo bloque`n$end"
+    $prefix = "# Reglas privadas`r`nEspacios finales  `r`n"
+    $suffix = "`r`n# Después`r`nConservar  "
+    $existing = $prefix + "$start`r`nViejo bloque`r`n$end" + $suffix
+    $updated = Set-ManagedInstructionBlock $existing $block
+    Assert-True ($updated -ceq ($prefix + $block + $suffix)) 'Managed replacement lost prefix/suffix bytes.'
+    Assert-True ((Set-ManagedInstructionBlock $updated $block) -ceq $updated) 'Managed replacement is not idempotent.'
+    Assert-True ((Set-ManagedInstructionBlock '' $block) -ceq "$block`n") 'Empty AGENTS must contain exactly one block.'
+    $appended = Set-ManagedInstructionBlock $prefix $block
+    Assert-True ($appended.StartsWith($prefix, [StringComparison]::Ordinal) -and $appended.Contains($block)) 'Append trimmed existing instructions.'
+    Assert-True ((Set-ManagedInstructionBlock $appended $block) -ceq $appended) 'Append duplicated the managed block.'
+    foreach ($invalid in @($start, $end, "$end`n$start", "$block`n$block", "$start$start$end", "$start$end$end")) {
+        Assert-Throws { Set-ManagedInstructionBlock $invalid $block } 'marker'
+        Assert-Throws { Set-ManagedInstructionBlock '' $invalid } 'marker'
+    }
+    $registry = Get-OfficeRegistry $kitRoot
+    Assert-OfficeRegistry $registry $kitRoot
+    $roles = @($registry.profiles | Where-Object kind -CNE 'director')
+    $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('office-codex-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $sandbox | Out-Null
+    try {
+        foreach ($dir in @('office', 'scripts', 'templates')) { Copy-Item -LiteralPath (Join-Path $kitRoot $dir) -Destination $sandbox -Recurse }
+        $build = Join-Path $sandbox 'scripts/Build-Office.ps1'
+        $agentDir = Join-Path $sandbox '.codex/agents'
+        New-Item -ItemType Directory -Path (Join-Path $agentDir 'custom') -Force | Out-Null
+        $unknown = Join-Path $agentDir 'custom/keep.toml'
+        $unknownFlat = Join-Path $agentDir 'custom-agent.toml'
+        foreach ($path in @($unknown, $unknownFlat)) { [IO.File]::WriteAllText($path, 'user-owned: análisis') }
+        $legacy = @('desarrollo', 'diseno', 'diseno-web', 'marketing', 'social-contenido', 'finanzas', 'operaciones', 'legal', 'producto', 'arquitectura', 'ux-web', 'frontend-web', 'backend', 'calidad', 'seguridad', 'plataforma-devops', 'datos-ia', 'documentacion', 'experiencia-cliente', 'direccion-arte', 'movimiento', 'imagenes')
+        foreach ($id in $legacy) { [IO.File]::WriteAllText((Join-Path $agentDir "$id.toml"), 'old generated profile') }
+        $agentsPath = Join-Path $sandbox 'AGENTS.md'
+        [IO.File]::WriteAllText($agentsPath, $existing)
+        $configPath = Join-Path $sandbox 'opencode.jsonc'
+        [IO.File]::WriteAllText($configPath, '{"theme":"user-setting"}')
+        Assert-Throws { & $build -Platform Codex -Check } 'drift'
+        Assert-True ([IO.File]::ReadAllText($agentsPath) -ceq $existing -and [IO.File]::ReadAllText((Join-Path $agentDir 'diseno.toml')) -ceq 'old generated profile') 'Check changed instructions or obsolete output.'
+        & $build -Platform Codex | Out-Null
+        Assert-True ([IO.File]::ReadAllText($configPath) -ceq '{"theme":"user-setting"}' -and -not (Test-Path -LiteralPath (Join-Path $sandbox '.opencode'))) 'Codex build wrote OpenCode output.'
+        $files = @(Get-ChildItem -LiteralPath $agentDir -File -Filter '*.toml' | Where-Object BaseName -CIn $roles.id)
+        Assert-True ($files.Count -eq 30 -and -not (Test-Path -LiteralPath (Join-Path $agentDir 'directora.toml'))) 'Expected thirty non-Director Codex agents.'
+        foreach ($id in $legacy | Where-Object { $_ -cnotin $roles.id }) {
+            Assert-True (-not (Test-Path -LiteralPath (Join-Path $agentDir "$id.toml"))) "Obsolete Codex output remains: $id."
+        }
+        foreach ($path in @($unknown, $unknownFlat)) { Assert-True ([IO.File]::ReadAllText($path) -ceq 'user-owned: análisis') 'Build pruned unknown TOML.' }
+        foreach ($role in $roles) {
+            $bytes = [IO.File]::ReadAllBytes((Join-Path $agentDir "$($role.id).toml"))
+            $text = [Text.UTF8Encoding]::new($false, $true).GetString($bytes)
+            Assert-True (-not ($bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191) -and -not $text.Contains("`r")) 'Codex output must be UTF-8 without BOM and use LF.'
+            $agent = Read-CodexAgent $text
+            Assert-True ($agent.name -ceq $role.id -and $agent.description -ceq $role.description) "Codex identity did not round-trip: $($role.id)."
+            Assert-True ($agent.developer_instructions -ceq ((Get-OfficeRolePrompt $role $kitRoot) -replace "`r`n", "`n")) "Canonical Codex prompt differs: $($role.id)."
+            Assert-True ($text.StartsWith('# GENERATED:') -and $text.Contains('office/registry.json') -and $text.Contains($role.prompt)) "Canonical-source header missing: $($role.id)."
+        }
+        $guidance = [IO.File]::ReadAllText($agentsPath)
+        Assert-True ($guidance.StartsWith($prefix, [StringComparison]::Ordinal) -and $guidance.EndsWith($suffix, [StringComparison]::Ordinal)) 'Build lost prefix/suffix instructions.'
+        Assert-True ([regex]::Matches($guidance, [regex]::Escape($start)).Count -eq 1 -and [regex]::Matches($guidance, [regex]::Escape($end)).Count -eq 1) 'Director block missing or duplicated.'
+        Assert-True ($guidance.Contains('office/registry.json') -and $guidance.Contains('office/roles/directora.md') -and $guidance.Contains('templates/AGENTS-oficina.md')) 'Director block lacks canonical-source header.'
+        Assert-True ($guidance.Contains(((Get-OfficeRolePrompt ($registry.profiles | Where-Object id -CEQ 'directora') $kitRoot) -replace "`r`n", "`n").TrimEnd())) 'Director canonical prompt missing.'
+        $snapshot = @{}
+        foreach ($path in @($files.FullName) + $agentsPath + $unknown + $unknownFlat) { $snapshot[$path] = [Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) }
+        & $build -Platform Codex | Out-Null
+        & $build -Platform Codex -Check | Out-Null
+        & $build -Platform Both | Out-Null
+        & $build -Platform Both -Check | Out-Null
+        Assert-True (@(Get-ChildItem -LiteralPath (Join-Path $sandbox '.opencode/agents') -File -Filter '*.md').Count -eq 31) 'Both did not generate OpenCode agents.'
+        foreach ($path in $snapshot.Keys) { Assert-True ([Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) -ceq $snapshot[$path]) "Codex/Both generation is not byte-identical: $path." }
+        $driftPath = Join-Path $agentDir 'backend.toml'
+        [IO.File]::AppendAllText($driftPath, 'manual drift')
+        Assert-Throws { & $build -Platform Codex -Check } 'drift.*backend.toml'
+        Assert-True ([IO.File]::ReadAllText($driftPath).EndsWith('manual drift')) 'Check repaired Codex drift.'
+        & $build -Platform Codex | Out-Null
+        [IO.File]::WriteAllText((Join-Path $agentDir 'diseno.toml'), 'obsolete drift')
+        Assert-Throws { & $build -Platform Codex -Check } 'drift.*diseno.toml'
+        Assert-True (Test-Path -LiteralPath (Join-Path $agentDir 'diseno.toml')) 'Check removed obsolete drift.'
+        & $build -Platform Codex | Out-Null
+        [IO.File]::WriteAllText($agentsPath, $prefix)
+        Assert-Throws { & $build -Platform Codex -Check } 'drift.*AGENTS.md'
+        Assert-True ([IO.File]::ReadAllText($agentsPath) -ceq $prefix) 'Check repaired Director guidance.'
+        [IO.File]::WriteAllText($agentsPath, $start)
+        $before = [IO.File]::ReadAllText($driftPath)
+        [IO.File]::WriteAllText($configPath, '{"theme":"before-failure"}')
+        Assert-Throws { & $build -Platform Both } 'marker'
+        Assert-True ([IO.File]::ReadAllText($driftPath) -ceq $before -and [IO.File]::ReadAllText($configPath) -ceq '{"theme":"before-failure"}' -and [IO.File]::ReadAllText($agentsPath) -ceq $start) 'Failed Both build partially wrote output.'
+        $role = Copy-Value $roles[0]
+        $role.description = 'Descripción: "línea" # comentario'
+        $prompt = "# Análisis`r`nComillas: `"`"`"; ruta: C:\carpeta; tab:`tfin`n"
+        $agent = Read-CodexAgent (ConvertTo-CodexAgentToml $role $prompt)
+        Assert-True ($agent.description -ceq $role.description -and $agent.developer_instructions -ceq ($prompt -replace "`r`n", "`n")) 'Codex renderer lost quoted, multiline or Unicode content.'
+        Assert-Throws { ConvertTo-CodexAgentToml ($registry.profiles | Where-Object id -CEQ 'directora') '# Director' } 'Director'
+    } finally {
+        $resolved = [IO.Path]::GetFullPath($sandbox)
+        $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        if (-not $resolved.StartsWith($temp, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe cleanup path.' }
+        Remove-Item -LiteralPath $resolved -Recurse -Force
+    }
+    & (Join-Path $PSScriptRoot 'Build-Office.ps1') -Platform Codex -Check | Out-Null
+    Write-Output 'PASS: 30 Codex subagents; Director block valid; zero drift'
 }
 
 if ($Section -in @('Roles', 'All')) {
