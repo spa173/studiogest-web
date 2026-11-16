@@ -1,4 +1,4 @@
-param([ValidateSet('Registry', 'Contracts', 'Roles', 'All')][string] $Section = 'All')
+param([ValidateSet('Registry', 'Contracts', 'Roles', 'OpenCode', 'All')][string] $Section = 'All')
 $ErrorActionPreference = 'Stop'
 $kitRoot = Split-Path -Parent $PSScriptRoot
 function Assert-True($Condition, [string] $Message) { if (-not $Condition) { throw $Message } }
@@ -10,6 +10,171 @@ function Assert-Throws([scriptblock] $Action, [string] $Pattern) {
 function Copy-Value($Value) { $Value | ConvertTo-Json -Depth 30 | ConvertFrom-Json }
 Assert-True (Test-Path (Join-Path $PSScriptRoot 'Office.Common.ps1')) 'Missing Office.Common.ps1 and canonical office registry.'
 . (Join-Path $PSScriptRoot 'Office.Common.ps1')
+
+if ($Section -in @('OpenCode', 'All')) {
+    $rendererPath = Join-Path $PSScriptRoot 'render/Render-OpenCodeAgent.ps1'
+    Assert-True (Test-Path -LiteralPath $rendererPath) 'Missing OpenCode renderer.'
+    . $rendererPath
+    # This deliberately reads the emitted YAML subset, not renderer internals.
+    function Read-OpenCodeAgent([string] $Text) {
+        $match = [regex]::Match($Text, '\A---\n(?<header>.*?)\n---\n(?<body>.*)\z', 'Singleline')
+        Assert-True $match.Success 'Invalid OpenCode frontmatter boundaries.'
+        $header = $match.Groups['header'].Value
+        Assert-True ($header -notmatch '(?im)^model\s*:') 'Generated agents must inherit their model.'
+        $description = [regex]::Match($header, '(?m)^description: (?<value>.+)$')
+        $mode = [regex]::Match($header, '(?m)^mode: (?<value>primary|subagent)$')
+        $permissions = [regex]::Match($header, '(?ms)^permissions: (?<value>\[.*\])$')
+        Assert-True ($description.Success -and $mode.Success -and $permissions.Success) 'Invalid OpenCode frontmatter fields.'
+        [pscustomobject]@{
+            description = ($description.Groups['value'].Value | ConvertFrom-Json)
+            mode = $mode.Groups['value'].Value
+            permissions = @($permissions.Groups['value'].Value | ConvertFrom-Json)
+            body = $match.Groups['body'].Value
+        }
+    }
+    function Get-OpenCodeEffect($Rules, [string] $Action, [string] $Resource) {
+        $effect = 'ask'
+        foreach ($rule in $Rules) {
+            $matchesResource = $Resource -like $rule.resource -or ($rule.resource.EndsWith(' *') -and $Resource -eq $rule.resource.Substring(0, $rule.resource.Length - 2))
+            if ($Action -like $rule.action -and $matchesResource) { $effect = $rule.effect }
+        }
+        $effect
+    }
+    $registry = Get-OfficeRegistry $kitRoot
+    Assert-OfficeRegistry $registry $kitRoot
+    $routes = @{
+        directora = 'coord-producto-experiencia,coord-ingenieria-datos,coord-calidad-seguridad,coord-operaciones-entrega,coord-negocio-gobernanza'
+        'coord-producto-experiencia' = 'producto,diseno-web,ux-accesibilidad,seo-growth,data-analytics'
+        'coord-ingenieria-datos' = 'arquitectura,frontend,backend,mobile,datos-ia,integraciones'
+        'coord-calidad-seguridad' = 'qa,seguridad,auditoria,rendimiento'
+        'coord-operaciones-entrega' = 'devops,sre-observabilidad,forensics,release,documentacion'
+        'coord-negocio-gobernanza' = 'marketing,social-contenido,finanzas,legal,experiencia-cliente'
+    }
+    $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('office-opencode-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $sandbox | Out-Null
+    try {
+        Copy-Item -LiteralPath (Join-Path $kitRoot 'office') -Destination $sandbox -Recurse
+        Copy-Item -LiteralPath $PSScriptRoot -Destination $sandbox -Recurse
+        $agentDir = Join-Path $sandbox '.opencode/agents'
+        New-Item -ItemType Directory -Path (Join-Path $agentDir 'custom') -Force | Out-Null
+        $unknown = Join-Path $agentDir 'custom/keep.md'
+        [IO.File]::WriteAllText($unknown, 'user-owned: análisis')
+        $unknownFlat = Join-Path $agentDir 'custom-agent.md'
+        [IO.File]::WriteAllText($unknownFlat, 'user-owned flat profile')
+        $obsolete = @('directora', 'desarrollo', 'diseno', 'diseno-web', 'marketing', 'social-contenido', 'finanzas', 'operaciones', 'legal', 'producto', 'arquitectura', 'ux-web', 'frontend-web', 'backend', 'calidad', 'seguridad', 'plataforma-devops', 'datos-ia', 'documentacion', 'experiencia-cliente', 'direccion-arte', 'movimiento', 'imagenes')
+        foreach ($id in $obsolete) { [IO.File]::WriteAllText((Join-Path $agentDir "$id.md"), 'old generated profile') }
+        $configPath = Join-Path $sandbox 'opencode.jsonc'
+        $configFixture = @'
+{
+  // User settings survive merging, including trailing commas and URL strings.
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "other",
+  "theme": "custom",
+  "mcp": {"local": {"url": "https://example.test//path", "enabled": false}},
+  "experimental": {"subagent_depth": 1, "keep": {"enabled": true},},
+}
+'@
+        [IO.File]::WriteAllText($configPath, $configFixture)
+        $build = Join-Path $sandbox 'scripts/Build-Office.ps1'
+        Assert-Throws { & $build -Platform OpenCode -Check } 'drift'
+        Assert-True ([IO.File]::ReadAllText($configPath) -ceq $configFixture) 'Check changed configuration.'
+        Assert-True ([IO.File]::ReadAllText((Join-Path $agentDir 'diseno.md')) -ceq 'old generated profile') 'Check removed obsolete output.'
+        foreach ($platform in @('Codex', 'Both')) {
+            Assert-Throws { & $build -Platform $platform } 'Codex renderer not implemented yet'
+            Assert-True ([IO.File]::ReadAllText($configPath) -ceq $configFixture) 'Unsupported platform wrote output.'
+        }
+        & $build -Platform OpenCode | Out-Null
+        $files = @(Get-ChildItem -LiteralPath $agentDir -File -Filter '*.md' | Where-Object BaseName -CIn $registry.profiles.id)
+        Assert-True ($files.Count -eq 31) 'Expected 31 flat OpenCode agents.'
+        Assert-True ([IO.File]::ReadAllText($unknown) -ceq 'user-owned: análisis') 'Build pruned an unknown nested file.'
+        Assert-True ([IO.File]::ReadAllText($unknownFlat) -ceq 'user-owned flat profile') 'Build pruned an unknown flat file.'
+        foreach ($id in $obsolete | Where-Object { $_ -cnotin $registry.profiles.id }) {
+            Assert-True (-not (Test-Path -LiteralPath (Join-Path $agentDir "$id.md"))) "Obsolete output remains: $id."
+        }
+        $primaryCount = 0
+        foreach ($role in $registry.profiles) {
+            $path = Join-Path $agentDir "$($role.id).md"
+            $bytes = [IO.File]::ReadAllBytes($path)
+            $strictUtf8 = [Text.UTF8Encoding]::new($false, $true)
+            $text = $strictUtf8.GetString($bytes)
+            Assert-True (-not ($bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191)) 'Output must be UTF-8 without BOM.'
+            $agent = Read-OpenCodeAgent $text
+            Assert-True ($agent.description -ceq $role.description) "Description did not round-trip for $($role.id)."
+            $expectedMode = if ($role.id -eq 'directora') { 'primary' } else { 'subagent' }
+            Assert-True ($agent.mode -eq $expectedMode) "Incorrect mode for $($role.id)."
+            if ($agent.mode -eq 'primary') { $primaryCount++ }
+            Assert-True ($agent.body.Contains('GENERATED') -and $agent.body.Contains('office/registry.json') -and $agent.body.Contains($role.prompt) -and $agent.body.Contains("office/permission-sets/$($role.permission_set).json")) "Canonical-source header missing for $($role.id)."
+            Assert-True ($agent.body.Contains(((Get-OfficeRolePrompt $role $kitRoot) -replace "`r`n", "`n").TrimEnd())) "Canonical prompt differs for $($role.id)."
+            $children = if ($routes.ContainsKey($role.id)) { @($routes[$role.id] -split ',') } else { @() }
+            $subagentRules = @($agent.permissions | Where-Object action -CEQ 'subagent')
+            Assert-True ($subagentRules.Count -eq (1 + $children.Count) -and $subagentRules[0].resource -eq '*' -and $subagentRules[0].effect -eq 'deny') "Delegation deny missing or allowlist expanded for $($role.id)."
+            $allows = @($subagentRules | Where-Object effect -CEQ 'allow' | Select-Object -ExpandProperty resource)
+            Assert-True ((($allows | Sort-Object) -join ',') -ceq (($children | Sort-Object) -join ',')) "Incorrect exact allowlist for $($role.id)."
+            foreach ($target in @('general', 'explore', 'custom/keep') + @($registry.profiles.id)) {
+                $want = if ($target -cin $children) { 'allow' } else { 'deny' }
+                Assert-True ((Get-OpenCodeEffect $agent.permissions subagent $target) -eq $want) "Incorrect delegation to $target from $($role.id)."
+            }
+            foreach ($rule in $agent.permissions) {
+                Assert-True ($rule.action -is [string] -and $rule.resource -is [string] -and $rule.effect -cin @('allow', 'deny', 'ask')) 'Invalid V2 permission rule.'
+            }
+            Assert-True ((Get-OpenCodeEffect $agent.permissions read 'src/main.ps1') -eq 'allow') 'Local reading must be allowed.'
+            $webEffect = if ('web_research' -cin $role.capabilities) { 'allow' } else { 'deny' }
+            Assert-True ((Get-OpenCodeEffect $agent.permissions webfetch 'https://example.test') -eq $webEffect -and (Get-OpenCodeEffect $agent.permissions websearch 'references') -eq $webEffect) 'Web access must follow the role capability.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'git status --short') -eq 'allow') 'Inspection must be allowed.'
+            $isReadonly = $role.permission_set -eq 'readonly'
+            $externalEffect = if ($isReadonly) { 'deny' } else { 'ask' }
+            Assert-True ((Get-OpenCodeEffect $agent.permissions external_directory 'C:/outside/*') -eq $externalEffect) 'Outside-workspace access bypassed policy.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions read '.env') -eq 'ask') 'Credential reads must require authorization.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'git push origin main') -eq $externalEffect) 'Push must require external-write authorization.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions github_create_issue '*') -eq $externalEffect) 'MCP writes must not inherit a broad allow.'
+            $editEffect = if ($isReadonly) { 'deny' } else { 'allow' }
+            Assert-True ((Get-OpenCodeEffect $agent.permissions edit 'docs/guide.md') -eq $editEffect) 'Incorrect workspace edit policy.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'Remove-Item -Recurse src') -ne 'allow') 'Destructive commands must not be allowed.'
+            if ($isReadonly) {
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'node arbitrary.js') -eq 'deny') 'Readonly allowed general shell.'
+            } elseif ($role.permission_set -eq 'implementer') {
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'npm run build') -eq 'allow') 'Implementer builds denied.'
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'npm test') -eq 'allow') 'Implementer tests denied.'
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'npm install package') -eq 'ask') 'Dependency installation must ask.'
+            }
+            if ($role.id -eq 'documentacion') { Assert-True ((Get-OpenCodeEffect $agent.permissions edit 'src/main.ps1') -eq 'deny') 'Documentation role may edit only documents.' }
+            if ($role.id -eq 'qa') { Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'npm test') -eq 'ask') 'QA suites require task authorization.' }
+            if ($role.permission_set -eq 'operator') {
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'kubectl get pods') -eq 'allow') 'Operator diagnostics denied.'
+                Assert-True ((Get-OpenCodeEffect $agent.permissions shell 'kubectl apply -f prod.yaml') -eq 'ask') 'Infrastructure changes must require authorization.'
+            }
+        }
+        Assert-True ($primaryCount -eq 1) 'Expected exactly one primary Director.'
+        $config = [IO.File]::ReadAllText($configPath) | ConvertFrom-Json
+        Assert-True (-not [IO.File]::ReadAllText($configPath).Contains("`r")) 'Configuration must use stable LF line endings.'
+        Assert-True ($config.default_agent -eq 'directora' -and $config.experimental.subagent_depth -eq 2) 'Missing two-hop configuration.'
+        Assert-True ($config.theme -eq 'custom' -and $config.experimental.keep.enabled -eq $true -and $config.mcp.local.url -ceq 'https://example.test//path' -and $config.mcp.local.enabled -eq $false) 'Build lost unrelated configuration.'
+        $snapshot = @{}
+        foreach ($path in @($files.FullName) + $configPath + $unknown + $unknownFlat) { $snapshot[$path] = [Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) }
+        & $build -Platform OpenCode | Out-Null
+        & $build -Platform OpenCode -Check | Out-Null
+        foreach ($path in $snapshot.Keys) { Assert-True ([Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) -ceq $snapshot[$path]) "Generation is not byte-identical: $path." }
+        $driftPath = Join-Path $agentDir 'backend.md'
+        [IO.File]::AppendAllText($driftPath, 'manual drift')
+        $driftBytes = [Convert]::ToBase64String([IO.File]::ReadAllBytes($driftPath))
+        Assert-Throws { & $build -Platform OpenCode -Check } 'drift.*backend.md'
+        Assert-True ([Convert]::ToBase64String([IO.File]::ReadAllBytes($driftPath)) -ceq $driftBytes) 'Check repaired drift instead of failing without writing.'
+        # Direct renderer boundary exercises quoting, Unicode and multiline prompts.
+        $role = Copy-Value $registry.profiles[0]
+        $role.description = 'Descripción: "línea" # comentario'
+        $role | Add-Member allowed_subagents @('coord-producto-experiencia')
+        $permission = Get-Content -LiteralPath (Join-Path $kitRoot 'office/permission-sets/readonly.json') -Raw | ConvertFrom-Json
+        $rendered = Read-OpenCodeAgent (ConvertTo-OpenCodeAgent $role "# Análisis`r`nTexto: \" $permission)
+        Assert-True ($rendered.description -ceq $role.description -and $rendered.body.Contains("# Análisis`nTexto: \")) 'Renderer lost escaped or multiline content.'
+    } finally {
+        $resolved = [IO.Path]::GetFullPath($sandbox)
+        $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        if (-not $resolved.StartsWith($temp, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe cleanup path.' }
+        Remove-Item -LiteralPath $resolved -Recurse -Force
+    }
+    & (Join-Path $PSScriptRoot 'Build-Office.ps1') -Platform OpenCode -Check | Out-Null
+    Write-Output 'PASS: 31 OpenCode agents; exact delegation; permission translation; UTF-8; idempotence; zero drift'
+}
 
 if ($Section -in @('Roles', 'All')) {
     # Literal roster pins identity and ownership: a consistent rename or move is a regression.
