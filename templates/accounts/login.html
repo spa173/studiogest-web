@@ -5,36 +5,35 @@
 
 {% block full_page %}
 <!-- Contenedor Maestro de Inicio de Sesión -->
-<div class="min-h-screen w-full flex flex-col lg:flex-row bg-surface">
+<div class="login-layout min-h-screen w-full flex flex-col lg:flex-row bg-surface">
   
   <!-- Columna Izquierda: Hero Visual de Marca (Azul Noche, Detalles Turquesa y Acento Dorado) -->
-  <div class="relative w-full lg:w-5/12 xl:w-[48%] bg-primary-container text-inverse-on-surface p-8 lg:p-14 flex flex-col justify-between overflow-hidden">
+  <div class="login-brand-panel relative w-full lg:w-5/12 xl:w-[48%] text-inverse-on-surface p-5 sm:p-8 lg:p-10 flex flex-col justify-between">
     <!-- Decoración de fondo ambiental sutil -->
-    <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-secondary/15 blur-3xl pointer-events-none"></div>
-    <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-tertiary-container/30 blur-2xl pointer-events-none"></div>
+    <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-brand-turquoise/10 blur-3xl pointer-events-none"></div>
+      <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-tertiary/10 blur-2xl pointer-events-none"></div>
+    </div>
 
-    <!-- Cabecera de Columna con Logotipo Oficial SVG -->
-    <div class="relative z-10">
-      <div class="inline-block p-3.5 rounded-2xl bg-surface-container-lowest/10 backdrop-blur-md border border-outline-variant/20 mb-8 shadow-sm">
-        <img src="{% static 'img/logo_studiogest.svg' %}" alt="Logotipo de StudioGest" class="h-10 w-auto object-contain">
-      </div>
-
-      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/15 border border-secondary/30 mb-6">
+    <!-- Logo principal original completo: sin recortar ni redibujar -->
+    <div class="login-brand-content relative z-10">
+      <div class="login-brand-status inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-turquoise/15 border border-brand-turquoise/30 mb-3">
         <span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
         <span class="font-label-sm text-label-sm text-secondary-container font-semibold">Sede Principal • En línea</span>
       </div>
 
-      <h1 class="font-headline text-3xl lg:text-4xl font-bold text-inverse-on-surface tracking-tight max-w-lg mb-5 leading-tight">
+      <figure class="login-brand-figure mb-6">
+        <img src="{% static 'img/branding/logo-principal.png' %}" alt="StudioGest — Barbería y salón de belleza" width="1600" height="1200" class="login-brand-logo" fetchpriority="high">
+      </figure>
+
+      <h1 class="login-brand-title font-headline text-2xl lg:text-3xl font-bold text-inverse-on-surface tracking-tight max-w-lg mb-4 leading-tight">
         Gestión integral y eficiente para barberías y peluquerías
       </h1>
 
-      <p class="font-body-md text-base text-inverse-primary/80 max-w-md leading-relaxed">
-        Control diario simplificado. Todo lo que tu equipo necesita para sincronizar turnos, gestionar clientes y administrar servicios sin complicaciones.
-      </p>
     </div>
 
     <!-- Tarjeta Resumen Operativo -->
-    <div class="relative z-10 my-8 bg-primary-container/85 backdrop-blur-md border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
+    <div class="login-summary relative z-10 my-8 bg-primary-container/85 backdrop-blur-md border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
       <div class="flex items-center justify-between pb-3.5 border-b border-outline-variant/20 mb-4">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-secondary-container text-xl">storefront</span>
@@ -85,7 +84,7 @@
     </div>
 
     <!-- Pie de Columna Izquierda -->
-    <div class="relative z-10 pt-2 flex items-center justify-between text-inverse-primary/60 border-t border-outline-variant/15">
+    <div class="login-brand-footer relative z-10 pt-2 flex items-center justify-between text-inverse-primary/60 border-t border-outline-variant/15">
       <span class="font-body-sm text-xs">Peluquería &amp; Barbería Profesional</span>
       <div class="flex items-center gap-1 text-secondary-container">
         <span class="material-symbols-outlined text-sm">verified</span>
@@ -95,10 +94,10 @@
   </div>
 
   <!-- Columna Derecha: Tarjeta de Autenticación Centrada -->
-  <div class="w-full lg:w-7/12 xl:w-[52%] bg-surface flex flex-col justify-between p-6 sm:p-12 lg:p-16">
+  <div class="login-form-panel w-full lg:w-7/12 xl:w-[52%] bg-surface flex flex-col justify-between p-6 sm:p-12 lg:p-16">
     
     <!-- Top Utility Bar -->
-    <div class="w-full flex justify-end items-center mb-6">
+    <div class="login-utility w-full flex justify-end items-center mb-6">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant/30">
         <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
         <span class="font-label-xs text-xs text-on-surface-variant font-medium">Terminal Principal</span>
@@ -106,7 +105,7 @@
     </div>
 
     <!-- Main Login Card (Centered) -->
-    <div class="w-full max-w-[440px] mx-auto my-auto py-4">
+    <div class="login-form-card w-full max-w-[440px] mx-auto my-auto py-4">
       
       <!-- Header de Login -->
       <div class="mb-6">
@@ -209,7 +208,7 @@
 
         <!-- Botón Principal Iniciar Sesión -->
         <div class="pt-2">
-          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-secondary text-on-secondary font-headline text-base font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer">
+          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-brand-turquoise text-primary-container font-headline text-base font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer">
             <span>Iniciar sesión</span>
             <span class="material-symbols-outlined text-lg">arrow_forward</span>
           </button>
@@ -217,7 +216,7 @@
       </form>
 
       <!-- Indicador de Contexto Local -->
-      <div class="mt-8 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center gap-3">
+      <div class="login-context mt-8 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center gap-3">
         <span class="material-symbols-outlined text-on-surface-variant text-lg">badge</span>
         <div class="font-body-sm text-xs text-on-surface-variant">
           Acceso exclusivo para administradores, barberos y estilistas autorizados.
@@ -226,7 +225,7 @@
     </div>
 
     <!-- Pie de Página -->
-    <footer class="w-full mt-8 pt-4 border-t border-outline-variant/30 text-center">
+    <footer class="login-footer w-full mt-8 pt-4 border-t border-outline-variant/30 text-center">
       <p class="font-body-sm text-xs text-outline">
         StudioGest v1.0 • Sistema de Gestión para Barberías &amp; Peluquerías. Sede Principal.
       </p>
