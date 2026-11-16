@@ -1,0 +1,19 @@
+{
+  "id": "implementer",
+  "description": "Cambios locales autorizados; documentación se limita a documentos y diseño requiere autorización de implementación.",
+  "permissions": {
+    "read": "allow",
+    "search": "allow",
+    "edit": "workspace",
+    "build": "allow",
+    "test": "allow",
+    "outside_workspace": "ask",
+    "credentials": "ask",
+    "install_dependencies": "ask",
+    "push": "ask",
+    "publish": "ask",
+    "deployment": "ask",
+    "external_write": "ask",
+    "destructive": "deny_unless_explicitly_authorized"
+  }
+}

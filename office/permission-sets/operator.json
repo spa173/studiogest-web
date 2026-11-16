@@ -1,0 +1,17 @@
+{
+  "id": "operator",
+  "description": "Diagnósticos, preparación de configuración y health checks; cambios operativos requieren autorización.",
+  "permissions": {
+    "read": "allow",
+    "search": "allow",
+    "diagnostics": "allow",
+    "prepare_config": "workspace",
+    "health_checks": "allow",
+    "external_write": "ask",
+    "deployment": "ask",
+    "rollback": "ask",
+    "infrastructure_write": "ask",
+    "credentials": "ask",
+    "destructive": "deny_unless_exact_target_authorized"
+  }
+}

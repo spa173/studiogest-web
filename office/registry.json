@@ -1,0 +1,484 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "directora",
+      "kind": "director",
+      "department": "direccion",
+      "parent": null,
+      "description": "Clasifica solicitudes, coordina departamentos y reúne evidencia y resultados.",
+      "prompt": "office/roles/directora.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "work_tracking"
+      ]
+    },
+    {
+      "id": "coord-producto-experiencia",
+      "kind": "coordinator",
+      "department": "producto-experiencia",
+      "parent": "directora",
+      "description": "Coordina producto-experiencia, sus especialistas y entregas verificables.",
+      "prompt": "office/roles/coord-producto-experiencia.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "work_tracking"
+      ]
+    },
+    {
+      "id": "producto",
+      "kind": "specialist",
+      "department": "producto-experiencia",
+      "parent": "coord-producto-experiencia",
+      "description": "Define alcance, prioridades y criterios de aceptación.",
+      "prompt": "office/roles/producto.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "work_tracking",
+        "web_research"
+      ]
+    },
+    {
+      "id": "diseno-web",
+      "kind": "specialist",
+      "department": "producto-experiencia",
+      "parent": "coord-producto-experiencia",
+      "description": "Investiga referencias y define interfaces originales mediante taste-skill.",
+      "prompt": "office/roles/diseno-web.md",
+      "permission_set": "readonly",
+      "skills": [
+        "taste-skill"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "web_research",
+        "design_source"
+      ]
+    },
+    {
+      "id": "ux-accesibilidad",
+      "kind": "specialist",
+      "department": "producto-experiencia",
+      "parent": "coord-producto-experiencia",
+      "description": "Verifica usabilidad, accesibilidad y flujos de experiencia.",
+      "prompt": "office/roles/ux-accesibilidad.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "seo-growth",
+      "kind": "specialist",
+      "department": "producto-experiencia",
+      "parent": "coord-producto-experiencia",
+      "description": "Investiga descubrimiento, SEO y crecimiento medible.",
+      "prompt": "office/roles/seo-growth.md",
+      "permission_set": "readonly",
+      "skills": [
+        "seo-growth"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "web_research",
+        "product_analytics"
+      ]
+    },
+    {
+      "id": "data-analytics",
+      "kind": "specialist",
+      "department": "producto-experiencia",
+      "parent": "coord-producto-experiencia",
+      "description": "Define métricas, consultas y análisis de producto.",
+      "prompt": "office/roles/data-analytics.md",
+      "permission_set": "readonly",
+      "skills": [
+        "data-analytics"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "database",
+        "product_analytics"
+      ]
+    },
+    {
+      "id": "coord-ingenieria-datos",
+      "kind": "coordinator",
+      "department": "ingenieria-datos",
+      "parent": "directora",
+      "description": "Coordina ingenieria-datos, sus especialistas y entregas verificables.",
+      "prompt": "office/roles/coord-ingenieria-datos.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "arquitectura",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Define arquitectura, interfaces y decisiones técnicas.",
+      "prompt": "office/roles/arquitectura.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "frontend",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Implementa arquitectura de cliente, estado e interfaces.",
+      "prompt": "office/roles/frontend.md",
+      "permission_set": "implementer",
+      "skills": [
+        "frontend-developer"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "backend",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Implementa servicios, reglas de negocio y persistencia.",
+      "prompt": "office/roles/backend.md",
+      "permission_set": "implementer",
+      "skills": [
+        "backend-developer"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "database"
+      ]
+    },
+    {
+      "id": "mobile",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Implementa aplicaciones móviles e integración con el dispositivo.",
+      "prompt": "office/roles/mobile.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "datos-ia",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Implementa pipelines, modelos y sistemas de IA.",
+      "prompt": "office/roles/datos-ia.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "database"
+      ]
+    },
+    {
+      "id": "integraciones",
+      "kind": "specialist",
+      "department": "ingenieria-datos",
+      "parent": "coord-ingenieria-datos",
+      "description": "Implementa contratos e integraciones entre sistemas.",
+      "prompt": "office/roles/integraciones.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "coord-calidad-seguridad",
+      "kind": "coordinator",
+      "department": "calidad-seguridad",
+      "parent": "directora",
+      "description": "Coordina calidad-seguridad, sus especialistas y entregas verificables.",
+      "prompt": "office/roles/coord-calidad-seguridad.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "qa",
+      "kind": "specialist",
+      "department": "calidad-seguridad",
+      "parent": "coord-calidad-seguridad",
+      "description": "Verifica criterios y ejecuta pruebas sin corregir producto durante revisión.",
+      "prompt": "office/roles/qa.md",
+      "permission_set": "readonly",
+      "skills": [
+        "qa-engineer"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "seguridad",
+      "kind": "specialist",
+      "department": "calidad-seguridad",
+      "parent": "coord-calidad-seguridad",
+      "description": "Audita seguridad, permisos, secretos y superficie de ataque.",
+      "prompt": "office/roles/seguridad.md",
+      "permission_set": "readonly",
+      "skills": [
+        "security-auditor"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "auditoria",
+      "kind": "specialist",
+      "department": "calidad-seguridad",
+      "parent": "coord-calidad-seguridad",
+      "description": "Revisa controles, trazabilidad y evidencia de forma independiente.",
+      "prompt": "office/roles/auditoria.md",
+      "permission_set": "readonly",
+      "skills": [
+        "security-auditor"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "rendimiento",
+      "kind": "specialist",
+      "department": "calidad-seguridad",
+      "parent": "coord-calidad-seguridad",
+      "description": "Mide rendimiento, identifica cuellos de botella y verifica presupuestos.",
+      "prompt": "office/roles/rendimiento.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "coord-operaciones-entrega",
+      "kind": "coordinator",
+      "department": "operaciones-entrega",
+      "parent": "directora",
+      "description": "Coordina operaciones-entrega, sus especialistas y entregas verificables.",
+      "prompt": "office/roles/coord-operaciones-entrega.md",
+      "permission_set": "operator",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "devops",
+      "kind": "specialist",
+      "department": "operaciones-entrega",
+      "parent": "coord-operaciones-entrega",
+      "description": "Prepara plataforma, automatización y despliegues autorizados.",
+      "prompt": "office/roles/devops.md",
+      "permission_set": "operator",
+      "skills": [
+        "devops-platform"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "observability",
+        "deployment"
+      ]
+    },
+    {
+      "id": "sre-observabilidad",
+      "kind": "specialist",
+      "department": "operaciones-entrega",
+      "parent": "coord-operaciones-entrega",
+      "description": "Diagnostica fiabilidad, telemetría y salud operativa.",
+      "prompt": "office/roles/sre-observabilidad.md",
+      "permission_set": "operator",
+      "skills": [
+        "devops-platform"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "observability"
+      ]
+    },
+    {
+      "id": "forensics",
+      "kind": "specialist",
+      "department": "operaciones-entrega",
+      "parent": "coord-operaciones-entrega",
+      "description": "Preserva evidencia y analiza incidentes antes de corregir.",
+      "prompt": "office/roles/forensics.md",
+      "permission_set": "operator",
+      "skills": [
+        "forensics-incident"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "observability"
+      ]
+    },
+    {
+      "id": "release",
+      "kind": "specialist",
+      "department": "operaciones-entrega",
+      "parent": "coord-operaciones-entrega",
+      "description": "Coordina preparación de entregas, gates y rollback.",
+      "prompt": "office/roles/release.md",
+      "permission_set": "operator",
+      "skills": [
+        "devops-platform"
+      ],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "deployment"
+      ]
+    },
+    {
+      "id": "documentacion",
+      "kind": "specialist",
+      "department": "operaciones-entrega",
+      "parent": "coord-operaciones-entrega",
+      "description": "Mantiene documentación técnica y procedimientos verificables.",
+      "prompt": "office/roles/documentacion.md",
+      "permission_set": "implementer",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "coord-negocio-gobernanza",
+      "kind": "coordinator",
+      "department": "negocio-gobernanza",
+      "parent": "directora",
+      "description": "Coordina negocio-gobernanza, sus especialistas y entregas verificables.",
+      "prompt": "office/roles/coord-negocio-gobernanza.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "marketing",
+      "kind": "specialist",
+      "department": "negocio-gobernanza",
+      "parent": "coord-negocio-gobernanza",
+      "description": "Define posicionamiento, campañas y medición comercial.",
+      "prompt": "office/roles/marketing.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "web_research"
+      ]
+    },
+    {
+      "id": "social-contenido",
+      "kind": "specialist",
+      "department": "negocio-gobernanza",
+      "parent": "coord-negocio-gobernanza",
+      "description": "Prepara contenido y comunicación para canales sociales.",
+      "prompt": "office/roles/social-contenido.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "communication"
+      ]
+    },
+    {
+      "id": "finanzas",
+      "kind": "specialist",
+      "department": "negocio-gobernanza",
+      "parent": "coord-negocio-gobernanza",
+      "description": "Evalúa costes, presupuestos y sostenibilidad financiera.",
+      "prompt": "office/roles/finanzas.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "legal",
+      "kind": "specialist",
+      "department": "negocio-gobernanza",
+      "parent": "coord-negocio-gobernanza",
+      "description": "Evalúa riesgos legales, privacidad y gobernanza.",
+      "prompt": "office/roles/legal.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "web_research"
+      ]
+    },
+    {
+      "id": "experiencia-cliente",
+      "kind": "specialist",
+      "department": "negocio-gobernanza",
+      "parent": "coord-negocio-gobernanza",
+      "description": "Analiza soporte, experiencia del cliente y oportunidades de mejora.",
+      "prompt": "office/roles/experiencia-cliente.md",
+      "permission_set": "readonly",
+      "skills": [],
+      "capabilities": [
+        "repository",
+        "knowledge",
+        "communication"
+      ]
+    }
+  ]
+}

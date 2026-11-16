@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "handoff",
+  "type": "object",
+  "required": [
+    "from",
+    "to",
+    "task_id",
+    "context_summary",
+    "scope",
+    "artifacts",
+    "evidence",
+    "gate_status",
+    "risks",
+    "next_action"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "gate_status": { "const": "pass" } },
+        "required": ["gate_status"]
+      },
+      "then": {
+        "properties": {
+          "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "from": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "gate_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "pass",
+        "fail",
+        "waived"
+      ]
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

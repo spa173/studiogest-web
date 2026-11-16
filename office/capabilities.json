@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "capabilities": [
+    {
+      "id": "repository",
+      "description": "Logical capability: repository. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Git",
+        "GitHub"
+      ]
+    },
+    {
+      "id": "work_tracking",
+      "description": "Logical capability: work_tracking. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Linear"
+      ]
+    },
+    {
+      "id": "knowledge",
+      "description": "Logical capability: knowledge. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Notion",
+        "repository documentation"
+      ]
+    },
+    {
+      "id": "database",
+      "description": "Logical capability: database. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Neon",
+        "Postgres"
+      ]
+    },
+    {
+      "id": "web_research",
+      "description": "Logical capability: web_research. Availability must be detected; no connection is implied.",
+      "providers": [
+        "browser",
+        "web search"
+      ]
+    },
+    {
+      "id": "design_source",
+      "description": "Logical capability: design_source. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Figma"
+      ]
+    },
+    {
+      "id": "communication",
+      "description": "Logical capability: communication. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Slack"
+      ]
+    },
+    {
+      "id": "observability",
+      "description": "Logical capability: observability. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Datadog"
+      ]
+    },
+    {
+      "id": "deployment",
+      "description": "Logical capability: deployment. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Vercel"
+      ]
+    },
+    {
+      "id": "product_analytics",
+      "description": "Logical capability: product_analytics. Availability must be detected; no connection is implied.",
+      "providers": [
+        "Mixpanel",
+        "Amplitude"
+      ],
+      "selection": "choose_one"
+    }
+  ]
+}
