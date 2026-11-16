@@ -27,6 +27,7 @@
 <!-- FILA DE MÉTRICAS CLAVE (4 KPI Bento Cards) -->
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
   
+  {% if can_view_financial_dashboard %}
   <!-- KPI 1: Ventas del Día -->
   <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-secondary/40 transition-colors">
     <div class="flex items-center justify-between mb-2">
@@ -54,6 +55,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- KPI 2: Citas de Hoy -->
   <div class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/30 shadow-sm flex flex-col justify-between hover:border-secondary/40 transition-colors">
@@ -169,6 +171,7 @@
 
           <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-outline-variant/20">
             <span class="font-headline text-sm font-bold text-on-surface">{{ app.price_cop_formatted }}</span>
+            {% if request.user.is_admin or app.professional.user_id == request.user.id %}
             <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline">
               {% csrf_token %}
               <button type="submit" class="px-3 py-1.5 bg-secondary text-on-secondary rounded-lg text-xs font-semibold hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer shadow-sm">
@@ -176,6 +179,7 @@
                 <span>Atender</span>
               </button>
             </form>
+            {% endif %}
           </div>
 
         </div>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recibo {{ sale.receipt_number }} - StudioGest</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #111; background: #fff; }
+    .receipt { max-width: 720px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 24px; }
+    h2 { margin: 20px 0 8px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+    .muted { color: #555; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-top: 12px; }
+    .meta div { font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+    th, td { border-bottom: 1px solid #e5e5e5; padding: 8px 4px; text-align: left; vertical-align: top; }
+    th { font-weight: 600; }
+    .num { text-align: right; white-space: nowrap; }
+    .total-row td { font-weight: 700; border-top: 2px solid #333; border-bottom: none; }
+    .actions { margin: 0 0 16px; display: flex; gap: 8px; }
+    .btn { display: inline-block; padding: 8px 14px; border: 1px solid #444; border-radius: 8px; background: #fff; color: #111; text-decoration: none; cursor: pointer; font-size: 14px; }
+    .btn-primary { background: #111; color: #fff; border-color: #111; }
+    @media print {
+      body { margin: 0; }
+      .actions { display: none; }
+      .receipt { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="actions">
+      <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+      <a href="{% url 'sales:index' %}" class="btn">Volver a ventas</a>
+    </div>
+
+    <h1>StudioGest</h1>
+    <div class="muted">Comprobante de venta</div>
+
+    <div class="meta">
+      <div><strong>Comprobante:</strong> {{ sale.receipt_number }}</div>
+      <div><strong>Número de venta:</strong> #{{ sale.pk }}</div>
+      <div><strong>Fecha y hora:</strong> {{ sale.created_at|date:"Y-m-d H:i" }}</div>
+      <div><strong>Atendido por:</strong> {{ sale.user }}</div>
+      <div><strong>Estado:</strong> {{ sale.get_status_display }}</div>
+      <div><strong>Cliente:</strong> {% if sale.customer %}{{ sale.customer }}{% else %}—{% endif %}</div>
+      <div><strong>Medio de pago:</strong> {{ sale.get_payment_method_display }}</div>
+      <div><strong>Cita cobrada:</strong> {% if sale.appointment %}#{{ sale.appointment.pk }} - {{ sale.appointment }}{% else %}—{% endif %}</div>
+      <div><strong>Sesión de caja:</strong> {% if sale.cash_session %}#{{ sale.cash_session.pk }} ({{ sale.cash_session.opened_at|date:"Y-m-d H:i" }}){% else %}—{% endif %}</div>
+    </div>
+
+    <h2>Detalles</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Ítem</th>
+          <th class="num">Cantidad</th>
+          <th class="num">Precio unitario</th>
+          <th class="num">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for detail in sale.details.all %}
+        <tr>
+          <td>{{ detail.get_detail_type_display }}</td>
+          <td>{% if detail.service %}{{ detail.service }}{% elif detail.product %}{{ detail.product }}{% else %}—{% endif %}</td>
+          <td class="num">{{ detail.quantity }}</td>
+          <td class="num">${{ detail.unit_price }}</td>
+          <td class="num">${{ detail.subtotal }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted">Sin detalles registrados.</td></tr>
+        {% endfor %}
+        <tr class="total-row">
+          <td colspan="4" class="num">Total</td>
+          <td class="num">${{ sale.total }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Observaciones</h2>
+    <div>{% if sale.notes %}{{ sale.notes|linebreaksbr }}{% else %}<span class="muted">Sin observaciones.</span>{% endif %}</div>
+  </div>
+</body>
+</html>

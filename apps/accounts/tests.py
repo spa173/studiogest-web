@@ -186,6 +186,12 @@ class LoginLogoutTests(TestCase):
         self.assertRedirects(response, reverse('accounts:login'))
         self.assertNotIn('_auth_user_id', self.client.session)
 
+    def test_logout_get_is_rejected_and_does_not_close_session(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('accounts:logout'))
+        self.assertEqual(response.status_code, 405)
+        self.assertIn('_auth_user_id', self.client.session)
+
 
 class CreateInitialUsersTests(TestCase):
     def test_creates_admin_and_worker_with_default_development_passwords(self):

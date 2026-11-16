@@ -259,7 +259,7 @@ def test_model_rejects_invalid_or_incomplete_pricing_snapshot(pricing_booking, c
     assert not Appointment.objects.exists()
 
 
-def test_staff_worker_cannot_edit_prices_in_django_admin(client, pricing_booking):
+def test_staff_worker_cannot_access_or_edit_appointment_in_django_admin(client, pricing_booking):
     _, data, _, worker = pricing_booking
     appointment = _book(client, data)
     from django.contrib.auth.models import Permission
@@ -271,7 +271,9 @@ def test_staff_worker_cannot_edit_prices_in_django_admin(client, pricing_booking
         **data, 'end_time': '11:30', 'status': 'CONFIRMADA', 'price_cop': '1',
         'adjusted_price_cop': '1', 'discount_type': 'PERCENT', 'discount_value': '100',
     })
-    assert response.status_code == 302
+    assert response.status_code in (302, 403)
+    if response.status_code == 302:
+        assert reverse('admin:login') in response.url
     appointment.refresh_from_db()
     assert appointment.price_cop == 250000
     assert appointment.adjusted_price_cop == 250000

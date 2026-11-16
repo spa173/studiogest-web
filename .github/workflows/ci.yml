@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,6 +26,8 @@ jobs:
     steps:
     - name: Descargar repositorio
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Configurar Python
       uses: actions/setup-python@v5
@@ -44,11 +53,14 @@ jobs:
     - name: Comprobar configuración de pruebas
       run: python manage.py check --settings=config.settings_test
 
+    - name: Comprobar migraciones pendientes
+      run: python manage.py makemigrations --check --dry-run --settings=config.settings_test
+
     - name: Ejecutar pruebas automáticas con cobertura
       run: python -m pytest --cov=apps --cov-report=term-missing --cov-report=xml
 
     - name: Ejecutar pruebas de frontend (Node)
-      run: node --test apps/inventory/frontend_test.cjs apps/sales/navigation_test.cjs apps/appointments/pricing_frontend_test.cjs
+      run: npm run test:frontend
 
     - name: Subir reporte de cobertura
       uses: actions/upload-artifact@v4
@@ -57,7 +69,8 @@ jobs:
         path: coverage.xml
 
     - name: Subir análisis y cobertura a SonarCloud
-      if: github.event_name == 'push'
-      uses: SonarSource/sonarcloud-github-action@v4
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

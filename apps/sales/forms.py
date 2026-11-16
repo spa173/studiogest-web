@@ -7,7 +7,7 @@ from customers.models import Customer
 from inventory.models import Product
 from services.models import Service
 
-from .models import CashRegisterSession, PaymentMethod, Sale, SaleDetail, SaleDetailType
+from .models import CashRegisterSession, PaymentMethod, Sale, SaleDetail, SaleDetailType, SaleStatus
 
 CLASE_INPUT = (
     'w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant '
@@ -15,6 +15,25 @@ CLASE_INPUT = (
     'focus:outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 '
     'transition-all font-medium'
 )
+
+
+class CashRegisterSessionCloseForm(forms.Form):
+    counted_cash = forms.DecimalField(
+        min_value=Decimal('0'),
+        label='Efectivo contado',
+        widget=forms.NumberInput(attrs={'class': CLASE_INPUT, 'min': '0', 'step': '1'}),
+        error_messages={
+            'required': 'Ingresa el efectivo contado al cierre.',
+            'min_value': 'El efectivo contado no puede ser negativo.',
+            'invalid': 'Ingresa un monto válido.',
+        },
+    )
+
+    def clean_counted_cash(self):
+        value = self.cleaned_data['counted_cash']
+        if value < 0:
+            raise forms.ValidationError('El efectivo contado no puede ser negativo.')
+        return value
 
 
 class CashRegisterSessionForm(forms.ModelForm):
@@ -53,9 +72,11 @@ class SaleForm(forms.Form):
     )
     cash_session = forms.ModelChoiceField(
         queryset=CashRegisterSession.objects.filter(status=CashRegisterSession.Status.OPEN).order_by('-opened_at'),
-        required=False,
+        required=True,
         label='Sesión de caja',
+        empty_label='Selecciona una sesión de caja abierta',
         widget=forms.Select(attrs={'class': CLASE_INPUT}),
+        error_messages={'required': 'Debes seleccionar una sesión de caja abierta.'},
     )
     notes = forms.CharField(
         required=False,
@@ -65,10 +86,13 @@ class SaleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Solo citas no cobradas y no canceladas pueden cobrarse.
+        # Solo citas no cobradas (venta registrada) y no canceladas pueden cobrarse.
         self.fields['appointment'].queryset = Appointment.objects.exclude(
             status=Appointment.Status.CANCELLED,
-        ).exclude(sale__isnull=False).select_related('customer', 'service').order_by('-date', '-start_time')
+        ).exclude(sale__status=SaleStatus.REGISTERED).select_related('customer', 'service').order_by('-date', '-start_time')
+        open_sessions = self.fields['cash_session'].queryset
+        if not self.is_bound and not self.initial.get('cash_session') and open_sessions.count() == 1:
+            self.initial['cash_session'] = open_sessions.first()
 
     def clean(self):
         cleaned = super().clean()

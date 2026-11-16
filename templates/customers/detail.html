@@ -12,10 +12,35 @@
     <p class="text-sm text-on-surface-variant">{{ cliente.phone }}{% if cliente.email %} · {{ cliente.email }}{% endif %}</p>
   </div>
 
-  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-2">
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
     <h2 class="font-headline text-lg font-bold text-on-surface">Datos del cliente</h2>
     <p class="text-sm text-on-surface-variant">{{ cliente.notes|default:'Sin notas.' }}</p>
-    <p class="text-sm">VIP: {% if cliente.is_vip %}Sí{% else %}No{% endif %} · Consentimiento de datos: {% if cliente.data_consent %}Sí{% else %}No{% endif %}</p>
+    <p class="text-sm">VIP: {% if cliente.is_vip %}Sí{% else %}No{% endif %}</p>
+    <div class="rounded-xl border border-outline-variant/30 bg-surface-container-low/40 p-3 space-y-1">
+      <p class="text-sm font-medium text-on-surface">
+        Autorización de tratamiento de datos personales (Ley 1581):
+        {% if cliente.data_consent %}
+          <span class="text-secondary">Vigente</span>
+        {% else %}
+          <span class="text-on-surface-variant">No vigente / no registrada</span>
+        {% endif %}
+      </p>
+      <p class="text-xs text-on-surface-variant">
+        Cubre el registro y uso operativo de datos de contacto e historial de atención para agendar, comunicar y gestionar servicios en StudioGest.
+      </p>
+      {% if cliente.data_consent_at or cliente.data_consent_method or cliente.data_consent_recorded_by or cliente.data_consent_notes %}
+      <div class="text-xs text-on-surface-variant space-y-0.5 pt-1">
+        <p class="font-semibold text-on-surface">Evidencia básica registrada</p>
+        {% if cliente.data_consent_at %}<p>Fecha/hora: {{ cliente.data_consent_at|date:"Y-m-d H:i" }}</p>{% endif %}
+        {% if cliente.data_consent_method %}<p>Medio: {{ cliente.get_data_consent_method_display }}</p>{% endif %}
+        {% if cliente.data_consent_recorded_by %}<p>Registrado por: {{ cliente.data_consent_recorded_by.get_username }}</p>{% endif %}
+        {% if cliente.data_consent_notes %}<p>Observaciones: {{ cliente.data_consent_notes }}</p>{% endif %}
+        {% if not cliente.data_consent %}<p>Estado actual: revocado/no vigente; se conserva la evidencia del último otorgamiento.</p>{% endif %}
+      </div>
+      {% else %}
+      <p class="text-xs text-on-surface-variant">Sin evidencia registrada aún. Puedes capturarla al editar el cliente.</p>
+      {% endif %}
+    </div>
     <a href="{{ whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">
       <span class="material-symbols-outlined text-base">chat</span> WhatsApp
     </a>
@@ -53,6 +78,7 @@
     {% endif %}
   </section>
 
+  {% if can_view_sales_history %}
   <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
     <h2 class="font-headline text-lg font-bold text-on-surface">Historial de compras</h2>
     {% if sales %}
@@ -86,5 +112,6 @@
     <p class="text-sm text-on-surface-variant">Sin compras registradas.</p>
     {% endif %}
   </section>
+  {% endif %}
 </div>
 {% endblock %}

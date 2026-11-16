@@ -65,6 +65,13 @@ Desktop.ini
 /tools/ensayar_migracion_mysql.py
 /tools/test_ensayo_sql.py
 
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+coverage/
+htmlcov/
+
 # Node / Tailwind CSS build
 node_modules/
 

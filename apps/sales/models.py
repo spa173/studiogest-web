@@ -44,6 +44,14 @@ class CashRegisterSession(models.Model):
         'Base inicial en efectivo', max_digits=12, decimal_places=0,
         default=Decimal('0'), validators=[MinValueValidator(0)],
     )
+    counted_cash = models.DecimalField(
+        'Efectivo contado al cierre', max_digits=12, decimal_places=0,
+        null=True, blank=True, validators=[MinValueValidator(0)],
+    )
+    cash_difference = models.DecimalField(
+        'Diferencia de efectivo', max_digits=12, decimal_places=0,
+        null=True, blank=True,
+    )
     status = models.CharField(
         'Estado', max_length=10, choices=Status.choices, default=Status.OPEN,
     )
@@ -108,6 +116,13 @@ class Sale(models.Model):
     @property
     def is_registered(self):
         return self.status == SaleStatus.REGISTERED
+
+    @property
+    def receipt_number(self):
+        """Identificador operativo estable del comprobante basado en el ID existente (no fiscal)."""
+        if self.pk is None:
+            return 'V-000000'
+        return f'V-{self.pk:06d}'
 
 
 class SaleDetail(models.Model):

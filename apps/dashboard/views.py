@@ -1,11 +1,12 @@
-import datetime
+﻿import datetime
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from appointments.models import Appointment
-from services.models import Professional, Service
+from services.models import Professional
 from customers.models import Customer
 from inventory.models import Product
 from django.db.models import F
+from accounts.permissions import can_view_financial_dashboard
 
 
 @login_required
@@ -24,8 +25,9 @@ def dashboard_view(request):
     completed_count = completed_appointments.count()
 
     # 2. Ventas calculadas del día (Suma de servicios atendidos hoy)
-    total_sales_cop = sum(app.price_cop for app in completed_appointments)
-    projected_sales_cop = sum(app.price_cop for app in today_appointments)
+    can_view_financial = can_view_financial_dashboard(request.user)
+    total_sales_cop = sum(app.price_cop for app in completed_appointments) if can_view_financial else 0
+    projected_sales_cop = sum(app.price_cop for app in today_appointments) if can_view_financial else 0
 
     # 3. Próximas citas de hoy ordenadas por hora
     upcoming_appointments = today_appointments.filter(
@@ -61,6 +63,7 @@ def dashboard_view(request):
         'today': today,
         'today_count': today_count,
         'completed_count': completed_count,
+        'can_view_financial_dashboard': can_view_financial,
         'total_sales_cop': total_sales_cop,
         'total_sales_formatted': f"${int(total_sales_cop):,} COP".replace(',', '.'),
         'projected_sales_formatted': f"${int(projected_sales_cop):,} COP".replace(',', '.'),

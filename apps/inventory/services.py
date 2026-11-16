@@ -112,11 +112,14 @@ def _record_entry(product, data, user, key, fingerprint, mode, values):
         presentation=product.presentation, created_by=user)
 
 
+STOCK_UPDATE_ERROR = 'No se pudo actualizar el stock de forma segura.'
+
+
 def _increase_stock(product, quantity):
     updated = Product.objects.filter(pk=product.pk, stock__lte=MAX_STOCK-quantity).update(
         stock=F('stock') + quantity)
     if updated != 1:
-        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+        raise ValidationError(STOCK_UPDATE_ERROR)
 
 
 @transaction.atomic
@@ -154,7 +157,31 @@ def consume_stock(*, product, quantity, user=None):
         pk=locked.pk, stock__gte=quantity
     ).update(stock=F('stock') - quantity)
     if updated != 1:
-        raise ValidationError('No se pudo actualizar el stock de forma segura.')
+        raise ValidationError(STOCK_UPDATE_ERROR)
+
+    locked.refresh_from_db(fields=['stock'])
+    return locked
+
+
+@transaction.atomic
+def restore_stock(*, product, quantity, user=None):
+    """Restaura stock de forma atómica, utilizado al anular ventas."""
+    product_id = getattr(product, 'pk', product)
+    quantity = Decimal(str(quantity))
+    if quantity <= 0:
+        raise ValidationError('La cantidad a restaurar debe ser mayor que cero.')
+
+    locked = Product.objects.select_for_update().get(pk=product_id)
+    if not locked.is_active:
+        raise ValidationError('No se puede restaurar stock de un producto inactivo.')
+    if locked.stock + quantity > MAX_STOCK:
+        raise ValidationError('La restauración supera el límite de existencias del producto.')
+
+    updated = Product.objects.filter(
+        pk=locked.pk, stock__lte=MAX_STOCK - quantity
+    ).update(stock=F('stock') + quantity)
+    if updated != 1:
+        raise ValidationError(STOCK_UPDATE_ERROR)
 
     locked.refresh_from_db(fields=['stock'])
     return locked

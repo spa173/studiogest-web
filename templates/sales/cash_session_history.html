@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de caja - StudioGest{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="pb-3 border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <a href="{% url 'sales:index' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span> Volver a ventas
+      </a>
+      <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">Historial de sesiones de caja</h1>
+      <p class="mt-1 text-sm text-on-surface-variant">Consulta sesiones abiertas y cerradas con su arqueo detallado y ventas asociadas.</p>
+    </div>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6">
+    {% if session_rows %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant border-b border-outline-variant/30">
+            <th class="py-2 pr-3">Sesión</th>
+            <th class="py-2 pr-3">Estado</th>
+            <th class="py-2 pr-3">Apertura / Cierre</th>
+            <th class="py-2 pr-3 text-right">Base</th>
+            <th class="py-2 pr-3 text-right">Ventas efectivo</th>
+            <th class="py-2 pr-3 text-right">Ventas tarjeta</th>
+            <th class="py-2 pr-3 text-right">Ventas transferencia</th>
+            <th class="py-2 pr-3 text-right">Total ventas</th>
+            <th class="py-2 pr-3 text-right">Efectivo esperado</th>
+            <th class="py-2 pr-3 text-right">Contado</th>
+            <th class="py-2 pr-3 text-right">Diferencia</th>
+            <th class="py-2">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in session_rows %}
+          {% with session=row.session totals=row.totals %}
+          <tr class="border-b border-outline-variant/20 last:border-b-0 align-top">
+            <td class="py-3 pr-3">
+              <div class="font-medium">#{{ session.pk }}</div>
+              <div class="text-on-surface-variant">{{ session.opened_by }}</div>
+              <div class="text-on-surface-variant">{{ row.sales_count }} venta(s) registrada(s)</div>
+            </td>
+            <td class="py-3 pr-3">
+              {% if session.status == 'ABIERTA' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-secondary/10 text-secondary">Abierta</span>
+              {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-surface-container-high text-on-surface-variant">Cerrada</span>
+              {% endif %}
+            </td>
+            <td class="py-3 pr-3">
+              <div>{{ session.opened_at|date:"Y-m-d H:i" }}</div>
+              <div class="text-on-surface-variant">{% if session.closed_at %}{{ session.closed_at|date:"Y-m-d H:i" }}{% else %}—{% endif %}</div>
+            </td>
+            <td class="py-3 pr-3 text-right">${{ session.opening_cash }}</td>
+            <td class="py-3 pr-3 text-right">${{ totals.cash }}</td>
+            <td class="py-3 pr-3 text-right">${{ totals.card }}</td>
+            <td class="py-3 pr-3 text-right">${{ totals.transfer }}</td>
+            <td class="py-3 pr-3 text-right">${{ row.sales_total }}</td>
+            <td class="py-3 pr-3 text-right font-medium">${{ row.expected_cash }}</td>
+            <td class="py-3 pr-3 text-right">{% if session.counted_cash is not None %}${{ session.counted_cash }}{% else %}—{% endif %}</td>
+            <td class="py-3 pr-3 text-right font-medium {% if session.cash_difference < 0 %}text-error{% elif session.cash_difference > 0 %}text-secondary{% endif %}">{% if session.cash_difference is not None %}${{ session.cash_difference }}{% else %}—{% endif %}</td>
+            <td class="py-3">
+              <a href="{% url 'sales:cash_close' session.pk %}" class="text-secondary font-semibold hover:underline">{% if session.status == 'ABIERTA' %}Cerrar / ver detalle{% else %}Ver arqueo{% endif %}</a>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No hay sesiones de caja registradas.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
