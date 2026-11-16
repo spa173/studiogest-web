@@ -1,4 +1,4 @@
-param([ValidateSet('Registry', 'Contracts', 'Roles', 'OpenCode', 'Codex', 'All')][string] $Section = 'All')
+param([ValidateSet('Registry', 'Contracts', 'Roles', 'OpenCode', 'Codex', 'Compatibility', 'All')][string] $Section = 'All')
 $ErrorActionPreference = 'Stop'
 $kitRoot = Split-Path -Parent $PSScriptRoot
 function Assert-True($Condition, [string] $Message) { if (-not $Condition) { throw $Message } }
@@ -10,6 +10,58 @@ function Assert-Throws([scriptblock] $Action, [string] $Pattern) {
 function Copy-Value($Value) { $Value | ConvertTo-Json -Depth 30 | ConvertFrom-Json }
 Assert-True (Test-Path (Join-Path $PSScriptRoot 'Office.Common.ps1')) 'Missing Office.Common.ps1 and canonical office registry.'
 . (Join-Path $PSScriptRoot 'Office.Common.ps1')
+
+if ($Section -in @('Compatibility', 'All')) {
+    # Legacy commands must consume office/ even when the old prompt tree is absent.
+    $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('office-compatibility-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $sandbox | Out-Null
+    try {
+        foreach ($dir in @('office', 'scripts', 'templates')) { Copy-Item -LiteralPath (Join-Path $kitRoot $dir) -Destination $sandbox -Recurse }
+        $build = Join-Path $sandbox 'scripts/Build-Codex-Agents.ps1'
+        $test = Join-Path $sandbox 'scripts/Test-Equipo.ps1'
+        & (Join-Path $sandbox 'scripts/Build-Office.ps1') -Platform Both | Out-Null
+        $configPath = Join-Path $sandbox 'opencode.jsonc'
+        $configBefore = [IO.File]::ReadAllText($configPath)
+        $openCodePath = Join-Path $sandbox '.opencode/agents/backend.md'
+        $openCodeBefore = [IO.File]::ReadAllText($openCodePath)
+        $warnings = @()
+        $result = @(& $test -Section Registry -WarningVariable warnings -WarningAction SilentlyContinue)
+        Assert-True (($result -join "`n").Contains('PASS: 31 profiles; 4 contracts; 3 permission sets')) 'Legacy test did not run the canonical registry checks.'
+        Assert-True (($warnings -join "`n") -match '(?i)depreca.*Test-Office.Core.ps1') 'Legacy test must name its replacement in a deprecation warning.'
+        $registryPath = Join-Path $sandbox 'office/registry.json'
+        $source = [IO.File]::ReadAllText($registryPath)
+        $invalid = $source | ConvertFrom-Json
+        $invalid.profiles[1].id = 'directora'
+        [IO.File]::WriteAllText($registryPath, ($invalid | ConvertTo-Json -Depth 30))
+        Assert-Throws { & $test -Section Registry -WarningAction SilentlyContinue } 'Expected unique IDs'
+        [IO.File]::WriteAllText($registryPath, $source)
+        $warnings = @()
+        & $build -WarningVariable warnings -WarningAction SilentlyContinue | Out-Null
+        Assert-True (($warnings -join "`n") -match '(?i)depreca.*Build-Office.ps1') 'Legacy build must name its replacement in a deprecation warning.'
+        $agentDir = Join-Path $sandbox '.codex/agents'
+        Assert-True (@(Get-ChildItem -LiteralPath $agentDir -Filter '*.toml' -File).Count -eq 30) 'Legacy build must generate thirty canonical Codex subagents.'
+        Assert-True ([IO.File]::ReadAllText($configPath) -ceq $configBefore -and [IO.File]::ReadAllText($openCodePath) -ceq $openCodeBefore) 'Legacy Codex build changed OpenCode output.'
+        $guidancePath = Join-Path $sandbox 'AGENTS.md'
+        $guidance = [IO.File]::ReadAllText($guidancePath)
+        Assert-True ([regex]::Matches($guidance, '<!-- oficina-unificada:inicio -->').Count -eq 1) 'Legacy build must generate one Director block.'
+        & $build -Check -WarningAction SilentlyContinue | Out-Null
+        $driftPath = Join-Path $agentDir 'backend.toml'
+        [IO.File]::AppendAllText($driftPath, 'manual drift')
+        Assert-Throws { & $build -Check -WarningAction SilentlyContinue } 'drift.*backend.toml'
+        Assert-True ([IO.File]::ReadAllText($driftPath).EndsWith('manual drift')) 'Legacy check repaired drift instead of reporting it.'
+        & $build -WarningAction SilentlyContinue | Out-Null
+        & $build -Check -WarningAction SilentlyContinue | Out-Null
+        Assert-True ([IO.File]::ReadAllText($guidancePath) -ceq $guidance) 'Legacy regeneration changed or duplicated Director guidance.'
+    } finally {
+        $resolved = [IO.Path]::GetFullPath($sandbox)
+        $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        if (-not $resolved.StartsWith($temp, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe cleanup path.' }
+        Remove-Item -LiteralPath $resolved -Recurse -Force
+    }
+    $readme = [IO.File]::ReadAllText((Join-Path $kitRoot 'README.md'))
+    Assert-True ($readme.Contains('office/registry.json') -and $readme -match '(?i)fuente (canónica|única)') 'README must identify office/registry.json as the canonical source.'
+    Write-Output 'PASS: legacy entrypoints delegate to office core; canonical source documented'
+}
 
 if ($Section -in @('OpenCode', 'All')) {
     $rendererPath = Join-Path $PSScriptRoot 'render/Render-OpenCodeAgent.ps1'

@@ -1,81 +1,69 @@
-# Equipo de desarrollo asistido por IA
+# Oficina unificada para Codex y OpenCode
 
-Este repositorio contiene una oficina de software reutilizable para trabajar con **Codex y OpenCode**. Codex o el agente principal de OpenCode coordina; los perfiles especialistas analizan o implementan partes concretas. El equipo comparte los archivos y las reglas del repositorio de trabajo.
+Este repositorio define una sola oficina de **31 perfiles conceptuales**: Dirección, cinco coordinadores y veinticinco especialistas. Convoca únicamente los departamentos necesarios y conserva un responsable por archivo compartido.
 
-## Contenido
+La fuente canónica es [`office/registry.json`](office/registry.json): fija identificadores, jerarquía, departamentos, prompts, permisos, skills y capacidades. Los prompts viven en `office/roles/`, los contratos en `office/contracts/` y las políticas en `office/permission-sets/` y `office/capabilities.json`.
 
-- `.opencode/agents/`: una directora, ocho responsables de departamento y catorce especialistas en español.
-- `AGENTS.md`: reglas comunes para Codex y otros agentes compatibles.
-- `.codex/agents/`: 22 subagentes de proyecto que Codex puede invocar por nombre.
-- `codex/roles/`: prompts fuente de esos subagentes, también copiables como referencia.
-- `scripts/Install-Equipo.ps1`: instala el kit en otro repositorio sin borrar su configuración.
-- `scripts/Build-Codex-Agents.ps1`: regenera los perfiles TOML de Codex cuando cambies los prompts fuente.
-- `docs/`: diseño, plan de instalación y guía operativa.
+`scripts/Build-Office.ps1` genera ambas plataformas desde esa fuente:
 
-La guía de [departamentos, especialistas y delegación](docs/guia-departamentos-y-delegacion.md) explica a quién encargar cada parte y cómo pedir primero un plan de trabajo.
+| Plataforma | Dirección | Perfiles subordinados |
+|---|---|---|
+| Codex | El chat principal recibe el bloque administrado de `AGENTS.md`. | 30 subagentes TOML en `.codex/agents/`: cinco coordinadores y veinticinco especialistas. |
+| OpenCode | `directora` es el agente primario. | 30 subagentes Markdown en `.opencode/agents/`; 31 archivos contando `directora`. |
 
-Los perfiles no contienen claves, no eligen proveedor ni fijan modelo: OpenCode usa el modelo seleccionado en la sesión. Cada producto conserva su propio `AGENTS.md`, historial y cambios.
+Los archivos generados llevan una cabecera con su origen. Edita `office/` y regenera; las verificaciones detectan cambios manuales en las salidas. La plantilla del bloque de Dirección es `templates/AGENTS-oficina.md`; el generador conserva las instrucciones de `AGENTS.md` fuera de sus marcadores.
 
-## Empezar aquí
+## Usar la oficina en este repositorio
 
-### Usar el equipo en este repositorio
+Abre esta carpeta en Codex o OpenCode. En Codex, el chat principal ejerce la Dirección: los perfiles subordinados son subagentes, no chats independientes. En OpenCode, selecciona `directora` en una sesión nueva; `opencode debug agents` permite inspeccionar los perfiles que reconoce tu instalación.
 
-1. Abre esta carpeta en OpenCode. En una sesión nueva, selecciona **Directora** como agente principal. Si la sesión ya estaba abierta, crea una nueva o cambia el agente desde el selector.
-2. Selecciona un modelo que ya te funcione en OpenCode.
-3. Describe el resultado que quieres. La directora revisará las reglas, propondrá un plan breve cuando haga falta y decidirá qué especialista conviene consultar.
-4. Revisa los cambios en Git antes de aceptarlos.
+La ruta de trabajo es **Dirección → coordinador → especialista**. OpenCode configura `experimental.subagent_depth = 2`. Ningún perfil fija un modelo o proveedor; hereda la selección de la sesión. En Codex, los subagentes también heredan los permisos efectivos del entorno: sus instrucciones no crean un sandbox separado.
 
-Para confirmar qué perfiles reconoce OpenCode, abre una terminal en esta carpeta y ejecuta `opencode debug agents`.
+La [guía de departamentos y delegación](docs/guia-departamentos-y-delegacion.md) detalla las rutas, entregables y ejemplos de encargo.
 
-### Usarlo en otro proyecto
+## Generar y verificar
 
-Desde PowerShell, instala el kit en la carpeta del proyecto:
+Necesitas PowerShell 7 o posterior. Desde la raíz del kit:
 
 ```powershell
-& "<ruta-a-este-kit>\scripts\Install-Equipo.ps1" -Target "<ruta-del-proyecto>"
+pwsh -NoProfile -File scripts/Build-Office.ps1 -Platform Both
+pwsh -NoProfile -File scripts/Build-Office.ps1 -Platform Both -Check
+pwsh -NoProfile -File scripts/Test-Office.Core.ps1
 ```
 
-Ejemplo:
+`-Platform` acepta `Codex`, `OpenCode` o `Both`. `-Check` detecta deriva sin escribir archivos. La suite Core valida registro, contratos, prompts, generación determinista, conservación de instrucciones y compatibilidad de los comandos antiguos. Puedes ejecutar una sección: `Registry`, `Contracts`, `Roles`, `OpenCode`, `Codex` o `Compatibility` mediante `-Section`.
 
-```powershell
-& "C:\Users\camilo\Documents\Codex\2026-11-13\como-creamos\outputs\equipo-agentes\scripts\Install-Equipo.ps1" -Target "C:\ruta\a\mi-proyecto"
-```
+Se conservan dos entrypoints con aviso de deprecación:
 
-Después, abre **la carpeta del proyecto** en OpenCode o Codex. En OpenCode usa `directora`. En Codex, el agente principal lee `AGENTS.md` y puede delegar por nombre a agentes como `desarrollo`, `diseno`, `legal` o `calidad`; las definiciones del proyecto se cargan desde `.codex/agents/` y sus prompts de referencia están en `.codex/roles/`.
+| Comando heredado | Equivalente canónico |
+|---|---|
+| `scripts/Test-Equipo.ps1` | `scripts/Test-Office.Core.ps1`; admite `-Section` y ejecuta todo por defecto. |
+| `scripts/Build-Codex-Agents.ps1` | `scripts/Build-Office.ps1 -Platform Codex`; admite `-Check`. |
 
-El instalador:
+El generador heredado conserva su invocación sin argumentos y su alcance Codex. Ahora produce los treinta subagentes y el bloque de Dirección desde `office/`; ya no consume `codex/roles/`.
 
-- copia `.opencode/agents/` sin modificar perfiles con el mismo nombre; si hay conflicto, se detiene y pide `-Force` explícito;
-- instala subagentes Codex en `.codex/agents/` y sus prompts en `.codex/roles/`, con la misma protección contra sobrescritura;
-- crea `.opencode/opencode.jsonc` solo si no existe;
-- añade el bloque de reglas de oficina a `AGENTS.md` sin duplicarlo y conserva el contenido existente.
+## Departamentos
 
-Antes de usar `-Force`, revisa los archivos de agente que ya existan: serán reemplazados por las versiones del kit.
+| Coordinador | Especialistas |
+|---|---|
+| `coord-producto-experiencia` | `producto`, `diseno-web`, `ux-accesibilidad`, `seo-growth`, `data-analytics` |
+| `coord-ingenieria-datos` | `arquitectura`, `frontend`, `backend`, `mobile`, `datos-ia`, `integraciones` |
+| `coord-calidad-seguridad` | `qa`, `seguridad`, `auditoria`, `rendimiento` |
+| `coord-operaciones-entrega` | `devops`, `sre-observabilidad`, `forensics`, `release`, `documentacion` |
+| `coord-negocio-gobernanza` | `marketing`, `social-contenido`, `finanzas`, `legal`, `experiencia-cliente` |
 
-## Equipo
+`diseno-web` concentra dirección de arte, movimiento e imágenes y utiliza `taste-skill` como autoridad visual. `frontend` usa `frontend-developer` para arquitectura de cliente. El registro declara las skills requeridas; la generación Core no las instala ni confirma conexiones externas. Si falta una capacidad o skill necesaria, el agente debe declararlo y proponer una alternativa verificable.
 
-Los ocho departamentos son Desarrollo, Diseño, Diseño Web, Marketing, Social y Contenido, Finanzas, Operaciones y Legal. Cada uno cuenta con un perfil de coordinación. Se conectan con catorce especialistas: Producto, Arquitectura, UX Web, Frontend Web, Dirección de Arte, Movimiento, Imágenes, Backend, Calidad, Seguridad, Plataforma/DevOps, Datos e IA, Documentación y Experiencia del cliente. La directora general coordina las tareas que cruzan departamentos.
+## Instalación en otros proyectos
 
-### Diseño Web: requiere la skill `taste-skill`
+El Core genera y verifica la oficina local. La migración e instalación segura global o por proyecto pertenece al plan posterior: respaldo, inventario exacto, conflictos y restauración requieren su propia validación.
 
-El departamento Diseño Web (`diseno-web` y sus especialistas) trabaja con la skill `taste-skill` (ver la [guía de Diseño Web](docs/guia-diseno-web.md)), que **no se incluye en este kit**: debes instalarla globalmente (o pedir a tu agente que la instale) copiando `taste-skill/` a tu carpeta global de skills, por ejemplo `~/.agents/skills/taste-skill/` (OpenCode) o `~/.claude/skills/taste-skill/` (Claude Code). Sin la skill, los perfiles web se detienen y lo declaran; no improvisan el sistema de diseño.
+`scripts/Install-Equipo.ps1`, `codex/roles/` y `templates/AGENTS-equipo.md` son recursos heredados pendientes de esa migración. El instalador conserva el contrato anterior y actualmente rechaza el inventario unificado; no es el procedimiento para instalar esta oficina. No elimines perfiles a mano por patrón ni uses las guías históricas como garantía de instalación actual.
 
-Si tu proyecto ya tenía instalada una versión anterior de este kit, el instalador **no borra** los archivos retirados: `.opencode/agents/ux-ui.md`, `.opencode/agents/frontend.md`, `.codex/roles/ux-ui.md`, `.codex/roles/frontend.md`, `.codex/agents/ux-ui.toml` y `.codex/agents/frontend.toml`; bórralos manualmente para evitar que tu agente los invoque por error.
+## Encargos para empezar
 
-El TikTok presenta 42 skills en Claude Code. Este kit lleva los ocho departamentos a perfiles y encargos compatibles con OpenCode y Codex; no copia literalmente las instrucciones internas de Claude Code.
+- “Directora, analiza este proyecto sin cambiar archivos. Pide a Ingeniería y Datos una revisión de arquitectura y a Calidad y Seguridad los riesgos principales. Reúne evidencia y límites.”
+- “Directora, agrega validación al formulario. Revisa las convenciones, encarga la implementación a Ingeniería y Datos y la revisión a Calidad y Seguridad. No publiques.”
+- “Directora, prepara primero un plan para la pantalla y su endpoint. Acordemos el contrato y los criterios de aceptación antes de implementar.”
 
-## Tareas recomendadas para probar
-
-- **Solo análisis:** “Directora, revisa este proyecto y dime los tres riesgos técnicos principales. No cambies archivos; consulta a Arquitectura y Seguridad.”
-- **Cambio pequeño:** “Agrega validación de correo al formulario. Revisa primero el patrón existente; implementa y pide a Calidad una revisión enfocada.”
-- **Trabajo dividido:** “Diseña el endpoint y la pantalla de administración. Primero acordemos el contrato; luego divide backend y Frontend Web, y reúne ambos resultados antes de editar archivos compartidos.”
-
-Un agente es un colaborador de IA con instrucciones y herramientas, no una persona autónoma ni un proceso que trabaja continuamente. Tú apruebas alcance, modelo, cambios y acciones externas.
-
-## Validar el kit
-
-```powershell
-& ".\scripts\Test-Equipo.ps1"
-```
-
-El script comprueba los perfiles y valida la configuración JSONC como JSON (este archivo no usa comentarios ni comas finales).
+Cada entrega debe distinguir cambios, verificaciones reales, riesgos y pendientes. Publicar, desplegar, usar credenciales o cambiar servicios externos requiere autorización explícita para esa acción.

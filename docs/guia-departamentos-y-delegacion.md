@@ -1,102 +1,106 @@
-# Guía para trabajar con los departamentos y agentes
+# Guía de departamentos y delegación
 
-La oficina tiene una directora que coordina el trabajo, ocho responsables de departamento y catorce especialistas. No tienes que escoger todos los agentes: empieza con la **Directora** y pídele que proponga quién hace falta. Convoca departamentos o especialistas directamente cuando ya sepas qué necesitas.
+La oficina tiene **31 perfiles conceptuales**: Dirección, cinco coordinadores y veinticinco especialistas. Su única fuente canónica es [`office/registry.json`](../office/registry.json), junto con los prompts en `office/roles/`. Esta guía explica cómo encargar el trabajo; los perfiles generados se actualizan mediante `scripts/Build-Office.ps1`.
 
-## Quién analiza el encargo y decide a quién delegar
+En **Codex**, el chat principal ejerce la Dirección y dispone de **30 subagentes**; `directora` no es un subagente separado. En **OpenCode**, `directora` es el agente primario y coordina **30 subagentes**. Ambas plataformas usan los mismos identificadores y responsabilidades.
 
-Sí existe una coordinadora para eso: **Directora** (`directora` en OpenCode; agente principal en Codex). Su perfil pide aclarar el resultado, identificar riesgos, definir pasos verificables, delegar tareas acotadas e integrar las respuestas.
+## Cómo se reparte un encargo
 
-Para requisitos de producto, la Directora puede pedir apoyo a **Producto** (`producto`). Producto convierte tu idea en problema, objetivo, alcance, exclusiones, casos límite y criterios de aceptación. Para ordenar dependencias técnicas, consulta a **Arquitectura** (`arquitectura`). En conjunto:
+La ruta es **Dirección → coordinador → especialista**. Dirección selecciona los departamentos necesarios; cada coordinador delega únicamente en sus especialistas. Un especialista devuelve necesidades ajenas a su coordinador; los cruces de departamento regresan a Dirección.
 
-1. **Producto** aclara qué hay que resolver y cómo sabremos que quedó bien.
-2. **Arquitectura** identifica dependencias y el orden técnico, si hay cambios de software.
-3. **La Directora** propone fases, asigna cada fase al agente adecuado e indica qué puede avanzar en paralelo.
-4. **Tú revisas el plan** y aclaras o apruebas los pasos que quieras encargar.
-5. **Los agentes asignados** entregan análisis o cambios concretos.
-6. **Calidad** revisa el resultado; **Seguridad** participa si hay cuentas, datos, permisos, pagos o conexiones.
-7. **La Directora** reúne los resultados y te explica qué se hizo y qué queda pendiente.
+Una edición clara puede seguir una ruta corta. Si faltan criterios de aceptación, Producto ayuda a definirlos a través de su coordinador. Arquitectura interviene cuando hace falta acordar componentes, contratos o dependencias. Las tareas que comparten archivos se ejecutan en secuencia; el paralelismo se reserva para encargos independientes con archivos exclusivos.
 
-No hay un agente separado llamado “analista de delegación”: ese trabajo corresponde a la Directora. Para que primero te dé un plan y no empiece a ejecutar, indícalo de forma explícita:
+Para obtener un plan antes de implementar, puedes pedir:
 
-> **Antes de cambiar archivos, analiza estos requisitos. Consulta a Producto para aclarar el alcance. Después dime, paso por paso, qué agente debe intervenir, qué entregable le asignarías, de qué depende su tarea y qué se puede hacer en paralelo. Señala dudas y espera mi aprobación antes de implementar.**
+> Directora, analiza estos requisitos sin cambiar archivos. Pide a Producto y Experiencia que aclare el alcance y a Ingeniería y Datos que identifique dependencias. Dame las fases, el coordinador y especialista responsables, sus entregables y qué puede avanzar en paralelo. Espera mi aprobación antes de implementar.
 
-La secuencia cambia según el encargo. Una campaña no necesita Backend; una pantalla no necesita Finanzas. Pide solo las revisiones que aporten valor.
+## Los cinco departamentos
 
-## Qué hace cada departamento
-
-| Departamento | Úsalo para | Compañeros habituales | Ejemplo de encargo |
-|---|---|---|---|
-| **Desarrollo** (`desarrollo`) | Planear e implementar cambios técnicos en una aplicación. | Arquitectura, Frontend Web, Backend, Calidad, Seguridad, Plataforma/DevOps, Datos e IA, Documentación. | "Implementa el inicio de sesión. Primero revisa la arquitectura y propón el orden de trabajo; no despliegues." |
-| **Diseño** (`diseno`) | Diseñar diseño no digital: marca, identidad, editorial impreso, materiales y sistemas visuales offline. | Marketing y Producto. Las interfaces web delegan en **Diseño Web**. | "Diseña la identidad para el lanzamiento. Revisa primero la marca existente; no toques la interfaz web." |
-| **Diseño Web** (`diseno-web`) | Web e interfaces con dirección de arte verificable (skill `taste-skill`): landing, dashboard, e-commerce, portfolio, app, sistema de diseño web. | Dirección de Arte, UX Web, Movimiento, Imágenes, Frontend Web, Producto. | "Rediseña el hero de la landing. Empieza por el contrato de taste-skill; deja la implementación para después de mi aprobación." |
-| **Marketing** (`marketing`) | Investigar audiencia y posicionamiento, preparar mensajes, SEO y experimentos de conversión. | Social y Contenido, Producto y Datos e IA. | “Propón cómo presentar el Help Desk a pequeñas empresas. Separa datos comprobados de hipótesis.” |
-| **Social y Contenido** (`social-contenido`) | Preparar calendario, guiones, publicaciones y piezas editoriales por canal. | Marketing y Diseño. | “Crea una semana de publicaciones para presentar el producto; entrega borradores y no publiques nada.” |
-| **Finanzas** (`finanzas`) | Preparar presupuestos, precios, proyecciones y escenarios financieros. | Datos e IA y Producto. | “Compara tres precios mensuales. Expón moneda, periodo, supuestos y datos que faltan.” |
-| **Operaciones** (`operaciones`) | Mejorar procesos internos, procedimientos, responsables y métricas; evaluar automatizaciones. | Experiencia del cliente, Plataforma/DevOps, Seguridad y Documentación. | “Mapea cómo atendemos un reporte de error y señala dónde conviene automatizar sin perder controles.” |
-| **Legal** (`legal`) | Revisar contratos, obligaciones, riesgos y documentación de cumplimiento. | Seguridad, Producto y Documentación. | “Resume las obligaciones y riesgos de este contrato; separa lo que dice el texto de lo que estás interpretando.” |
-
-Los departamentos coordinan el trabajo de su área; no reemplazan la aprobación humana. En particular, pide borradores para campañas y documentos legales. No delegues a un agente que publique, firme, pague o cambie cuentas externas.
-
-Finanzas y Legal no tienen un segundo subespecialista dentro del equipo actual: sus responsables hacen el análisis inicial. Puedes pedir a Datos e IA que revise cálculos o fuentes, y a Seguridad o Documentación que apoyen en riesgos técnicos y registros, respectivamente.
-
-## Qué especialista conviene convocar
-
-| Especialista | Convócalo cuando quieras… | Lo que debe entregarte |
+| Departamento y coordinador | Especialistas a su cargo | Cuándo encargarle trabajo |
 |---|---|---|
-| **Producto** (`producto`) | Analizar una necesidad, ordenar requisitos o definir qué significa “terminado”. | Objetivo, alcance, exclusiones, casos límite y criterios de aceptación. |
-| **Arquitectura** (`arquitectura`) | Entender cómo encaja un cambio en el sistema o qué dependencias tiene. | Componentes afectados, opciones, riesgos y orden técnico sugerido. |
-| **Dirección de Arte** (`direccion-arte`) | Elegir perfil, escala tipográfica, tokens y estética de una web. | PERFIL/ESCALA/ESTÉTICA del contrato de `taste-skill`, tokens y dirección de arte; veto sobre escala y estética. |
-| **UX Web** (`ux-web`) | Revisar o diseñar tareas del usuario, navegación, accesibilidad y estados de pantalla web. | Flujo, problemas priorizados y propuesta de interacción; no implementa por defecto. |
-| **Movimiento** (`movimiento`) | Decidir y aplicar animaciones, transiciones y coreografías web. | Niveles 0–3, duraciones, `prefers-reduced-motion` y coreografía nombrada. |
-| **Imágenes** (`imagenes`) | Tratar, proporcionar y optimizar medios (fotos, ilustración, generadas, iconografía). | 4 decisiones por medio, `<picture>`, presupuesto LCP y revisión de imágenes generadas. |
-| **Frontend Web** (`frontend-web`) | Construir o corregir la interfaz web acordada. | Cambios de interfaz en los archivos asignados con auditor `audit_taste.py` en verde. |
-| **Backend** (`backend`) | Construir APIs, servicios, persistencia o integraciones de servidor. | Cambios de servidor, contratos, manejo de errores y verificaciones. |
-| **Calidad** (`calidad`) | Buscar errores, regresiones y casos límite en un cambio. | Hallazgos priorizados, pasos para reproducir y qué no pudo verificarse. |
-| **Seguridad** (`seguridad`) | Revisar autenticación, permisos, secretos, datos sensibles y superficies de red. | Riesgos con evidencia y mitigaciones concretas. |
-| **Plataforma/DevOps** (`plataforma-devops`) | Revisar builds, CI, configuración, despliegues, logs y recuperación. | Comandos y cambios reproducibles, observabilidad y riesgos; no despliega por defecto. |
-| **Datos e IA** (`datos-ia`) | Diseñar procesamiento de datos, evaluación de modelos o integraciones de IA. | Enfoque reproducible con privacidad, coste y alternativa de respaldo. |
-| **Documentación** (`documentacion`) | Crear o actualizar guías técnicas y de uso. | Instrucciones cotejadas con el código y los comandos disponibles. |
-| **Experiencia del cliente** (`experiencia-cliente`) | Revisar onboarding, soporte, errores y recuperación desde el punto de vista del usuario. | Pasos confusos, mensajes y mejoras de ayuda o soporte. |
+| Producto y Experiencia — `coord-producto-experiencia` | `producto`, `diseno-web`, `ux-accesibilidad`, `seo-growth`, `data-analytics` | Alcance, experiencia, dirección visual web, accesibilidad, búsqueda y métricas de producto. |
+| Ingeniería y Datos — `coord-ingenieria-datos` | `arquitectura`, `frontend`, `backend`, `mobile`, `datos-ia`, `integraciones` | Contratos técnicos, cliente, servidor, móvil, pipelines e integración entre sistemas. |
+| Calidad y Seguridad — `coord-calidad-seguridad` | `qa`, `seguridad`, `auditoria`, `rendimiento` | Pruebas, regresiones, controles, seguridad y medición del rendimiento. |
+| Operaciones y Entrega — `coord-operaciones-entrega` | `devops`, `sre-observabilidad`, `forensics`, `release`, `documentacion` | Plataforma, observabilidad, incidentes, preparación de releases y documentación. |
+| Negocio y Gobernanza — `coord-negocio-gobernanza` | `marketing`, `social-contenido`, `finanzas`, `legal`, `experiencia-cliente` | Posicionamiento, contenido, presupuestos, obligaciones y soporte. |
 
-### Ejemplo: diseñar una experiencia web
+## Qué entrega cada especialista
 
-Para definir cómo se usa una función web, encarga el trabajo a **Diseño Web** y pídele que coordine al departamento. Su coordinadora `diseno-web` emite el contrato de `taste-skill` (perfil, escala, estética, movimiento e imagen) y reparte: **Dirección de Arte** fija tokens y escala; **UX Web** analiza el recorrido, los estados vacíos, cargando y error, la accesibilidad y el lenguaje; **Movimiento** e **Imágenes** definen la coreografía y los medios; **Frontend Web** implementa con el auditor en verde. Reúne eso en una propuesta de flujo y pantallas. Cuando apruebes la propuesta, se implementa y después **Calidad** comprueba los casos importantes.
+| Especialista | Entrega esperada |
+|---|---|
+| `producto` | Problema, objetivo, alcance, exclusiones y criterios de aceptación. |
+| `diseno-web` | Estudio de referencias cuando corresponde, contrato de `taste-skill`, tokens, estados, movimiento e imágenes. |
+| `ux-accesibilidad` | Recorridos, accesibilidad, problemas priorizados y propuesta de interacción. |
+| `seo-growth` | Diagnóstico de indexación y descubrimiento, hipótesis y experimentos medibles. |
+| `data-analytics` | Métricas, definición de eventos y análisis con supuestos y fuentes. |
+| `arquitectura` | Contratos técnicos, componentes, alternativas, riesgos y dependencias. |
+| `frontend` | Componentes, estado, formularios, consumo de APIs y verificaciones del cliente. |
+| `backend` | APIs, servicios, persistencia, errores y pruebas relevantes. |
+| `mobile` | Flujos móviles, ciclo de vida, capacidades de plataforma y pruebas aplicables. |
+| `datos-ia` | Pipelines y evaluación reproducible con privacidad, coste y límites. |
+| `integraciones` | Contratos entre sistemas, mapeos y manejo verificable de fallos. |
+| `qa` | Casos y resultados reales de prueba, regresiones y pasos para reproducir. |
+| `seguridad` | Riesgos técnicos con evidencia y mitigaciones; revisión sin editar producto. |
+| `auditoria` | Evaluación independiente de controles, hallazgos y límites de evidencia. |
+| `rendimiento` | Mediciones, cuellos de botella y recomendaciones contrastables. |
+| `devops` | Preparación de build, CI y plataforma con comandos reproducibles. |
+| `sre-observabilidad` | Diagnósticos de fiabilidad, señales, alertas y recuperación propuesta. |
+| `forensics` | Evidencia preservada, cronología y análisis de incidentes. |
+| `release` | Comprobación de preparación, riesgos y rollback; autorización pendiente antes de producción. |
+| `documentacion` | Guías y procedimientos cotejados con el código y comandos disponibles. |
+| `marketing` | Audiencia, posicionamiento y mensajes, separando datos de hipótesis. |
+| `social-contenido` | Borradores, guiones y calendario por canal. |
+| `finanzas` | Presupuestos y escenarios con moneda, periodo, supuestos y fuentes. |
+| `legal` | Obligaciones y riesgos, distinguiendo texto contractual e interpretación. |
+| `experiencia-cliente` | Recorridos de soporte, onboarding, recuperación y mejoras de ayuda. |
 
-Si solo quieres una auditoría de una pantalla existente, puedes convocar directamente a `ux-web`. Si quieres que aparezca implementada en la aplicación, aclara que autorizas también la fase de Frontend Web.
+Dirección de arte, movimiento e imágenes se consolidan en `diseno-web`; la automatización de pruebas pertenece a `qa`. Los prompts anteriores bajo `codex/roles/` son material heredado y no definen agentes de esta oficina.
 
-## Cómo usar los agentes en cada herramienta
+## Ejemplo: diseñar y construir una experiencia web
 
-### OpenCode
+Dirección encarga a `coord-producto-experiencia` los criterios de Producto, la propuesta de `diseno-web` y la revisión de `ux-accesibilidad`. Para web nueva, landing o rediseño significativo, `diseno-web` investiga entre tres y seis referencias actuales y documenta patrones y decisiones en `reference-study.md`. Usa `taste-skill` como autoridad visual; si falta esa skill o no puede investigar, declara la limitación.
 
-1. Abre el proyecto correcto y elige **Directora** como agente principal.
-2. Describe el resultado que buscas y cualquier límite: “solo analizar”, “no modificar archivos” o “espera mi aprobación”.
-3. Si ya sabes qué perfil quieres, selecciónalo en el menú de agentes o menciónalo por su nombre, por ejemplo `@producto` o `@ux-web`.
-4. Revisa el plan y los cambios antes de continuar.
+La implementación se encarga después a `coord-ingenieria-datos`: `frontend` sigue el contrato visual y `frontend-developer`; `backend` resuelve el servidor cuando hace falta. `diseno-web` entrega especificaciones en modo de lectura por defecto. No coordina ni invoca otros especialistas.
 
-### Codex
+`coord-calidad-seguridad` organiza las pruebas y revisiones aplicables. Dirección integra los resultados y explica lo comprobado y lo pendiente. Pedir una auditoría no autoriza corregir producto.
 
-1. Abre el mismo proyecto y crea una sesión nueva para que cargue sus instrucciones y perfiles.
-2. El chat principal de Codex cumple el papel de **Directora**; no busques `directora` como perfil separado. Los perfiles de departamento y especialistas son subagentes, no chats para abrir desde el selector.
-3. Escribe a Codex como coordinador principal. Pídele que use subagentes por nombre, por ejemplo: “Delega el análisis de requisitos a `producto` y la revisión técnica a `arquitectura`; no implementes todavía”.
-4. Para tareas independientes, especifica que las ejecute en paralelo. Si dos tareas tocarían los mismos archivos, pide que las haga en secuencia.
-5. Revisa los resultados de los subagentes en el panel de actividad y pide a Codex un resumen integrado.
+## Entregas, gates y permisos
 
-Los agentes de Codex heredan el modelo y los permisos de la sesión principal. Usar varios puede consumir más tiempo y uso del modelo que una consulta individual.
+Cada encargo acota objetivo, alcance, exclusiones, criterios de aceptación y riesgos. El handoff incluye contexto, artefactos, evidencia, estado del gate y siguiente acción. Los contratos verificables viven en `office/contracts/`; son formatos de intercambio, no una base de datos de tareas.
 
-## Tres encargos listos para copiar
+Un cambio de funcionalidad requiere gates de producto, implementación y QA; diseño si toca UI y seguridad si toca autenticación, permisos, datos, red, pagos o secretos. Documentación es obligatoria cuando cambia una API, operación, flujo o procedimiento. Los estados de gate son `pending`, `pass`, `fail` y `waived`; `pass` exige evidencia y `waived` requiere aprobación humana documentada. Una auditoría entrega hallazgos y revisión del dominio; no implica implementación. Un incidente prioriza preservar evidencia antes de corregir.
+
+OpenCode emite reglas de permisos por perfil. En Codex, los subagentes heredan herramientas y permisos de la sesión; los límites del prompt no crean aislamiento adicional. Ningún perfil fija modelo o proveedor ni obtiene acceso a una herramienta por mencionarla. Toda carencia de capacidad se declara. Publicación, despliegue, gasto y escrituras externas requieren autorización explícita para la acción.
+
+## Usar los perfiles
+
+En OpenCode, abre el proyecto y selecciona `directora`. Describe el resultado, los archivos o límites conocidos y si pides solo análisis. Dirección aplica la jerarquía; `experimental.subagent_depth = 2` permite sus dos saltos.
+
+En Codex, abre el proyecto con sus instrucciones y perfiles cargados. Habla con el chat principal y pide la ruta por coordinadores, por ejemplo: “Encarga el análisis técnico a `coord-ingenieria-datos` para que consulte a `arquitectura`; no implementes todavía”. Puedes seguir la actividad de los subagentes; no necesitas abrir un chat por especialista. Usar varios consume más recursos que una consulta individual: convoca solo los necesarios.
+
+## Encargos listos para copiar
 
 **Solo planificar:**
 
-> Directora, analiza esta idea con Producto. No cambies archivos. Dame requisitos, preguntas pendientes y un plan por fases con el agente, el entregable y las dependencias de cada fase. Espera mi aprobación.
+> Directora, analiza esta idea con Producto y Experiencia. No cambies archivos. Entrega criterios de aceptación, preguntas pendientes y fases con responsables, entregables y dependencias. Espera mi aprobación.
 
-**Diseñar y luego construir:**
+**Diseñar y construir:**
 
-> Directora, quiero mejorar [función]. Primero pide a Producto que defina criterios de aceptación; luego a Diseño Web que proponga el flujo y el contrato visual. No implementes hasta que yo apruebe el diseño. Después, si lo apruebo, divide la implementación entre Frontend Web y Backend y pide una revisión a Calidad.
+> Directora, quiero mejorar [función]. Primero pide a Producto y Experiencia los criterios, el flujo y el contrato visual. No implementes hasta que apruebe la propuesta. Después encarga el cliente y servidor a Ingeniería y Datos y la revisión a Calidad y Seguridad.
 
-**Revisar un problema existente:**
+**Investigar un problema:**
 
-> Directora, investiga [problema] sin modificar archivos. Pide a Experiencia del cliente que describa el recorrido del usuario, a Arquitectura que localice el flujo técnico y a Calidad que proponga cómo reproducirlo. Después reúne evidencia y recomiéndame el siguiente paso.
+> Directora, investiga [problema] sin modificar archivos. Pide a Negocio y Gobernanza el recorrido de Experiencia del cliente, a Ingeniería y Datos el flujo técnico y a Calidad y Seguridad la reproducción. Reúne evidencia y recomienda el siguiente paso.
 
-## Qué esperar de un buen resultado
+## Comprobar el Core
 
-El agente debe indicar qué revisó, qué entregó, qué verificó y qué quedó pendiente. Si su plan depende de una decisión tuya, debe detenerse y preguntarte. Los agentes no trabajan continuamente fuera de la sesión ni sustituyen tu aprobación para publicar, desplegar, firmar o gastar dinero.
+Desde la raíz del kit:
+
+```powershell
+pwsh -NoProfile -File scripts/Test-Office.Core.ps1
+pwsh -NoProfile -File scripts/Build-Office.ps1 -Platform Both -Check
+```
+
+Los nombres heredados `Test-Equipo.ps1` y `Build-Codex-Agents.ps1` delegan al Core y emiten deprecación; no mantienen un segundo roster. El primero admite `-Section`; el segundo conserva generación Codex sin argumentos y añade `-Check`.
+
+La instalación segura en otros proyectos y la migración global están pendientes del plan de instalación. `Install-Equipo.ps1` todavía exige su inventario anterior y no instala el Core actual. Consulta el [README](../README.md) para el alcance local y las verificaciones disponibles.
