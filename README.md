@@ -29,9 +29,13 @@ Necesitas PowerShell 7 o posterior. Desde la raíz del kit:
 pwsh -NoProfile -File scripts/Build-Office.ps1 -Platform Both
 pwsh -NoProfile -File scripts/Build-Office.ps1 -Platform Both -Check
 pwsh -NoProfile -File scripts/Test-Office.Core.ps1
+pwsh -NoProfile -File scripts/Test-Office.Skills.ps1
+pwsh -NoProfile -File scripts/Invoke-TasteAudit.ps1 -Path skills/taste-skill/assets -Profile 3
 ```
 
 `-Platform` acepta `Codex`, `OpenCode` o `Both`. `-Check` detecta deriva sin escribir archivos. La suite Core valida registro, contratos, prompts, generación determinista, conservación de instrucciones y compatibilidad de los comandos antiguos. Puedes ejecutar una sección: `Registry`, `Contracts`, `Roles`, `OpenCode`, `Codex` o `Compatibility` mediante `-Section`.
+
+`Invoke-TasteAudit.ps1` es la vía soportada por este proyecto para ejecutar el auditor importado: rechaza rutas ausentes y directorios sin HTML/CSS auditable, fuerza salida UTF-8 en Windows y conserva el código de salida del auditor. Usa código `0` para una auditoría limpia, `1` cuando hay errores de Taste y `2` cuando falla el preflight. No invoques `audit_taste.py` directamente en las verificaciones del kit.
 
 Se conservan dos entrypoints con aviso de deprecación:
 

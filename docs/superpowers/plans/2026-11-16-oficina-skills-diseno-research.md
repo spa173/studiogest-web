@@ -36,6 +36,8 @@
 - Create: `skills/taste-skill/**` from the approved ZIP
 - Create: `skills/frontend-developer/SKILL.md` from the approved ZIP
 - Create: `scripts/Test-Office.Skills.ps1`
+- Create: `scripts/Invoke-TasteAudit.ps1`
+- Create: `scripts/fixtures/Office.Skill.ConsumerScenarios.json`
 
 **Interfaces:**
 - Produces: `Get-OfficeSkillManifest([string] $SkillsRoot) -> object[]`.
@@ -63,7 +65,7 @@ The approved ZIP references `assets/motion.css` but does not contain it. Add tha
 
 Run: `pwsh -NoProfile -File scripts/Test-Office.Skills.ps1 -Section Imported`
 
-Run: `python skills/taste-skill/scripts/audit_taste.py skills/taste-skill/assets --profile 3`
+Run: `pwsh -NoProfile -File scripts/Invoke-TasteAudit.ps1 -Path skills/taste-skill/assets -Profile 3`
 
 Expected: skill validation passes; the approved clean asset fixture reports zero errors.
 
@@ -301,7 +303,7 @@ Document which agents use each skill and when Design research is mandatory. Do n
 
 Run: `pwsh -NoProfile -File scripts/Test-Office.Skills.ps1`
 
-Run: `python skills/taste-skill/scripts/audit_taste.py skills/taste-skill/assets --profile 3`
+Run: `pwsh -NoProfile -File scripts/Invoke-TasteAudit.ps1 -Path skills/taste-skill/assets -Profile 3`
 
 Expected: PASS; nine skills, four eval classes each, no broken references, no authority conflicts, Taste assets clean.
 

@@ -30,11 +30,11 @@ Verifica la instalación pidiendo «diseña un hero»: la respuesta debe abrir c
 4. `movimiento` define la coreografía (niveles 0–3; 1 momento nivel 3 por vista) e `imagenes` el sistema de medios (tratamiento → proporción → peso → consistencia; LCP con `fetchpriority="high"`). 3 y 4 van en paralelo.
 5. `frontend-web` implementa con los tokens (sin valores a mano) y ejecuta el auditor:
 
-   ```bash
-   python3 scripts/audit_taste.py <ruta-html-css> --profile <1-5>   # o `python` en Windows
+   ```powershell
+   pwsh -NoProfile -File scripts/Invoke-TasteAudit.ps1 -Path <ruta-html-css> -Profile <1-5>
    ```
 
-   **0 errores abiertos es condición de entrega.** Los warnings se corrigen o se justifican en una línea.
+   El runner verifica que la entrada exista y contenga archivos auditables, normaliza UTF-8 en Windows y conserva el código de salida del auditor. **0 errores abiertos es condición de entrega.** Los warnings se corrigen o se justifican en una línea.
 6. `diseno-web` verifica el checklist de terminado de la skill (§11) y firma.
 
 ## Reglas del departamento
@@ -47,6 +47,7 @@ Verifica la instalación pidiendo «diseña un hero»: la respuesta debe abrir c
 ## Verificación
 
 - `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Test-Equipo.ps1` — inventario, frontmatter, TOML en sync, instalación idempotente.
+- `pwsh -NoProfile -File scripts/Test-Office.Skills.ps1` — integridad de skills, referencias y contrato estructural de escenarios.
 - `opencode debug agents` — perfiles que reconoce OpenCode.
 - Smoke manual: pide «diseña el hero de una landing» y comprueba que la respuesta abre con el contrato §0 y delega según el orden anterior.
 

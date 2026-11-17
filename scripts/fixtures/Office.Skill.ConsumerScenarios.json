@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "backend-only-anti-trigger",
+      "kind": "activation",
+      "prompt": "Refactoriza el endpoint POST /api/orders para paginar con cursor; no cambia ninguna interfaz de usuario.",
+      "expected": {
+        "activate": [],
+        "must_not_activate": [
+          "taste-skill"
+        ],
+        "authority": {
+          "visual": "not-applicable"
+        }
+      }
+    },
+    {
+      "id": "frontend-visual-authority-handoff",
+      "kind": "authority",
+      "prompt": "Implementa la carga y caché de una pantalla frontend y decide también su tipografía, paleta, espaciado y movimiento.",
+      "expected": {
+        "activate": [
+          "frontend-developer"
+        ],
+        "must_not_activate": [],
+        "authority": {
+          "client": "frontend-developer",
+          "visual": "taste-skill"
+        }
+      }
+    }
+  ]
+}
