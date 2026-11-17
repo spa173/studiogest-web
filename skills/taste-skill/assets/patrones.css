@@ -1,0 +1,161 @@
+/* ==========================================================================
+   taste-skill / patrones.css
+   Recetas con estados completos. Todas asumen tokens.css cargado.
+   ========================================================================== */
+
+@layer components {
+
+  /* ---------- Botón: 3 estados de acento + foco + loading sin salto ---------- */
+  .btn {
+    --btn-h: var(--control-h, 44px);
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-xs);
+    min-block-size: var(--btn-h); min-inline-size: 6.5rem;        /* evita el salto al cambiar el label */
+    padding-inline: var(--sp-lg);
+    border-radius: var(--r-base, var(--r-md));
+    font-size: var(--fs-base, 1rem); font-weight: 550; line-height: 1;
+    text-decoration: none; cursor: pointer;
+    transition: background-color var(--dur-2) var(--ease-std),
+                border-color var(--dur-2) var(--ease-std),
+                color var(--dur-2) var(--ease-std),
+                transform var(--dur-1) var(--ease-out);
+  }
+  .btn--primary { background: var(--accent); color: var(--on-accent); }
+  .btn--primary:hover { background: var(--accent-hover); }
+  .btn--primary:active { background: var(--accent-active); transform: scale(0.97); }
+  .btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--border-strong); }
+  .btn--ghost:hover { background: var(--surface-2); }
+  .btn--danger { background: var(--danger); color: #fff; }
+  .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+  .btn[data-loading="true"] { color: color-mix(in oklab, currentColor 60%, transparent); }
+  .btn[data-loading="true"]::before {
+    content: ""; inline-size: 1em; block-size: 1em; border-radius: var(--r-full);
+    border: 2px solid currentColor; border-block-start-color: transparent;
+    animation: spin 700ms linear infinite;                     /* 700ms: perceptible, no lento */
+  }
+  @keyframes spin { to { rotate: 360deg; } }
+
+  /* ---------- Card (Perfil 1–2: sin sombra · Perfil 3: elevación) ---------- */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-base, var(--r-md));
+    padding: var(--sp-lg);
+  }
+  [data-profile="3"] .card[data-elevated] { box-shadow: var(--shadow-2); border-color: transparent; }
+  [data-profile="3"] .card[data-elevated]:hover { transform: translateY(-2px); }
+  .card[data-elevated] { transition: transform var(--dur-2) var(--ease-out); } /* la sombra cambia sin transición: animarla cuesta repaint */
+  /* card totalmente clicable con un solo enlace */
+  .card[data-link] { position: relative; }
+  .card[data-link] > a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+
+  /* ---------- Tabla densa con cabecera sticky (Perfil 1) ---------- */
+  .table { inline-size: 100%; font-size: var(--fs-sm); }
+  .table thead th {
+    position: sticky; inset-block-start: 0; z-index: var(--z-sticky);
+    background: var(--surface-1);                   /* OPACO: si no, el contenido se transparenta */
+    box-shadow: inset 0 -1px 0 var(--border);
+    font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--ink-2); text-align: start; padding: var(--sp-sm) var(--sp-sm);
+    white-space: nowrap;
+  }
+  .table td { padding: var(--sp-xs) var(--sp-sm); block-size: var(--row-h, 40px); border-block-end: 1px solid var(--border); }
+  .table tbody tr:hover { background: var(--surface-2); }
+  .table .num { text-align: end; font-variant-numeric: tabular-nums; }
+  .table__actions { position: sticky; inset-inline-end: 0; background: var(--surface-1); }
+
+  /* ---------- Grilla de producto uniforme (Perfil 2) ---------- */
+  .grid-products {
+    display: grid; gap: var(--sp-md);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .media { aspect-ratio: var(--aspect-product, 4 / 5); overflow: hidden; background: var(--surface-media); border-radius: var(--r-base); }
+  .media > img { inline-size: 100%; block-size: 100%; object-fit: cover; object-position: 50% 40%; }
+  .price { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* ---------- KPI (Perfil 1) ---------- */
+  .kpi__value { font-size: var(--fs-kpi); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1; }
+  .kpi__label { font-size: var(--fs-xs); color: var(--ink-2); }
+  .kpi__delta[data-dir="up"] { color: var(--success); }
+  .kpi__delta[data-dir="down"] { color: var(--danger); }
+  .kpi__delta::before { content: "▲"; font-size: 0.7em; margin-inline-end: 4px; } /* el color no va solo */
+
+  /* ---------- Badge / pill — 2px 6px es la excepción permitida a la grilla ---------- */
+  .badge {
+    display: inline-flex; align-items: center; gap: var(--sp-2xs);
+    padding: 2px 6px; border-radius: var(--r-full);
+    font-size: var(--fs-2xs, 0.6875rem); font-weight: 500; line-height: 1.4;
+  }
+  .badge[data-tone="success"] { background: var(--success-soft); color: var(--success); }
+  .badge[data-tone="warning"] { background: var(--warning-soft); color: var(--warning); }
+  .badge[data-tone="danger"]  { background: var(--danger-soft);  color: var(--danger); }
+  .badge[data-tone="info"]    { background: var(--info-soft);    color: var(--info); }
+
+  /* ---------- Skeleton con la proporción final (CLS = 0) ---------- */
+  .skeleton {
+    aspect-ratio: var(--aspect-product, 4 / 5);
+    background: var(--surface-2); border-radius: var(--r-base);
+    animation: pulse 1400ms var(--ease-inout) infinite alternate;
+  }
+  @keyframes pulse { from { opacity: 0.55; } to { opacity: 0.9; } }
+
+  /* ---------- Modal / popover con @starting-style (sin JS de clases) ---------- */
+  dialog.sheet {
+    inline-size: min(480px, calc(100vw - 32px)); margin: auto; padding: var(--sp-lg);
+    background: var(--surface-3); color: var(--ink);
+    border: 0; border-radius: var(--r-lg); box-shadow: var(--shadow-2);
+    opacity: 1; scale: 1;
+    transition: opacity var(--dur-4) var(--ease-out), scale var(--dur-4) var(--ease-out),
+                overlay var(--dur-4) allow-discrete, display var(--dur-4) allow-discrete;
+  }
+  @starting-style { dialog.sheet[open] { opacity: 0; scale: 0.96; } }
+  dialog.sheet::backdrop {
+    background: rgb(0 0 0 / 0.45);
+    transition: background-color var(--dur-4) var(--ease-std), overlay var(--dur-4) allow-discrete, display var(--dur-4) allow-discrete;
+  }
+  @starting-style { dialog.sheet[open]::backdrop { background-color: rgb(0 0 0 / 0); } }
+
+  /* ---------- Reveal al scroll: mejora progresiva real ---------- */
+  .reveal { opacity: 1; }                       /* sin soporte: visible, nunca un hueco */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .reveal {
+        animation: reveal-in linear both;       /* el shorthand PRIMERO… */
+        animation-timeline: view();             /* …la timeline DESPUÉS */
+        animation-range: entry 10% cover 30%;
+      }
+    }
+  }
+  @keyframes reveal-in { from { opacity: 0; translate: 0 32px; } to { opacity: 1; translate: 0 0; } }
+
+  /* ---------- Transición de página (MPA: cero JS) ---------- */
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation: fade-out 220ms var(--ease-in) both; }
+  ::view-transition-new(root) { animation: fade-in-soft 320ms var(--ease-out) both; }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes fade-in-soft { from { opacity: 0; translate: 0 8px; } }
+
+  /* ---------- Progreso de lectura (Perfil 4) ---------- */
+  .reading-progress {
+    position: fixed; inset-block-start: 0; inset-inline: 0; block-size: 2px;
+    background: var(--accent); transform-origin: 0 50%; z-index: var(--z-sticky);
+  }
+  @supports (animation-timeline: scroll()) {
+    .reading-progress { animation: grow linear both; animation-timeline: scroll(root block); }
+  }
+  @keyframes grow { from { scale: 0 1; } to { scale: 1 1; } }
+}
+
+/* ==========================================================================
+   prefers-reduced-motion: suelo de seguridad + excepciones curadas
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton, .reading-progress { animation: none !important; opacity: 0.8; }
+  .reveal { opacity: 1 !important; translate: none !important; }
+  .btn { transition-duration: 100ms !important; }  /* el feedback de opacidad se conserva */
+}

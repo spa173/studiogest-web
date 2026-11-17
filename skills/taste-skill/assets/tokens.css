@@ -1,0 +1,287 @@
+/* ==========================================================================
+   taste-skill / tokens.css
+   Copia al :root. Activa el perfil en <html data-profile="1|2|3|4|5">.
+   No redefinas valores en los componentes: pide un token nuevo.
+   ========================================================================== */
+
+@layer reset, tokens, base, components;
+
+/* --------------------------------------------------------------------------
+   1. TOKENS COMPARTIDOS
+   -------------------------------------------------------------------------- */
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* --- Espaciado: layout en múltiplos de 8, componentes en múltiplos de 4 --- */
+    --sp-3xs: 2px;   /* SOLO bordes, divisores, micro-badges */
+    --sp-2xs: 4px;   /* SOLO componentes: chips, iconos, gaps internos */
+    --sp-xs: 8px;
+    --sp-sm: 12px;
+    --sp-md: 16px;
+    --sp-lg: 24px;
+    --sp-xl: 32px;
+    --sp-2xl: 48px;
+    --sp-3xl: 64px;
+    --sp-4xl: 96px;
+    --sp-5xl: 128px;
+
+    /* --- Radios --- */
+    --r-xs: 4px;
+    --r-sm: 6px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 16px;
+    --r-full: 999px;
+
+    /* --- Tinta en 3 niveles (jerarquía cromática de texto) --- */
+    --ink: light-dark(#14130f, #f4f1ea);
+    --ink-2: light-dark(#565248, #a8a399);
+    --ink-3: light-dark(#7c776c, #7e7a72);
+
+    /* --- Superficies: en claro se ordenan por sombra, en oscuro por luminosidad --- */
+    --bg: light-dark(#fbfaf7, #0c0c0d);
+    --surface-1: light-dark(#ffffff, #141416);
+    --surface-2: light-dark(#f4f2ec, #1b1b1e);
+    --surface-3: light-dark(#eae7df, #232327);
+    --surface-media: light-dark(#efede7, #1a1a1d); /* respaldo de imagen */
+
+    --border: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+    --border-strong: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.22));
+    --border-top: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.08));
+
+    /* --- Sombra: solo en claro. En oscuro la elevación es lumínica. --- */
+    --shadow-1: light-dark(0 1px 2px rgb(0 0 0 / 0.06), none);
+    --shadow-2: light-dark(0 8px 24px -12px rgb(0 0 0 / 0.18), none);
+
+    /* --- Acento: 1 solo, con 3 estados --- */
+    --accent: light-dark(#b4451f, #e2744a);
+    --accent-hover: light-dark(#97371a, #ee8a63);
+    --accent-active: light-dark(#7f2e15, #c85f36);
+    --accent-soft: light-dark(rgb(180 69 31 / 0.1), rgb(226 116 74 / 0.16));
+    --on-accent: light-dark(#fff8f5, #1a0d07);
+
+    /* --- Semánticos de feedback: SIEMPRE aparte del acento de marca --- */
+    --success: light-dark(#1f7a4d, #4ec98a);
+    --success-soft: light-dark(rgb(31 122 77 / 0.1), rgb(78 201 138 / 0.16));
+    --warning: light-dark(#9a6100, #e0a94a);
+    --warning-soft: light-dark(rgb(154 97 0 / 0.1), rgb(224 169 74 / 0.16));
+    --danger: light-dark(#b3261e, #f0776d);
+    --danger-soft: light-dark(rgb(179 38 30 / 0.1), rgb(240 119 109 / 0.16));
+    --info: light-dark(#1b5f9e, #6aaeea);
+    --info-soft: light-dark(rgb(27 95 158 / 0.1), rgb(106 174 234 / 0.16));
+
+    --focus: light-dark(#1b5f9e, #8dc4f5);
+
+    /* --- Movimiento --- */
+    --dur-1: 80ms;
+    --dur-2: 140ms;
+    --dur-3: 200ms;
+    --dur-4: 320ms;
+    --dur-5: 500ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.3, 0, 0.8, 0.15);
+    --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-std: cubic-bezier(0.2, 0, 0, 1);
+    --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%,
+      0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159 1.163 27.4%, 1.161,
+      1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%,
+      0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
+    --move-xs: 4px;
+    --move-sm: 8px;
+    --move-md: 16px;
+    --move-lg: 32px;
+
+    /* --- Capas --- */
+    --z-base: 0;
+    --z-sticky: 10;
+    --z-drawer: 30;
+    --z-modal: 40;
+    --z-toast: 50;
+    --z-tooltip: 60;
+
+    /* --- Medida de lectura --- */
+    --measure: 66ch;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. PERFILES — cada uno redefine SOLO su capa tipográfica y de densidad
+   -------------------------------------------------------------------------- */
+
+/* PERFIL 1 · SaaS app / dashboard / finanzas — densidad 1.067 + jerarquía 1.25 */
+[data-profile="1"] {
+  --fs-2xs: 0.6875rem; /* 11 — solo badges y ejes */
+  --fs-xs: 0.75rem;    /* 12 — cabeceras de tabla, metadatos */
+  --fs-sm: 0.8125rem;  /* 13 — celdas densas */
+  --fs-md: 0.875rem;   /* 14 — base UI */
+  --fs-lg: 1rem;       /* 16 — inputs y prosa */
+  --fs-h4: 1rem;
+  --fs-h3: 1.25rem;
+  --fs-h2: 1.5rem;
+  --fs-h1: 1.75rem;
+  --fs-kpi: 2rem;
+  --lh-body: 1.45;
+  --lh-heading: 1.2;
+  --tracking-heading: -0.01em;
+  --r-base: var(--r-sm);      /* 6px */
+  --row-h: 40px;
+  --control-h: 36px;
+  --sidebar-w: 264px;
+  --container: 1280px;
+  --gutter: 24px;
+  --section-y: 32px;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-prose: var(--font-ui);
+}
+
+/* PERFIL 2 · Corporativo / e-commerce — Cuarta Justa 1.333, base 16 */
+[data-profile="2"] {
+  --fs-xs: 0.75rem;    /* 12 */
+  --fs-sm: 0.875rem;   /* 14 */
+  --fs-base: 1rem;     /* 16 */
+  --fs-lg: 1.125rem;   /* 18 */
+  --fs-h4: 1.3125rem;  /* 21 */
+  --fs-h3: 1.75rem;    /* 28 */
+  --fs-h2: 2.375rem;   /* 38 */
+  --fs-h1: 3.125rem;   /* 50 */
+  --fs-lead: 1.125rem;
+  --lh-body: 1.5;
+  --lh-heading: 1.1;
+  --tracking-heading: -0.02em;
+  --r-base: var(--r-md);      /* 8px */
+  --control-h: 44px;
+  --container: 1280px;
+  --gutter: clamp(16px, 3vw, 32px);
+  --section-y: clamp(48px, 7vw, 96px);
+  --aspect-product: 4 / 5;    /* moda: 4/5 · catálogo: 1/1 · B2B: 16/10 */
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-prose: var(--font-ui);
+}
+
+/* PERFIL 3 · Landing / portfolio — 1.414, con 1.618 SOLO en el hero */
+[data-profile="3"] {
+  --fs-2xs: 0.6875rem;  /* 11 — solo micro-badges */
+  --fs-meta: 0.8125rem;
+  --fs-base: 1rem;
+  --fs-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem);
+  --fs-h4: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+  --fs-h3: clamp(1.375rem, 1.2rem + 0.85vw, 1.875rem);
+  --fs-h2: clamp(1.75rem, 1.35rem + 1.6vw, 2.75rem);
+  --fs-hero: clamp(2.5rem, 1.75rem + 3.2vw, 4.75rem); /* techo 76px: límite real en español */
+  --lh-body: 1.6;
+  --lh-heading: 1.06;
+  --tracking-heading: -0.03em;
+  --r-base: var(--r-lg);      /* 12px */
+  --control-h: 48px;
+  --container: 1200px;
+  --gutter: clamp(20px, 3.5vw, 48px);
+  --section-y: clamp(56px, 9vw, 112px);
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-prose: var(--font-ui);
+}
+
+/* PERFIL 4 · Editorial profundo — Tercera Mayor 1.25, base 18–20 */
+[data-profile="4"] {
+  --fs-sm: 0.875rem;   /* 14 */
+  --fs-base: 1.125rem; /* 18 móvil */
+  --fs-body: 1.25rem;  /* 20 desktop */
+  --fs-lead: 1.5rem;
+  --fs-h3: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem);
+  --fs-h2: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+  --fs-h1: clamp(2rem, 1.55rem + 2vw, 3.375rem);
+  --lh-body: 1.65;
+  --lh-heading: 1.12;
+  --tracking-heading: -0.02em;
+  --r-base: var(--r-xs);
+  --control-h: 44px;
+  --container: 1120px;
+  --gutter: clamp(20px, 4vw, 32px);
+  --section-y: clamp(48px, 6vw, 80px);
+  --measure: 66ch;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-prose: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+}
+
+/* PERFIL 5 · App móvil / PWA — 1.2, base 17px */
+[data-profile="5"] {
+  --fs-2xs: 0.75rem;    /* 12 */
+  --fs-xs: 0.8125rem;   /* 13 */
+  --fs-sm: 0.875rem;    /* 14 */
+  --fs-base: 1rem;      /* 16 — mínimo en inputs (autozoom iOS) */
+  --fs-body: 1.0625rem; /* 17 */
+  --fs-h4: 1.25rem;
+  --fs-h3: 1.5rem;
+  --fs-h2: 1.8125rem;
+  --fs-h1: 2.1875rem;
+  --lh-body: 1.5;
+  --lh-heading: 1.15;
+  --tracking-heading: -0.02em;
+  --r-base: var(--r-lg);
+  --control-h: 48px;
+  --container: 100%;
+  --gutter: 16px;               /* la medida de 35–40ch sale sola */
+  --section-y: 32px;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-prose: var(--font-ui);
+}
+
+/* --------------------------------------------------------------------------
+   3. RESET mínimo con criterio
+   -------------------------------------------------------------------------- */
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--fs-base, 1rem);
+    line-height: var(--lh-body, 1.5);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  img, video, svg, canvas { display: block; max-inline-size: 100%; }
+  img, video { block-size: auto; }
+  input, button, textarea, select { font: inherit; color: inherit; }
+  button { background: none; border: 0; }
+  :where(h1, h2, h3, h4) { line-height: var(--lh-heading, 1.15); letter-spacing: var(--tracking-heading, -0.02em); }
+  h1 { font-size: var(--fs-h1); }
+  h2 { font-size: var(--fs-h2); }
+  h3 { font-size: var(--fs-h3); }
+  h4 { font-size: var(--fs-h4); }
+  p, li, dd { text-wrap: pretty; }
+  :where(h1, h2, h3, h4, blockquote) { text-wrap: balance; }
+  a { color: inherit; }
+  table { border-collapse: collapse; }
+  td, th { font-variant-numeric: tabular-nums; }
+  ::selection { background: var(--accent-soft); }
+}
+
+/* --------------------------------------------------------------------------
+   4. BASE
+   -------------------------------------------------------------------------- */
+@layer base {
+  .container {
+    inline-size: 100%;
+    max-inline-size: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .prose { max-inline-size: var(--measure); font-family: var(--font-prose); font-size: var(--fs-body, 1.0625rem); }
+  .stack > * + * { margin-block-start: var(--sp-md); }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+  }
+  :where([data-anchor]) { scroll-margin-top: 96px; }
+
+  .u-tnum { font-variant-numeric: tabular-nums; }
+  .u-visually-hidden {
+    position: absolute; inline-size: 1px; block-size: 1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
