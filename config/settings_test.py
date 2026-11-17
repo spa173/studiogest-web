@@ -28,3 +28,7 @@ DATABASES = {
         'TEST': {'NAME': ':memory:'},
     },
 }
+
+# Cifrado de contraseñas rápido solo para pruebas: PBKDF2 (el de producción) es lento a propósito
+# y alarga mucho cada prueba que crea un usuario o inicia sesión.
+PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
