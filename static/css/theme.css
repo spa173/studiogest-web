@@ -1,0 +1,93 @@
+/* RGB channels let Tailwind reuse these tokens with its opacity modifiers. */
+:root {
+  --sg-night: 16 25 41;           /* #101929 */
+  --sg-deep: 10 18 32;           /* #0A1220 */
+  --sg-gold: 217 171 112;        /* #D9AB70 */
+  --sg-turquoise: 21 157 156;    /* #159D9C */
+  --sg-soft-white: 241 243 246;  /* #F1F3F6 */
+  --sg-paper: 255 255 255;
+  --sg-link: 13 119 118;         /* Darker turquoise for text on light surfaces. */
+  --sg-muted: 71 85 105;
+  --sg-border: 203 213 225;
+  --sg-success: 22 101 52;
+  --sg-success-container: 220 252 231;
+  --sg-warning: 146 64 14;
+  --sg-warning-container: 254 243 199;
+}
+
+/* Internal screens only: the approved login keeps its own presentation. */
+.studio-app,
+.studio-app main {
+  min-width: 0;
+}
+
+.studio-app .bg-secondary {
+  background-color: rgb(var(--sg-turquoise));
+  color: rgb(var(--sg-deep));
+}
+
+.studio-app :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgb(var(--sg-link));
+  outline-offset: 3px;
+}
+
+.studio-app :is(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.studio-app :is(input, select, textarea) {
+  accent-color: rgb(var(--sg-link));
+}
+
+.studio-app :is(input, select, textarea):not([aria-invalid="true"], .border-error) {
+  border-color: rgb(var(--sg-muted) / 0.8);
+}
+
+.studio-app thead {
+  background-color: rgb(var(--sg-soft-white));
+  color: rgb(var(--sg-night));
+}
+
+/* Keep date/status and actions inside narrow weekly-calendar columns. */
+.studio-app .appointment-card {
+  padding: clamp(0.375rem, 0.8vw, 0.75rem);
+}
+
+.studio-app .appointment-card > .flex {
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.studio-app .appointment-card > .flex > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.studio-app .appointment-card > :first-child > span:last-child {
+  padding-inline: 0.25rem;
+}
+
+.studio-app dialog::backdrop,
+dialog.studio-app::backdrop {
+  background-color: rgb(var(--sg-deep) / 0.6);
+}
+
+.studio-sidebar nav a[class~="bg-brand-turquoise/15"],
+#mobile-menu nav a[aria-current="page"] {
+  box-shadow: inset 3px 0 rgb(var(--sg-gold));
+}
+
+.studio-sidebar nav a[class~="bg-brand-turquoise/15"],
+#mobile-menu nav a[aria-current="page"],
+.studio-bottom-nav a[class~="bg-brand-turquoise/15"] {
+  color: rgb(var(--sg-soft-white));
+}
+
+.studio-sidebar :is(a, button):focus-visible,
+#mobile-menu :is(a, button):focus-visible,
+.studio-bottom-nav :is(a, button):focus-visible {
+  outline-color: rgb(var(--sg-gold));
+}
+
+/* Neutral buttons retain their existing styles; semantic alerts stay untouched. */

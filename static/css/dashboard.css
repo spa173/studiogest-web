@@ -1,0 +1,295 @@
+/* Loaded only on Inicio; other modules and the login keep their styles. */
+.dashboard-page {
+  display: grid;
+  gap: clamp(1rem, 1.4vw, 1.25rem);
+  min-width: 0;
+}
+
+.dashboard-page h1 {
+  font-size: clamp(1.5rem, 2.2vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dashboard-kpis,
+.dashboard-main,
+.dashboard-aside {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.dashboard-kpi,
+.dashboard-panel {
+  min-width: 0;
+  padding: clamp(1rem, 1.3vw, 1.25rem);
+  border: 1px solid rgb(var(--sg-border) / 0.5);
+  border-radius: 1rem;
+  background-color: rgb(var(--sg-paper));
+  box-shadow: 0 3px 12px rgb(var(--sg-night) / 0.035);
+}
+
+.dashboard-kpi:first-child {
+  border-top: 3px solid rgb(var(--sg-gold));
+}
+
+.dashboard-kpi {
+  padding: 1rem;
+}
+
+.dashboard-kpi dt,
+.dashboard-kpi dd > span {
+  color: rgb(var(--sg-muted));
+  font-size: 0.875rem;
+}
+
+.dashboard-kpi dd {
+  font-family: Lato, sans-serif;
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-kpi dd > span {
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-page h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.dashboard-page h2 .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: rgb(var(--sg-link));
+}
+
+.dashboard-schedule-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.375rem 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid rgb(var(--sg-border) / 0.5);
+  color: rgb(var(--sg-muted));
+  font-size: 0.875rem;
+}
+
+.dashboard-schedule-summary strong {
+  color: rgb(var(--sg-night));
+}
+
+.dashboard-link {
+  color: rgb(var(--sg-link));
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dashboard-link:hover {
+  text-decoration: underline;
+}
+
+.dashboard-list > li + li {
+  border-top: 1px solid rgb(var(--sg-border) / 0.5);
+}
+
+.dashboard-list > li {
+  padding-block: 0.75rem;
+}
+
+.dashboard-list > li:first-child {
+  padding-top: 0;
+}
+
+.dashboard-list > li:last-child {
+  padding-bottom: 0;
+}
+
+.dashboard-appointment {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(var(--sg-border) / 0.4);
+  border-radius: 0.75rem;
+  background-color: rgb(var(--sg-soft-white) / 0.65);
+}
+
+.dashboard-appointments {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.dashboard-time {
+  display: inline-flex;
+  justify-content: center;
+  padding-block: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: rgb(var(--sg-turquoise) / 0.1);
+  color: rgb(var(--sg-link));
+  font-weight: 700;
+}
+
+.dashboard-page h3 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-appointment-info p,
+.dashboard-stock-item p {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-appointment-info p {
+  display: inline;
+  margin-top: 0;
+  color: rgb(var(--sg-muted));
+}
+
+.dashboard-appointment-info p + p::before {
+  content: " · ";
+}
+
+.dashboard-vip {
+  margin-inline-start: 0.375rem;
+  color: rgb(var(--sg-warning));
+  font-size: 0.75rem;
+}
+
+.dashboard-appointment-actions {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-attend {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid rgb(var(--sg-border));
+  border-radius: 0.5rem;
+  color: rgb(var(--sg-link));
+  font-weight: 700;
+}
+
+.dashboard-attend:hover {
+  background-color: rgb(var(--sg-soft-white));
+}
+
+.dashboard-note,
+.dashboard-empty {
+  color: rgb(var(--sg-muted));
+  font-size: 0.875rem;
+}
+
+.dashboard-note {
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-team {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.dashboard-team li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-team li > div {
+  min-width: 0;
+}
+
+.dashboard-team p {
+  margin-top: 0.25rem;
+  color: rgb(var(--sg-muted));
+}
+
+.dashboard-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: rgb(var(--sg-turquoise) / 0.1);
+  color: rgb(var(--sg-link));
+  font-weight: 700;
+}
+
+.dashboard-count {
+  color: rgb(var(--sg-muted));
+  font-size: 0.875rem;
+}
+
+/* Keep both shortcuts, with one primary create action in the topbar on Inicio. */
+.studio-app .studio-sidebar button.bg-secondary {
+  background-color: transparent;
+  color: rgb(var(--sg-soft-white));
+  box-shadow: inset 0 0 0 1px rgb(var(--sg-border) / 0.4);
+}
+
+.studio-app .studio-sidebar button.bg-secondary:hover {
+  background-color: rgb(var(--sg-deep));
+}
+
+@media (min-width: 640px) {
+  .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-appointment {
+    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+  }
+
+  .dashboard-appointment-actions {
+    grid-column: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+}
+
+@media (min-width: 1280px) {
+  .dashboard-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dashboard-kpis-operational {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-main {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

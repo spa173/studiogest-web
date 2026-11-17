@@ -1,0 +1,136 @@
+/* Presentation only. Original brand PNGs are displayed without cropping. */
+.login-brand-panel {
+  background-color: #101929;
+}
+
+.login-brand-logo {
+  display: block;
+  width: 100%;
+  max-width: 46rem;
+  height: auto;
+  margin-inline: auto;
+  object-fit: contain;
+  /* Blend the original image background into the panel without a visible frame. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+.brand-isotype {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+@media (max-width: 1023px) {
+  .login-brand-logo {
+    max-width: 25rem;
+  }
+}
+
+/* Let content grow and scroll naturally when zoom or a small viewport needs it. */
+.login-layout .login-summary > :first-child,
+.login-layout .login-brand-footer {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 399px) {
+  .login-layout .login-summary {
+    padding: 1rem;
+  }
+
+  .login-layout .login-summary > .grid {
+    gap: 0.375rem;
+  }
+
+  .login-layout .login-summary > .grid > div {
+    min-width: 0;
+    padding: 0.375rem;
+  }
+
+  .login-layout .login-summary > .grid p {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .login-layout {
+    min-height: 100svh;
+  }
+
+  .login-layout .login-brand-panel,
+  .login-layout .login-form-panel {
+    padding: clamp(1.25rem, 3vh, 2.5rem) clamp(1.5rem, 3vw, 3.5rem);
+    gap: clamp(0.75rem, 1.5vh, 1.25rem);
+  }
+
+  .login-layout .login-brand-logo {
+    max-width: clamp(30rem, calc(133.333svh - 34rem), 46rem);
+  }
+
+  .login-layout .login-brand-panel {
+    padding-block: clamp(1rem, 2vh, 2rem);
+    gap: clamp(0.25rem, 0.5vh, 0.5rem);
+    justify-content: flex-start;
+  }
+
+  .login-layout .login-brand-status {
+    margin-bottom: 0.25rem;
+  }
+
+  .login-layout .login-brand-figure {
+    /* Reuse only the PNG's empty lower padding; keep the complete logo visible. */
+    margin-bottom: calc(-1 * clamp(0.75rem, 2.5vh, 1.75rem));
+  }
+
+  .login-layout .login-brand-title {
+    font-size: clamp(1.5rem, 2.8vh, 1.875rem);
+    line-height: 1.2;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .login-layout .login-summary {
+    margin-block: clamp(0.5rem, 1vh, 0.75rem) 0;
+    padding: clamp(0.75rem, 1.4vh, 1rem);
+  }
+
+  .login-layout .login-summary > :first-child {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-layout .login-summary > .grid > div {
+    padding: 0.5rem;
+  }
+
+  .login-layout .login-summary > :last-child {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+
+  .login-layout .login-brand-footer {
+    margin-top: auto;
+  }
+
+  .login-layout .login-utility {
+    margin-bottom: 0;
+  }
+
+  .login-layout .login-form-card {
+    padding-block: clamp(0.5rem, 1vh, 1rem);
+  }
+
+  .login-layout .login-context {
+    margin-top: clamp(1rem, 2vh, 2rem);
+  }
+
+  .login-layout .login-footer {
+    margin-top: 0;
+    padding-top: clamp(0.5rem, 1.5vh, 1rem);
+  }
+}

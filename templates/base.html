@@ -6,16 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}StudioGest - Gestión para Barberías & Peluquerías{% endblock %}</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <meta name="theme-color" content="#101929"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/branding/favicon-32.png' %}"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="{% static 'img/branding/favicon-64.png' %}"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="{% static 'img/branding/icon-512.png' %}"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="{% static 'img/branding/apple-touch-icon.png' %}"/>
+  <link rel="stylesheet" href="{% static 'css/tailwind.out.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/branding.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}"/>
+
+  <!-- Lato: tipografía de interfaz de la guía de marca -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet"/>
 
   <!-- Material Symbols Outlined -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-  <!-- Tailwind CSS compilado localmente (build: npm run build:css). Configuración en tailwind.config.js -->
-  <link rel="stylesheet" href="{% static 'css/tailwind.out.css' %}"/>
 
   <style>
     .material-symbols-outlined {
@@ -49,7 +56,7 @@
     <!-- Layout Estándar de la Aplicación -->
     {% include 'includes/messages.html' %}
 
-    <div class="min-h-screen flex flex-row overflow-x-hidden">
+    <div class="studio-app min-h-screen flex flex-row">
       <!-- Menú lateral fijo de escritorio -->
       {% include 'includes/sidebar.html' %}
 

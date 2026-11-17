@@ -31,8 +31,8 @@ class DashboardRBACTests(TestCase):
         response = self.client.get(reverse('dashboard:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context['can_view_financial_dashboard'])
-        self.assertNotContains(response, 'Ventas Atendidas Hoy')
-        self.assertContains(response, 'Citas del Día')
+        self.assertNotContains(response, 'Servicios atendidos')
+        self.assertContains(response, 'Citas de hoy')
 
     def test_admin_and_cashier_dashboard_show_financial_sales_kpi(self):
         for user in (self.admin, self.cashier):
@@ -40,4 +40,4 @@ class DashboardRBACTests(TestCase):
             response = self.client.get(reverse('dashboard:index'))
             self.assertEqual(response.status_code, 200, user)
             self.assertTrue(response.context['can_view_financial_dashboard'])
-            self.assertContains(response, 'Ventas Atendidas Hoy')
+            self.assertContains(response, 'Servicios atendidos')
