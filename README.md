@@ -93,15 +93,15 @@ python manage.py runserver
 Abrir http://127.0.0.1:8000/ en el navegador (redirige al login o al panel según
 la sesión).
 
-## Usuarios de prueba
+## Usuarios iniciales
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| Administrador | admin@studiogest.co | admin123 |
-| Trabajador | julian@studiogest.co | barbero123 |
+Los comandos de carga no incluyen contraseñas predeterminadas. Solicitan una
+contraseña oculta y confirmación para cada cuenta nueva; no muestran sus valores
+ni restablecen claves de usuarios existentes. En automatizaciones se requiere
+configuración explícita mediante variables del proceso y `--no-input`.
 
-Estas credenciales son solo para desarrollo y deben cambiarse antes de cualquier
-despliegue o uso con datos reales.
+Consulta [la guía de inicialización segura](docs/seguridad_inicializacion.md).
+La carga de catálogo es para entornos de demostración, no para bases con datos reales.
 
 ## Variables de entorno
 

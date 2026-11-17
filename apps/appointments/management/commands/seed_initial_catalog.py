@@ -1,4 +1,7 @@
 import datetime
+import re
+from django.db import transaction
+from accounts.management.passwords import initial_password
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from accounts.models import User
@@ -10,28 +13,11 @@ from appointments.models import Appointment
 class Command(BaseCommand):
     help = 'Puebla el catálogo de servicios, clientes, profesionales y citas iniciales'
 
+    def add_arguments(self, parser):
+        parser.add_argument('--no-input', '--noinput', action='store_false', dest='interactive', default=True)
+
+    @transaction.atomic
     def handle(self, *args, **kwargs):
-        self.stdout.write('[INFO] Iniciando carga de catalogo StudioGest...')
-
-        # 1. SERVICIOS (Precios en COP según DESIGN.md)
-        services_data = [
-            {'name': 'Corte Degradado + Barba Spa', 'price_cop': 65000, 'duration_minutes': 45, 'description': 'Corte moderno degradado con perfilado y toalla caliente para barba.'},
-            {'name': 'Corte Caballero Clasico', 'price_cop': 35000, 'duration_minutes': 30, 'description': 'Corte tradicional a tijera o maquina con lavado incluido.'},
-            {'name': 'Perfilado y Diseno de Barba', 'price_cop': 30000, 'duration_minutes': 30, 'description': 'Ritual de afeitado con navaja clasica y balsamo nutritivo.'},
-            {'name': 'Balayage & Spa Capilar', 'price_cop': 180000, 'duration_minutes': 120, 'description': 'Diseno de color personalizado y mascarilla hidratante profunda.'},
-            {'name': 'Ritual Facial Masculino', 'price_cop': 50000, 'duration_minutes': 45, 'description': 'Exfoliacion, mascarilla de carbon activado y masaje revitalizante.'},
-            {'name': 'Corte VIP', 'price_cop': 75000, 'duration_minutes': 60, 'description': 'Servicio exclusivo de corte, barba, exfoliacion y bebida de cortesia.'},
-        ]
-        created_services = []
-        for s_data in services_data:
-            s, _ = Service.objects.get_or_create(
-                name=s_data['name'],
-                defaults=s_data
-            )
-            created_services.append(s)
-        self.stdout.write(self.style.SUCCESS(f'[OK] {len(created_services)} servicios cargados.'))
-
-        # 2. USUARIOS Y PROFESIONALES
         profs_data = [
             {
                 'username': 'julian',
@@ -58,20 +44,49 @@ class Command(BaseCommand):
                 'color_tag': '#2563EB'
             },
         ]
+
+        users = {}
+        for data in profs_data:
+            user = User.objects.filter(username=data['username']).first()
+            if user is None:
+                user = User(
+                    username=data['username'], email=data['email'],
+                    first_name=data['first_name'], last_name=data['last_name'],
+                    role=User.Role.WORKER, phone='3101234567',
+                )
+                key = re.sub(r'[^A-Z0-9]', '_', data['username'].upper())
+                password = initial_password(
+                    f'INITIAL_CATALOG_{key}_PASSWORD', user=user, interactive=kwargs['interactive'],
+                )
+                user.set_password(password)
+            users[data['username']] = user
+
+        self.stdout.write('[INFO] Iniciando carga de catalogo StudioGest...')
+
+        # 1. SERVICIOS (Precios en COP según DESIGN.md)
+        services_data = [
+            {'name': 'Corte Degradado + Barba Spa', 'price_cop': 65000, 'duration_minutes': 45, 'description': 'Corte moderno degradado con perfilado y toalla caliente para barba.'},
+            {'name': 'Corte Caballero Clasico', 'price_cop': 35000, 'duration_minutes': 30, 'description': 'Corte tradicional a tijera o maquina con lavado incluido.'},
+            {'name': 'Perfilado y Diseno de Barba', 'price_cop': 30000, 'duration_minutes': 30, 'description': 'Ritual de afeitado con navaja clasica y balsamo nutritivo.'},
+            {'name': 'Balayage & Spa Capilar', 'price_cop': 180000, 'duration_minutes': 120, 'description': 'Diseno de color personalizado y mascarilla hidratante profunda.'},
+            {'name': 'Ritual Facial Masculino', 'price_cop': 50000, 'duration_minutes': 45, 'description': 'Exfoliacion, mascarilla de carbon activado y masaje revitalizante.'},
+            {'name': 'Corte VIP', 'price_cop': 75000, 'duration_minutes': 60, 'description': 'Servicio exclusivo de corte, barba, exfoliacion y bebida de cortesia.'},
+        ]
+        created_services = []
+        for s_data in services_data:
+            s, _ = Service.objects.get_or_create(
+                name=s_data['name'],
+                defaults=s_data
+            )
+            created_services.append(s)
+        self.stdout.write(self.style.SUCCESS(f'[OK] {len(created_services)} servicios cargados.'))
+
+        # 2. USUARIOS Y PROFESIONALES
         created_professionals = []
         for p_data in profs_data:
-            u, _ = User.objects.get_or_create(
-                username=p_data['username'],
-                defaults={
-                    'email': p_data['email'],
-                    'first_name': p_data['first_name'],
-                    'last_name': p_data['last_name'],
-                    'role': User.Role.WORKER,
-                    'phone': '3101234567'
-                }
-            )
-            u.set_password('barbero123')
-            u.save()
+            u = users[p_data['username']]
+            if u.pk is None:
+                u.save()
 
             prof, _ = Professional.objects.get_or_create(
                 user=u,
@@ -103,8 +118,7 @@ class Command(BaseCommand):
 
         # 4. CITAS DE PRUEBA (Hoy y la semana actual)
         today = datetime.date.today()
-        # Limpiar citas previas de prueba para evitar solapamientos al re-ejecutar
-        Appointment.objects.all().delete()
+        # Keep historical appointments; repeated runs do not replace them.
 
         admin_user = User.objects.filter(is_superuser=True).first()
 
@@ -181,9 +195,14 @@ class Command(BaseCommand):
         ]
 
         for app_data in sample_appointments:
-            Appointment.objects.create(
-                created_by=admin_user,
-                **app_data
+            Appointment.objects.get_or_create(
+                professional=app_data['professional'], date=app_data['date'],
+                start_time=app_data['start_time'],
+                defaults={
+                    'created_by': admin_user,
+                    **{key: value for key, value in app_data.items()
+                       if key not in {'professional', 'date', 'start_time'}},
+                },
             )
 
         self.stdout.write(self.style.SUCCESS(f'[OK] {len(sample_appointments)} citas iniciales creadas en agenda.'))

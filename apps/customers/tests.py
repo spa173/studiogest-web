@@ -1,5 +1,7 @@
+import secrets
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from unittest.mock import patch
 from django.db.models import Count
 from django.test import TestCase
 from django.urls import reverse
@@ -14,10 +16,11 @@ User = get_user_model()
 class ClientesTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.password = secrets.token_urlsafe(32)
         cls.admin = User.objects.create_user(
-            username='admin@t.co', email='admin@t.co', password='Clave#12345', role=User.Role.ADMIN)
+            username='admin@t.co', email='admin@t.co', password=cls.password, role=User.Role.ADMIN)
         cls.worker = User.objects.create_user(
-            username='trab@t.co', email='trab@t.co', password='Clave#12345', role=User.Role.WORKER)
+            username='trab@t.co', email='trab@t.co', password=cls.password, role=User.Role.WORKER)
         cls.ana = Customer.objects.create(name='Ana Gómez', phone='3001112233', is_vip=True)
         cls.luis = Customer.objects.create(name='Luis Pérez', phone='3109998877')
 
@@ -146,7 +149,8 @@ class ClientesTests(TestCase):
         self.assertFalse(Customer.objects.filter(pk=self.luis.pk).exists())
 
     def test_admin_no_elimina_cliente_con_citas(self):
-        call_command('seed_initial_catalog', verbosity=0)
+        with patch('appointments.management.commands.seed_initial_catalog.initial_password', side_effect=lambda *args, **kwargs: secrets.token_urlsafe(32)):
+            call_command('seed_initial_catalog', interactive=False, verbosity=0)
         con_citas = Customer.objects.filter(appointments__isnull=False).first()
         self.assertIsNotNone(con_citas)
         self.entrar(self.admin)
@@ -154,7 +158,8 @@ class ClientesTests(TestCase):
         self.assertTrue(Customer.objects.filter(pk=con_citas.pk).exists())
 
     def test_cliente_con_solo_citas_canceladas_si_se_elimina(self):
-        call_command('seed_initial_catalog', verbosity=0)
+        with patch('appointments.management.commands.seed_initial_catalog.initial_password', side_effect=lambda *args, **kwargs: secrets.token_urlsafe(32)):
+            call_command('seed_initial_catalog', interactive=False, verbosity=0)
         cliente = Customer.objects.filter(appointments__isnull=False).first()
         cliente.appointments.update(status=Appointment.Status.CANCELLED)
         self.entrar(self.admin)
@@ -166,7 +171,8 @@ class ClientesTests(TestCase):
         self.assertFalse(Appointment.objects.filter(customer_id=cliente.pk).exists())
 
     def test_cliente_con_una_cita_cancelada_y_otra_vigente_no_se_elimina(self):
-        call_command('seed_initial_catalog', verbosity=0)
+        with patch('appointments.management.commands.seed_initial_catalog.initial_password', side_effect=lambda *args, **kwargs: secrets.token_urlsafe(32)):
+            call_command('seed_initial_catalog', interactive=False, verbosity=0)
         cliente = Customer.objects.annotate(n=Count('appointments')).filter(n__gte=2).first()
         self.assertIsNotNone(cliente)
         primera = cliente.appointments.first()
@@ -204,7 +210,7 @@ class ClientesTests(TestCase):
         from services.models import Service
         from sales.services import create_sale
         cashier = User.objects.create_user(
-            username='caja@t.co', email='caja@t.co', password='Clave#12345', role=User.Role.CASHIER)
+            username='caja@t.co', email='caja@t.co', password=self.password, role=User.Role.CASHIER)
         service = Service.objects.create(name='Servicio detalle 2', price_cop=Decimal('12000'), duration_minutes=30)
         session = CashRegisterSession.objects.create(opened_by=self.admin, opening_cash=Decimal('0'))
         sale = create_sale(

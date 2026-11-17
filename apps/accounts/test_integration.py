@@ -1,3 +1,5 @@
+import secrets
+from unittest.mock import patch
 """Pruebas de integración: autenticación, permisos por rol y persistencia.
 
 Se ejecutan con pytest (``pytest``). Por defecto usan SQLite en memoria (config.settings_test);
@@ -15,7 +17,7 @@ from appointments.models import Appointment
 from customers.models import Customer
 from services.models import Professional, Service
 
-PASSWORD = 'ClavePrueba#2026'
+PASSWORD = secrets.token_urlsafe(32)
 
 # Pantallas que exigen iniciar sesión
 RUTAS_PROTEGIDAS = [
@@ -74,7 +76,7 @@ def test_login_correcto_inicia_sesion_y_abre_el_panel(client, admin_usuario):
 @pytest.mark.django_db
 def test_login_con_clave_incorrecta_no_inicia_sesion(client, admin_usuario):
     respuesta = client.post(reverse('accounts:login'),
-                            {'login': admin_usuario.email, 'password': 'incorrecta'})
+                            {'login': admin_usuario.email, 'password': secrets.token_urlsafe(32)})
     assert respuesta.status_code == 200  # vuelve al formulario
     assert client.get(reverse('dashboard:index')).status_code == 302
 
@@ -193,7 +195,8 @@ def test_caja_no_puede_eliminar_clientes(client, cajero):
 
 def _datos_de_cita():
     """Datos válidos para agendar una cita con el catálogo de prueba."""
-    call_command('seed_initial_catalog', verbosity=0)
+    with patch('appointments.management.commands.seed_initial_catalog.initial_password', side_effect=lambda *args, **kwargs: secrets.token_urlsafe(32)):
+        call_command('seed_initial_catalog', interactive=False, verbosity=0)
     dia = timezone.localdate() + datetime.timedelta(days=21)
     while dia.weekday() != 2:  # miércoles
         dia += datetime.timedelta(days=1)

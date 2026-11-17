@@ -1,6 +1,7 @@
+import secrets
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from io import StringIO
 
@@ -12,11 +13,12 @@ User = get_user_model()
 class ProfileSettingsTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.password = secrets.token_urlsafe(32)
         cls.worker = User.objects.create_user(
-            username='perfil-worker', email='worker@profile.test', password='Clave#12345',
+            username='perfil-worker', email='worker@profile.test', password=cls.password,
             first_name='Luisa', last_name='Gomez', phone='3001112233', role=User.Role.WORKER)
         cls.admin = User.objects.create_user(
-            username='perfil-admin', email='admin@profile.test', password='Clave#12345',
+            username='perfil-admin', email='admin@profile.test', password=cls.password,
             first_name='Admin', role=User.Role.ADMIN)
 
     def setUp(self):
@@ -62,7 +64,7 @@ class ProfileSettingsTests(TestCase):
         self.assertEqual(self.worker.email, 'nuevo@profile.test')
         self.assertEqual(self.worker.phone, self.data['phone'])
         self.assertEqual(int(self.client.session['_auth_user_id']), self.worker.pk)
-        login = LoginForm({'login': 'nuevo@profile.test', 'password': 'Clave#12345'})
+        login = LoginForm({'login': 'nuevo@profile.test', 'password': self.password})
         self.assertTrue(login.is_valid(), login.errors)
         self.assertEqual(login.get_user().pk, self.worker.pk)
 
@@ -73,7 +75,7 @@ class ProfileSettingsTests(TestCase):
         original_password = self.worker.password
         data = dict(self.data, id=self.admin.pk, pk=self.admin.pk, user_id=self.admin.pk,
                     username='changed', role=User.Role.ADMIN, is_staff='1', is_superuser='1',
-                    is_active='', password='replacement', groups='1', user_permissions='1')
+                    is_active='', password=secrets.token_urlsafe(32), groups='1', user_permissions='1')
         response = self.client.post(self.url + '?user_id=' + str(self.admin.pk), data)
         self.assertRedirects(response, self.url)
         self.worker.refresh_from_db()
@@ -142,8 +144,9 @@ class ProfileSettingsTests(TestCase):
 class LoginLogoutTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.password = secrets.token_urlsafe(32)
         cls.user = User.objects.create_user(
-            username='login-user', email='login@test.co', password='Clave#12345',
+            username='login-user', email='login@test.co', password=cls.password,
             first_name='Ana', role=User.Role.WORKER,
         )
 
@@ -154,21 +157,21 @@ class LoginLogoutTests(TestCase):
 
     def test_login_with_email_succeeds(self):
         response = self.client.post(reverse('accounts:login'), {
-            'login': 'login@test.co', 'password': 'Clave#12345', 'remember_me': 'on',
+            'login': 'login@test.co', 'password': self.password, 'remember_me': 'on',
         })
         self.assertRedirects(response, reverse('dashboard:index'))
         self.assertIn('_auth_user_id', self.client.session)
 
     def test_login_with_invalid_credentials_fails(self):
         response = self.client.post(reverse('accounts:login'), {
-            'login': 'login@test.co', 'password': 'wrong',
+            'login': 'login@test.co', 'password': secrets.token_urlsafe(32),
         })
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_login_with_unknown_email_fails(self):
         response = self.client.post(reverse('accounts:login'), {
-            'login': 'noexiste@test.co', 'password': 'Clave#12345',
+            'login': 'noexiste@test.co', 'password': self.password,
         })
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('_auth_user_id', self.client.session)
@@ -176,7 +179,7 @@ class LoginLogoutTests(TestCase):
     def test_login_with_next_redirects_safely(self):
         response = self.client.post(
             reverse('accounts:login') + '?next=' + reverse('accounts:settings'),
-            {'login': 'login@test.co', 'password': 'Clave#12345'},
+            {'login': 'login@test.co', 'password': self.password},
         )
         self.assertRedirects(response, reverse('accounts:settings'))
 
@@ -194,15 +197,25 @@ class LoginLogoutTests(TestCase):
 
 
 class CreateInitialUsersTests(TestCase):
-    def test_creates_admin_and_worker_with_default_development_passwords(self):
-        from django.core.management import call_command
+    def test_creates_admin_and_worker_with_explicit_generated_passwords(self):
+        from unittest.mock import patch
+        admin_password = secrets.token_urlsafe(32)
+        worker_password = secrets.token_urlsafe(32)
         out = StringIO()
-        with override_settings(DEBUG=True):
-            call_command('create_initial_users', stdout=out)
+        with patch.dict('os.environ', {
+            'INITIAL_ADMIN_PASSWORD': admin_password,
+            'INITIAL_WORKER_PASSWORD': worker_password,
+        }):
+            call_command('create_initial_users', interactive=False, stdout=out)
         admin = User.objects.get(username='admin')
         worker = User.objects.get(username='julian')
         self.assertEqual(admin.role, User.Role.ADMIN)
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.is_superuser)
         self.assertEqual(worker.role, User.Role.WORKER)
-        self.assertTrue(admin.check_password('admin123'))
-        self.assertTrue(worker.check_password('barbero123'))
-        self.assertIn('[OK] Administrador creado', out.getvalue())
+        self.assertFalse(worker.is_staff)
+        self.assertFalse(worker.is_superuser)
+        self.assertTrue(admin.check_password(admin_password))
+        self.assertTrue(worker.check_password(worker_password))
+        self.assertNotIn(admin_password, out.getvalue())
+        self.assertNotIn(worker_password, out.getvalue())

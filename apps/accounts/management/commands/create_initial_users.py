@@ -1,29 +1,20 @@
-import os
-import secrets
-
-from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
+from accounts.management.passwords import initial_password
 from accounts.models import User
 
 
 class Command(BaseCommand):
-    help = 'Crea usuarios iniciales (Administrador y Trabajador)'
+    help = 'Crea usuarios iniciales con contraseñas explícitas y sin alterar cuentas existentes'
 
-    def _password_for(self, env_name, default=None):
-        value = os.getenv(env_name)
-        if value:
-            return value, 'variable de entorno'
-        if default is not None and settings.DEBUG:
-            return default, 'valor de desarrollo'
-        return secrets.token_urlsafe(12), 'generada automáticamente'
+    def add_arguments(self, parser):
+        parser.add_argument('--no-input', '--noinput', action='store_false', dest='interactive', default=True)
 
-    def handle(self, *args, **kwargs):
-        # 1. Administrador Principal
-        admin_password, admin_source = self._password_for('INITIAL_ADMIN_PASSWORD', 'admin123')
-        admin_user, created_admin = User.objects.get_or_create(
-            username='admin',
-            defaults={
+    @transaction.atomic
+    def handle(self, *args, **options):
+        accounts = [
+            ('INITIAL_ADMIN_PASSWORD', 'admin', {
                 'email': 'admin@studiogest.co',
                 'first_name': 'Carlos',
                 'last_name': 'Mendoza',
@@ -31,26 +22,8 @@ class Command(BaseCommand):
                 'is_staff': True,
                 'is_superuser': True,
                 'phone': '3104567890'
-            }
-        )
-        if created_admin:
-            admin_user.set_password(admin_password)
-            admin_user.save()
-            self.stdout.write(self.style.SUCCESS(
-                f'[OK] Administrador creado: admin@studiogest.co (clave: {admin_password} [{admin_source}])'
-            ))
-            if admin_source != 'variable de entorno':
-                self.stdout.write(self.style.WARNING(
-                    'Cambia esta contraseña antes de usar el sistema en producción.'
-                ))
-        else:
-            self.stdout.write(self.style.WARNING('[INFO] El administrador ya existe.'))
-
-        # 2. Barbero / Trabajador
-        worker_password, worker_source = self._password_for('INITIAL_WORKER_PASSWORD', 'barbero123')
-        worker_user, created_worker = User.objects.get_or_create(
-            username='julian',
-            defaults={
+            }),
+            ('INITIAL_WORKER_PASSWORD', 'julian', {
                 'email': 'julian@studiogest.co',
                 'first_name': 'Julián',
                 'last_name': 'Restrepo',
@@ -58,17 +31,19 @@ class Command(BaseCommand):
                 'is_staff': False,
                 'is_superuser': False,
                 'phone': '3209876543'
-            }
-        )
-        if created_worker:
-            worker_user.set_password(worker_password)
-            worker_user.save()
-            self.stdout.write(self.style.SUCCESS(
-                f'[OK] Trabajador creado: julian@studiogest.co (clave: {worker_password} [{worker_source}])'
-            ))
-            if worker_source != 'variable de entorno':
-                self.stdout.write(self.style.WARNING(
-                    'Cambia esta contraseña antes de usar el sistema en producción.'
-                ))
-        else:
-            self.stdout.write(self.style.WARNING('[INFO] El trabajador ya existe.'))
+            }),
+        ]
+        pending = []
+        for env_name, username, defaults in accounts:
+            if User.objects.filter(username=username).exists():
+                self.stdout.write('[INFO] Cuenta inicial existente; se conserva sin cambios.')
+                continue
+            user = User(username=username, **defaults)
+            password = initial_password(env_name, user=user, interactive=options['interactive'])
+            user.set_password(password)
+            pending.append(user)
+
+        # Resolve every required password before persisting any account.
+        for user in pending:
+            user.save()
+            self.stdout.write(self.style.SUCCESS('[OK] Cuenta inicial creada. La contraseña no se muestra.'))
