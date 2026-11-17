@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cliente.name }} - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'customers:list' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a clientes
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">{{ cliente.name }}</h1>
+    <p class="text-sm text-on-surface-variant">{{ cliente.phone }}{% if cliente.email %} · {{ cliente.email }}{% endif %}</p>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Datos del cliente</h2>
+    <p class="text-sm text-on-surface-variant">{{ cliente.notes|default:'Sin notas.' }}</p>
+    <p class="text-sm">VIP: {% if cliente.is_vip %}Sí{% else %}No{% endif %}</p>
+    <div class="rounded-xl border border-outline-variant/30 bg-surface-container-low/40 p-3 space-y-1">
+      <p class="text-sm font-medium text-on-surface">
+        Autorización de tratamiento de datos personales (Ley 1581):
+        {% if cliente.data_consent %}
+          <span class="text-secondary">Vigente</span>
+        {% else %}
+          <span class="text-on-surface-variant">No vigente / no registrada</span>
+        {% endif %}
+      </p>
+      <p class="text-xs text-on-surface-variant">
+        Cubre el registro y uso operativo de datos de contacto e historial de atención para agendar, comunicar y gestionar servicios en StudioGest.
+      </p>
+      {% if cliente.data_consent_at or cliente.data_consent_method or cliente.data_consent_recorded_by or cliente.data_consent_notes %}
+      <div class="text-xs text-on-surface-variant space-y-0.5 pt-1">
+        <p class="font-semibold text-on-surface">Evidencia básica registrada</p>
+        {% if cliente.data_consent_at %}<p>Fecha/hora: {{ cliente.data_consent_at|date:"Y-m-d H:i" }}</p>{% endif %}
+        {% if cliente.data_consent_method %}<p>Medio: {{ cliente.get_data_consent_method_display }}</p>{% endif %}
+        {% if cliente.data_consent_recorded_by %}<p>Registrado por: {{ cliente.data_consent_recorded_by.get_username }}</p>{% endif %}
+        {% if cliente.data_consent_notes %}<p>Observaciones: {{ cliente.data_consent_notes }}</p>{% endif %}
+        {% if not cliente.data_consent %}<p>Estado actual: revocado/no vigente; se conserva la evidencia del último otorgamiento.</p>{% endif %}
+      </div>
+      {% else %}
+      <p class="text-xs text-on-surface-variant">Sin evidencia registrada aún. Puedes capturarla al editar el cliente.</p>
+      {% endif %}
+    </div>
+    <a href="{{ whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline">
+      <span class="material-symbols-outlined text-base">chat</span> WhatsApp
+    </a>
+  </section>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Historial de citas</h2>
+    {% if appointments %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant">
+            <th scope="col" class="py-2 pr-3">Fecha</th>
+            <th scope="col" class="py-2 pr-3">Servicio</th>
+            <th scope="col" class="py-2 pr-3">Profesional</th>
+            <th scope="col" class="py-2 pr-3">Estado</th>
+            <th scope="col" class="py-2 pr-3">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in appointments %}
+          <tr class="border-t border-outline-variant/20">
+            <td class="py-2 pr-3">{{ a.date }} {{ a.start_time }}</td>
+            <td class="py-2 pr-3">{{ a.service.name }}</td>
+            <td class="py-2 pr-3">{{ a.professional.name }}</td>
+            <td class="py-2 pr-3">{{ a.get_status_display }}</td>
+            <td class="py-2 pr-3">{{ a.price_cop_formatted }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">Sin citas registradas.</p>
+    {% endif %}
+  </section>
+
+  {% if can_view_sales_history %}
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-3">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Historial de compras</h2>
+    {% if sales %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant">
+            <th scope="col" class="py-2 pr-3">Fecha</th>
+            <th scope="col" class="py-2 pr-3">Medio de pago</th>
+            <th scope="col" class="py-2 pr-3">Total</th>
+            <th scope="col" class="py-2 pr-3">Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sales %}
+          <tr class="border-t border-outline-variant/20">
+            <td class="py-2 pr-3">{{ s.created_at }}</td>
+            <td class="py-2 pr-3">{{ s.get_payment_method_display }}</td>
+            <td class="py-2 pr-3">${{ s.total }}</td>
+            <td class="py-2 pr-3">
+              {% for d in s.details.all %}
+                {{ d }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">Sin compras registradas.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

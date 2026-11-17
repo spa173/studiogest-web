@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,10 +20,14 @@ jobs:
       DJANGO_SETTINGS_MODULE: config.settings_test
       DB_ENGINE: sqlite
       DEBUG: 'False'
+      SECRET_KEY: django-insecure-ci-secret-key
+      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
 
     steps:
     - name: Descargar repositorio
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Configurar Python
       uses: actions/setup-python@v5
@@ -28,8 +39,38 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements-dev.txt
 
+    - name: Configurar Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Instalar dependencias de Tailwind CSS
+      run: npm ci
+
+    - name: Compilar Tailwind CSS
+      run: npm run build:css
+
     - name: Comprobar configuración de pruebas
       run: python manage.py check --settings=config.settings_test
 
-    - name: Ejecutar pruebas automáticas
-      run: python -m pytest
+    - name: Comprobar migraciones pendientes
+      run: python manage.py makemigrations --check --dry-run --settings=config.settings_test
+
+    - name: Ejecutar pruebas automáticas con cobertura
+      run: python -m pytest --cov=apps --cov-report=term-missing --cov-report=xml
+
+    - name: Ejecutar pruebas de frontend (Node)
+      run: npm run test:frontend
+
+    - name: Subir reporte de cobertura
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-xml
+        path: coverage.xml
+
+    - name: Subir análisis y cobertura a SonarCloud
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      uses: SonarSource/sonarqube-scan-action@v6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

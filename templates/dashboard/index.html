@@ -12,10 +12,12 @@
     <h1 class="font-headline">¡Hola, {{ request.user.first_name|default:request.user.username }}!</h1>
   </div>
 
-  <dl class="dashboard-kpis">
+  <dl class="dashboard-kpis{% if not can_view_financial_dashboard %} dashboard-kpis-operational{% endif %}">
+    {% if can_view_financial_dashboard %}
     <div class="dashboard-kpi">
       <dt>Servicios atendidos</dt><dd>{{ total_sales_formatted }}<span>Importe de citas completadas</span></dd>
     </div>
+    {% endif %}
     <div class="dashboard-kpi">
       <dt>Citas de hoy</dt><dd>{{ today_count }}<span>{{ completed_count }} completadas</span></dd>
     </div>
@@ -23,7 +25,7 @@
       <dt>Clientes registrados</dt><dd>{{ total_customers }}<span><a href="{% url 'customers:list' %}" class="dashboard-link">Ver clientes</a></span></dd>
     </div>
     <div class="dashboard-kpi">
-      <dt>Stock bajo</dt><dd class="text-error">{{ inventory_alerts|length }}<span>Alertas de ejemplo</span></dd>
+      <dt>Stock bajo</dt><dd class="text-error">{{ inventory_alerts|length }}<span>Revisar existencias</span></dd>
     </div>
   </dl>
 
@@ -33,7 +35,9 @@
         <h2 id="upcoming-title"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span> Próximas citas</h2>
         <a href="{% url 'appointments:calendar' %}" class="dashboard-link">Ver agenda</a>
       </div>
+      {% if can_view_financial_dashboard %}
       <p class="dashboard-schedule-summary">Valor de citas de hoy <strong>{{ projected_sales_formatted }}</strong></p>
+      {% endif %}
       {% if upcoming_appointments %}
       <ul class="dashboard-appointments">
         {% for app in upcoming_appointments %}
@@ -46,10 +50,12 @@
           </div>
           <div class="dashboard-appointment-actions">
             <span class="font-semibold">{{ app.price_cop_formatted }}</span>
+            {% if request.user.is_admin or app.professional.user_id == request.user.id %}
             <form action="{% url 'appointments:complete' app.pk %}" method="POST" class="inline">
               {% csrf_token %}
               <button type="submit" class="dashboard-attend">Atender</button>
             </form>
+            {% endif %}
           </div>
         </li>
         {% endfor %}
@@ -82,7 +88,6 @@
           <h2 id="stock-title"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Control de insumos</h2>
           <a href="{% url 'inventory:list' %}" class="dashboard-link">Ver inventario</a>
         </div>
-        <p class="dashboard-note">Datos de ejemplo; aún sin conexión al inventario.</p>
         <ul class="dashboard-list">
           {% for item in inventory_alerts %}
           <li class="dashboard-stock-item">
@@ -90,6 +95,8 @@
             <p>{{ item.stock }} unidad{{ item.stock|pluralize:"es" }} · Mínimo: {{ item.min_stock }}</p>
             <p class="{% if item.critical %}text-error{% else %}text-warning{% endif %}">{% if item.critical %}Crítico{% else %}Revisar{% endif %} · {{ item.deficit }}</p>
           </li>
+          {% empty %}
+          <li class="dashboard-empty">No hay productos con stock bajo.</li>
           {% endfor %}
         </ul>
       </section>

@@ -6,13 +6,14 @@ class User(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Administrador'
         WORKER = 'TRABAJADOR', 'Trabajador (Barbero / Estilista)'
+        CASHIER = 'CAJA_RECEPCION', 'Caja / Recepción'
 
     email = models.EmailField('Correo electrónico', unique=True)
     role = models.CharField(
         'Rol',
         max_length=20,
         choices=Role.choices,
-        default=Role.ADMIN,
+        default=Role.WORKER,
         help_text='Define los permisos y nivel de acceso en StudioGest'
     )
     phone = models.CharField('Teléfono', max_length=20, blank=True, null=True)
@@ -35,3 +36,7 @@ class User(AbstractUser):
     @property
     def is_worker(self):
         return self.role == self.Role.WORKER
+
+    @property
+    def is_cashier(self):
+        return self.role == self.Role.CASHIER

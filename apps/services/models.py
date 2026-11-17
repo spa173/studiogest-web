@@ -64,12 +64,42 @@ class Professional(models.Model):
     )
     specialty = models.CharField('Especialidad', max_length=120, default='Barbero Profesional')
     color_tag = models.CharField('Color Identificador (Hex)', max_length=20, default='#0D9488')
+    work_start_time = models.TimeField(
+        'Hora de inicio laboral',
+        null=True,
+        blank=True,
+        help_text='Inicio de la jornada del profesional. Déjalo vacío junto con la hora de fin para no restringir horarios.'
+    )
+    work_end_time = models.TimeField(
+        'Hora de fin laboral',
+        null=True,
+        blank=True,
+        help_text='Fin de la jornada del profesional. Debe ser posterior a la hora de inicio.'
+    )
     is_active = models.BooleanField('Activo en Turnos', default=True)
 
     class Meta:
         verbose_name = 'Profesional'
         verbose_name_plural = 'Profesionales'
         ordering = ['user__first_name', 'user__last_name']
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        start = self.work_start_time
+        end = self.work_end_time
+        if (start is None) != (end is None):
+            msg = 'Define la hora de inicio y de fin laboral, o deja ambas vacías para no restringir horarios.'
+            errors['work_start_time'] = msg
+            errors['work_end_time'] = msg
+        elif start is not None and end is not None and end <= start:
+            errors['work_end_time'] = 'La hora de fin laboral debe ser posterior a la hora de inicio.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         full_name = self.user.get_full_name() or self.user.username
@@ -78,3 +108,13 @@ class Professional(models.Model):
     @property
     def name(self):
         return self.user.get_full_name() or self.user.username
+
+    @property
+    def has_work_schedule(self):
+        return self.work_start_time is not None and self.work_end_time is not None
+
+    @property
+    def work_schedule_display(self):
+        if self.has_work_schedule:
+            return f"{self.work_start_time.strftime('%H:%M')} - {self.work_end_time.strftime('%H:%M')}"
+        return 'Sin horario definido'

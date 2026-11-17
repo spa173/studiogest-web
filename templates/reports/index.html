@@ -30,11 +30,30 @@
 </form>
 
 {% if summary %}
-<p class="text-sm text-on-surface-variant">
-  {% if start_date or end_date %}
-    Período: {% if start_date %}desde {{ start_date|date:'d/m/Y' }}{% endif %} {% if end_date %}hasta {{ end_date|date:'d/m/Y' }}{% endif %}.
-  {% else %}Período: todo el historial.{% endif %}
-</p>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <p class="text-sm text-on-surface-variant">
+    {% if start_date or end_date %}
+      Período: {% if start_date %}desde {{ start_date|date:'d/m/Y' }}{% endif %} {% if end_date %}hasta {{ end_date|date:'d/m/Y' }}{% endif %}.
+    {% else %}Período: todo el historial.{% endif %}
+  </p>
+  <div class="flex flex-wrap gap-2 print:hidden">
+    <a href="{% url 'reports:index' %}?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&{% endif %}{% if end_date %}end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=csv"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-sm font-semibold hover:bg-surface-container border border-outline-variant/40 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">download</span>
+      Exportar CSV
+    </a>
+    <a href="{% url 'reports:index' %}?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&{% endif %}{% if end_date %}end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=xlsx"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-sm font-semibold hover:bg-surface-container border border-outline-variant/40 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">table_view</span>
+      Exportar Excel
+    </a>
+    <button type="button" onclick="window.print()"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-sm font-semibold hover:opacity-95 transition-colors">
+      <span class="material-symbols-outlined text-lg" aria-hidden="true">print</span>
+      Imprimir / PDF
+    </button>
+  </div>
+</div>
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
   <div class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
     <h2 class="text-sm font-semibold text-on-surface-variant">Total de citas</h2>
@@ -86,6 +105,91 @@
     <span class="material-symbols-outlined text-5xl text-outline" aria-hidden="true">bar_chart</span>
     <p class="mt-2 font-semibold text-on-surface">No hay citas registradas en el período seleccionado.</p>
     <p class="mt-1 text-sm text-on-surface-variant">No hay información para mostrar servicios solicitados. Prueba otro rango de fechas o limpia el filtro.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  <div class="p-5 border-b border-outline-variant/30">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Ventas registradas</h2>
+    <p class="mt-1 text-sm text-on-surface-variant">Totales por medio de pago en el período seleccionado.</p>
+  </div>
+  {% if sales_summary.count %}
+  <div class="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="p-4 rounded-xl bg-surface-container-low">
+      <p class="text-sm text-on-surface-variant">Ventas</p>
+      <p class="font-headline text-2xl font-bold text-on-surface">{{ sales_summary.count }}</p>
+    </div>
+    <div class="p-4 rounded-xl bg-surface-container-low">
+      <p class="text-sm text-on-surface-variant">Total cobrado</p>
+      <p class="font-headline text-xl font-bold text-secondary">${{ sales_summary.total }}</p>
+    </div>
+    {% for row in sales_by_payment %}
+    <div class="p-4 rounded-xl bg-surface-container-low">
+      <p class="text-sm text-on-surface-variant">{{ row.payment_method }}</p>
+      <p class="font-headline text-xl font-bold text-on-surface">${{ row.total }}</p>
+      <p class="text-xs text-on-surface-variant">{{ row.count }} venta(s)</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="overflow-x-auto border-t border-outline-variant/20">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant">
+        <tr>
+          <th scope="col" class="px-5 py-3 font-semibold">Producto</th>
+          <th scope="col" class="px-5 py-3 font-semibold text-right">Cantidad</th>
+          <th scope="col" class="px-5 py-3 font-semibold text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for item in popular_products %}
+        <tr class="hover:bg-surface-container-low/60">
+          <td class="px-5 py-3 text-sm font-semibold text-on-surface">{{ item.product__name }}</td>
+          <td class="px-5 py-3 text-sm text-on-surface text-right">{{ item.quantity }}</td>
+          <td class="px-5 py-3 text-sm text-on-surface text-right">${{ item.total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="px-5 py-4 text-sm text-on-surface-variant">Sin productos vendidos en el período.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <p class="font-semibold text-on-surface">No hay ventas registradas en el período seleccionado.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+  <div class="p-5 border-b border-outline-variant/30">
+    <h2 class="font-headline text-lg font-bold text-on-surface">Stock bajo</h2>
+    <p class="mt-1 text-sm text-on-surface-variant">Productos activos con existencia menor o igual al mínimo.</p>
+  </div>
+  {% if low_stock %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant">
+        <tr>
+          <th scope="col" class="px-5 py-3 font-semibold">Producto</th>
+          <th scope="col" class="px-5 py-3 font-semibold text-right">Stock</th>
+          <th scope="col" class="px-5 py-3 font-semibold text-right">Mínimo</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/20">
+        {% for p in low_stock %}
+        <tr class="hover:bg-surface-container-low/60">
+          <td class="px-5 py-3 text-sm font-semibold text-on-surface">{{ p.name }}</td>
+          <td class="px-5 py-3 text-sm text-on-surface text-right">{{ p.stock }}</td>
+          <td class="px-5 py-3 text-sm text-on-surface text-right">{{ p.minimum_stock }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-10 text-center">
+    <p class="font-semibold text-on-surface">No hay productos con stock bajo.</p>
   </div>
   {% endif %}
 </section>

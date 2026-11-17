@@ -10,6 +10,8 @@ from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from accounts.permissions import can_manage_services
+
 from .forms import ProfessionalForm, ServiceForm
 from .models import Professional, Service
 
@@ -31,8 +33,7 @@ def service_list(request):
 
 
 def _require_service_admin(user):
-    # is_admin incluye al rol ADMIN y a los superusuarios; is_staff por sí solo no basta.
-    if not user.is_admin:
+    if not can_manage_services(user):
         raise PermissionDenied('Solo los administradores pueden gestionar servicios.')
 
 
@@ -149,7 +150,8 @@ def professionals_list(request):
 @login_required
 @require_http_methods(GET_POST)
 def professional_create(request):
-    if not request.user.is_admin:
+    from accounts.permissions import can_manage_professionals
+    if not can_manage_professionals(request.user):
         messages.error(request, 'Solo un administrador puede registrar nuevos profesionales.')
         return redirect(URL_PROFESIONALES)
 
@@ -171,9 +173,10 @@ def professional_create(request):
 @login_required
 @require_http_methods(GET_POST)
 def professional_update(request, pk):
+    from accounts.permissions import can_manage_professionals
     prof = get_object_or_404(Professional.objects.select_related('user'), pk=pk)
 
-    if not request.user.is_admin:
+    if not can_manage_professionals(request.user):
         messages.error(request, 'Solo un administrador puede editar la información de profesionales.')
         return redirect(URL_PROFESIONALES)
 
@@ -196,9 +199,10 @@ def professional_update(request, pk):
 @login_required
 @require_http_methods(GET_POST)
 def professional_delete(request, pk):
+    from accounts.permissions import can_manage_professionals
     prof = get_object_or_404(Professional.objects.select_related('user'), pk=pk)
 
-    if not request.user.is_admin:
+    if not can_manage_professionals(request.user):
         messages.error(request, 'Solo un administrador puede eliminar o desactivar profesionales.')
         return redirect(URL_PROFESIONALES)
 
@@ -241,7 +245,8 @@ def professional_delete(request, pk):
 @login_required
 @require_POST
 def professional_toggle_status(request, pk):
-    if not request.user.is_admin:
+    from accounts.permissions import can_manage_professionals
+    if not can_manage_professionals(request.user):
         messages.error(request, 'Solo un administrador puede cambiar el estado de los profesionales.')
         return redirect(URL_PROFESIONALES)
 

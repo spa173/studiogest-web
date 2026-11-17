@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Reserva recibida - StudioGest{% endblock %}
+
+{% block full_page %}
+<div class="min-h-screen bg-surface">
+  <header class="border-b border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-sm">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <a href="/" class="font-headline text-lg font-bold text-on-surface">StudioGest</a>
+      <a href="/" class="text-sm font-medium text-on-surface-variant hover:text-secondary">Inicio</a>
+    </div>
+  </header>
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div class="max-w-xl mx-auto w-full">
+      <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-6 sm:p-8 text-center space-y-4">
+        <span class="material-symbols-outlined text-5xl text-secondary" aria-hidden="true">check_circle</span>
+        <h1 class="font-headline text-2xl font-bold text-on-surface">Solicitud de reserva recibida</h1>
+        <p class="text-sm text-on-surface-variant">Hemos registrado tu solicitud. El equipo la revisará y confirmará la disponibilidad.</p>
+        <div class="text-left text-sm bg-surface-container-low rounded-xl p-4 space-y-1">
+          <p><strong>Servicio:</strong> {{ appointment.service.name }}</p>
+          <p><strong>Profesional:</strong> {{ appointment.professional.name }}</p>
+          <p><strong>Fecha:</strong> {{ appointment.date|date:'d/m/Y' }}</p>
+          <p><strong>Hora:</strong> {{ appointment.start_time|time:'H:i' }} - {{ appointment.end_time|time:'H:i' }}</p>
+          <p><strong>Estado:</strong> {{ appointment.get_status_display }}</p>
+        </div>
+        <div class="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="{% url 'appointments:public_booking' %}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm">Hacer otra reserva</a>
+          <a href="/" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm text-on-surface-variant hover:bg-surface-container-low">Ir al inicio</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

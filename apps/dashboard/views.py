@@ -1,9 +1,12 @@
-import datetime
+﻿import datetime
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from appointments.models import Appointment
-from services.models import Professional, Service
+from services.models import Professional
 from customers.models import Customer
+from inventory.models import Product
+from django.db.models import F
+from accounts.permissions import can_view_financial_dashboard
 
 
 @login_required
@@ -22,8 +25,9 @@ def dashboard_view(request):
     completed_count = completed_appointments.count()
 
     # 2. Ventas calculadas del día (Suma de servicios atendidos hoy)
-    total_sales_cop = sum(app.price_cop for app in completed_appointments)
-    projected_sales_cop = sum(app.price_cop for app in today_appointments)
+    can_view_financial = can_view_financial_dashboard(request.user)
+    total_sales_cop = sum(app.price_cop for app in completed_appointments) if can_view_financial else 0
+    projected_sales_cop = sum(app.price_cop for app in today_appointments) if can_view_financial else 0
 
     # 3. Próximas citas de hoy ordenadas por hora
     upcoming_appointments = today_appointments.filter(
@@ -36,35 +40,30 @@ def dashboard_view(request):
     # 5. Clientes registrados
     total_customers = Customer.objects.count()
 
-    # 6. Alertas de inventario (Estructura preparada para conectar con módulo de inventario)
-    inventory_alerts = [
-        {
-            'name': 'Pomada Mate Reuzel 100g',
-            'stock': 2,
-            'min_stock': 5,
-            'deficit': '-60%',
-            'critical': True
-        },
-        {
-            'name': 'Tinte Keratina 7.1 Castaño',
-            'stock': 1,
-            'min_stock': 4,
-            'deficit': '-75%',
-            'critical': True
-        },
-        {
-            'name': 'Aceite para Barba Suavecito',
-            'stock': 3,
-            'min_stock': 6,
-            'deficit': '-50%',
-            'critical': False
-        }
-    ]
+    # 6. Alertas de inventario desde la base de datos (RF-09)
+    low_stock_products = Product.objects.filter(
+        is_active=True, stock__lte=F('minimum_stock')
+    ).order_by('stock', 'name')
+    inventory_alerts = []
+    for product in low_stock_products:
+        if product.minimum_stock > 0:
+            deficit_pct = int(round((1 - product.stock / product.minimum_stock) * 100))
+            deficit = f'-{deficit_pct}%'
+        else:
+            deficit = '0%'
+        inventory_alerts.append({
+            'name': product.name,
+            'stock': product.stock,
+            'min_stock': product.minimum_stock,
+            'deficit': deficit,
+            'critical': product.stock == 0 or product.stock * 2 <= product.minimum_stock,
+        })
 
     context = {
         'today': today,
         'today_count': today_count,
         'completed_count': completed_count,
+        'can_view_financial_dashboard': can_view_financial,
         'total_sales_cop': total_sales_cop,
         'total_sales_formatted': f"${int(total_sales_cop):,} COP".replace(',', '.'),
         'projected_sales_formatted': f"${int(projected_sales_cop):,} COP".replace(',', '.'),

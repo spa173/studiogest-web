@@ -16,11 +16,30 @@ load_dotenv(BASE_DIR / '.env')
 # Agregar directorio apps al sys.path para importaciones limpias
 sys.path.insert(0, str(BASE_DIR / 'apps'))
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-studiogest-dev-secret-key-change-in-production')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-studiogest-dev-secret-key-change-in-production'
+    else:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured('SECRET_KEY debe configurarse cuando DEBUG=False.')
 
-ALLOWED_HOSTS = ['*']
+_allowed_hosts = os.getenv('ALLOWED_HOSTS', '')
+if _allowed_hosts:
+    ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts.split(',') if host.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+else:
+    ALLOWED_HOSTS = []
+
+# Origenes confiables para CSRF (separados por coma). En desarrollo se incluyen los locales.
+_csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if _csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins.split(',') if origin.strip()]
+elif DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
 # Application definition
@@ -123,6 +142,22 @@ else:
         }
     }
 
+
+# Sesión: expiración tras 30 minutos de inactividad (RNF-04)
+SESSION_COOKIE_AGE = 1800
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Endurecimiento de seguridad para producción (solo cuando DEBUG=False)
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    X_FRAME_OPTIONS = 'DENY'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

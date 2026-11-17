@@ -226,9 +226,11 @@ class RegistrationTests(TestCase):
 
     def test_worker_and_anonymous_permissions(self):
         self.client.force_login(self.worker)
-        for url in [self.url, reverse('inventory:history')]:
-            self.assertEqual(self.client.get(url).status_code, 403)
-            self.assertEqual(self.client.post(url, {}).status_code in [403, 405], True)
+        # Registro/edición de productos: solo ADMIN (escritura).
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertIn(self.client.post(self.url, {}).status_code, (403, 405))
+        # Historial de inventario: lectura permitida para todos los roles de negocio.
+        self.assertEqual(self.client.get(reverse('inventory:history')).status_code, 200)
         response = self.client.get(reverse('inventory:list'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Registrar producto y compra')

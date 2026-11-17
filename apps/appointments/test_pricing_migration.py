@@ -13,7 +13,7 @@ def test_pricing_migration_preserves_legacy_amounts_and_unknown_details():
     assert connection.settings_dict['NAME'].startswith('file:memory') or connection.settings_dict['NAME'] == ':memory:'
     executor = MigrationExecutor(connection)
     latest = executor.loader.graph.leaf_nodes()
-    old_target = [('appointments', '0001_initial')]
+    old_target = [('accounts', '0001_initial'), ('customers', '0001_initial'), ('appointments', '0001_initial')]
     try:
         executor.migrate(old_target)
         old_apps = executor.loader.project_state(old_target).apps

@@ -284,6 +284,10 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .dashboard-kpis-operational {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .dashboard-main {
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     align-items: start;

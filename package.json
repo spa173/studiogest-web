@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^3.4.19"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.out.css",
+    "dev:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.out.css --watch",
+    "test:frontend": "node --test apps/appointments/pricing_frontend_test.cjs apps/inventory/frontend_test.cjs apps/sales/navigation_test.cjs"
+  }
+}

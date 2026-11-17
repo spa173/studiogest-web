@@ -110,12 +110,30 @@ class ProfessionalForm(forms.ModelForm):
             'placeholder': '••••••••',
             'autocomplete': 'new-password',
         }),
-        help_text='Por defecto: «barbero123» si se deja en blanco al crear. Al editar, déjalo vacío para no cambiarla.'
+        help_text='Obligatoria al crear un profesional. Al editar, déjala vacía para no cambiarla.'
+    )
+    work_start_time = forms.TimeField(
+        label='Hora de inicio laboral',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'class': CLASE_INPUT,
+            'type': 'time',
+        }),
+        help_text='Opcional. Déjala vacía junto con la hora de fin para no restringir horarios.'
+    )
+    work_end_time = forms.TimeField(
+        label='Hora de fin laboral',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'class': CLASE_INPUT,
+            'type': 'time',
+        }),
+        help_text='Opcional. Debe ser posterior a la hora de inicio.'
     )
 
     class Meta:
         model = Professional
-        fields = ['specialty', 'color_tag', 'is_active']
+        fields = ['specialty', 'color_tag', 'work_start_time', 'work_end_time', 'is_active']
         labels = {
             'specialty': 'Especialidad',
             'color_tag': 'Color identificador en agenda',
@@ -147,6 +165,8 @@ class ProfessionalForm(forms.ModelForm):
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
             self.fields['phone'].initial = user.phone or ''
+            self.fields['work_start_time'].initial = self.instance.work_start_time
+            self.fields['work_end_time'].initial = self.instance.work_end_time
 
     def clean_first_name(self):
         nombre = ' '.join(self.cleaned_data['first_name'].split())
@@ -190,6 +210,25 @@ class ProfessionalForm(forms.ModelForm):
             return 'Barbero Profesional'
         return esp
 
+    def clean_password(self):
+        password = (self.cleaned_data.get('password') or '').strip()
+        if not self.instance or not self.instance.pk:
+            if not password:
+                raise forms.ValidationError('La contraseña es obligatoria al crear un profesional.')
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('work_start_time')
+        end = cleaned_data.get('work_end_time')
+        if (start is None) != (end is None):
+            msg = 'Define la hora de inicio y de fin laboral, o deja ambas vacias para no restringir horarios.'
+            self.add_error('work_start_time', msg)
+            self.add_error('work_end_time', msg)
+        elif start is not None and end is not None and end <= start:
+            self.add_error('work_end_time', 'La hora de fin laboral debe ser posterior a la hora de inicio.')
+        return cleaned_data
+
     @transaction.atomic
     def save(self, commit=True):
         first_name = self.cleaned_data['first_name']
@@ -228,7 +267,7 @@ class ProfessionalForm(forms.ModelForm):
                 phone=phone,
                 role=User.Role.WORKER,
             )
-            user.set_password(password or 'barbero123')
+            user.set_password(password)
             user.save()
 
             prof = super().save(commit=False)

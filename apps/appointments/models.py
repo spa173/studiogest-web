@@ -101,6 +101,7 @@ class Appointment(models.Model):
         super().clean()
         self._validate_pricing()
         self._validate_interval()
+        self._validate_work_schedule()
         self._validate_conflicts()
 
     def _validate_pricing(self):
@@ -124,6 +125,24 @@ class Appointment(models.Model):
                 raise ValidationError({
                     'end_time': 'La hora de finalización debe ser posterior a la hora de inicio.'
                 })
+
+    def _validate_work_schedule(self):
+        if not (self.professional_id and self.start_time and self.end_time):
+            return
+        professional = self.professional
+        work_start = getattr(professional, 'work_start_time', None)
+        work_end = getattr(professional, 'work_end_time', None)
+        if work_start is None or work_end is None:
+            return
+        start = self.start_time
+        end = self.end_time
+        if start < work_start or end > work_end:
+            raise ValidationError({
+                'start_time': (
+                    f"La cita ({start.strftime('%H:%M')} - {end.strftime('%H:%M')}) está fuera del horario laboral de "
+                    f"{professional.name} ({work_start.strftime('%H:%M')} - {work_end.strftime('%H:%M')})."
+                )
+            })
 
     def _validate_conflicts(self):
         # Regla de Oro: Validación de Solapamientos (Conflict Detection)

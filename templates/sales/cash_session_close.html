@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if session.is_open %}Cerrar caja{% else %}Detalle de caja{% endif %} - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'sales:index' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a ventas
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">{% if session.is_open %}Cerrar caja{% else %}Detalle de caja{% endif %}</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Sesión abierta el {{ session.opened_at }}{% if session.closed_at %} · Cerrada el {{ session.closed_at }}{% endif %}</p>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
+    <div>
+      <h2 class="font-headline text-lg font-bold text-on-surface">Arqueo detallado</h2>
+      <p class="text-sm text-on-surface-variant mt-1">Solo se consideran ventas registradas de esta sesión.</p>
+    </div>
+
+    <div class="space-y-2">
+      <h3 class="text-sm font-semibold text-on-surface">Base y ventas por medio de pago</h3>
+      <div class="flex justify-between text-sm"><span>Base inicial</span><span>${{ session.opening_cash }}</span></div>
+      <div class="flex justify-between text-sm"><span>Ventas registradas en efectivo</span><span>${{ totals.cash }}</span></div>
+      <div class="flex justify-between text-sm"><span>Ventas registradas con tarjeta</span><span>${{ totals.card }}</span></div>
+      <div class="flex justify-between text-sm"><span>Ventas registradas por transferencia</span><span>${{ totals.transfer }}</span></div>
+    </div>
+
+    <div class="space-y-2 border-t border-outline-variant/30 pt-3">
+      <h3 class="text-sm font-semibold text-on-surface">Totales para arqueo</h3>
+      <div class="flex justify-between text-sm"><span>Total ventas (todos los medios)</span><span>${{ sales_total }}</span></div>
+      <div class="flex justify-between text-sm font-semibold"><span>Efectivo esperado en caja (base inicial + ventas en efectivo)</span><span>${{ expected_cash }}</span></div>
+      <div class="flex justify-between text-sm text-on-surface-variant"><span>Total general (base inicial + ventas por todos los medios)</span><span>${{ grand_total }}</span></div>
+      {% if session.counted_cash is not None %}
+      <div class="flex justify-between text-sm"><span>Efectivo contado</span><span>${{ session.counted_cash }}</span></div>
+      <div class="flex justify-between text-sm font-semibold {% if session.cash_difference < 0 %}text-error{% elif session.cash_difference > 0 %}text-secondary{% endif %}"><span>Diferencia (contado - esperado)</span><span>${{ session.cash_difference }}</span></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
+    <div>
+      <h2 class="font-headline text-lg font-bold text-on-surface">Ventas asociadas</h2>
+      <p class="text-sm text-on-surface-variant mt-1">Ventas registradas en esta sesión de caja.</p>
+    </div>
+    {% if sales %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-on-surface-variant border-b border-outline-variant/30">
+            <th class="py-2 pr-3">Comprobante</th>
+            <th class="py-2 pr-3">Fecha</th>
+            <th class="py-2 pr-3">Cliente</th>
+            <th class="py-2 pr-3">Medio de pago</th>
+            <th class="py-2 pr-3 text-right">Total</th>
+            <th class="py-2">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in sales %}
+          <tr class="border-b border-outline-variant/20 last:border-b-0">
+            <td class="py-2 pr-3 font-medium">{{ sale.receipt_number }} <span class="text-on-surface-variant font-normal">(Venta #{{ sale.pk }})</span></td>
+            <td class="py-2 pr-3">{{ sale.created_at|date:"Y-m-d H:i" }}</td>
+            <td class="py-2 pr-3">{% if sale.customer %}{{ sale.customer }}{% else %}—{% endif %}</td>
+            <td class="py-2 pr-3">{{ sale.get_payment_method_display }}</td>
+            <td class="py-2 pr-3 text-right">${{ sale.total }}</td>
+            <td class="py-2"><a href="{% url 'sales:receipt' sale.pk %}" class="text-secondary font-semibold hover:underline">Ver recibo</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-on-surface-variant">No hay ventas registradas asociadas a esta sesión.</p>
+    {% endif %}
+  </section>
+
+  {% if session.is_open %}
+  <form method="post" action="{% url 'sales:cash_finalize' session.pk %}" novalidate class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
+    {% csrf_token %}
+    {% if close_form.non_field_errors %}
+    <div class="text-sm text-error font-medium">{% for error in close_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+    {% endif %}
+    <div class="space-y-1.5">
+      <label for="{{ close_form.counted_cash.id_for_label }}" class="block text-sm font-semibold text-on-surface">Efectivo contado al cierre</label>
+      {{ close_form.counted_cash }}
+      <p class="text-xs text-on-surface-variant">Ingresa el efectivo físico en caja. La diferencia se calculará frente al esperado (${{ expected_cash }}).</p>
+      {% for error in close_form.counted_cash.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+    </div>
+    <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-sm">
+      Confirmar cierre
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

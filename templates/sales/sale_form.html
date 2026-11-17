@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - StudioGest{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto w-full space-y-6">
+  <div class="pb-2 border-b border-outline-variant/30">
+    <a href="{% url 'sales:index' %}" class="inline-flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary font-medium">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a ventas
+    </a>
+    <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mt-2">{{ title }}</h1>
+  </div>
+
+  <form method="post" novalidate class="space-y-5" action="{% url 'sales:store' %}">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
+      <h2 class="font-headline text-lg font-bold text-on-surface">Datos de la venta</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% for campo in form %}
+          {% if campo.name == 'notes' %}
+          <div class="sm:col-span-2 space-y-1.5">
+            <label for="{{ campo.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ campo.label }}</label>
+            {{ campo }}
+            {% for error in campo.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+          </div>
+          {% else %}
+          <div class="space-y-1.5">
+            <label for="{{ campo.id_for_label }}" class="block text-sm font-semibold text-on-surface">{{ campo.label }}</label>
+            {{ campo }}
+            {% for error in campo.errors %}<p class="text-sm text-error font-medium">{{ error }}</p>{% endfor %}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
+      <h2 class="font-headline text-lg font-bold text-on-surface">Detalles</h2>
+      {{ formset.management_form }}
+      <div class="space-y-3">
+        {% for detail_form in formset %}
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 p-3 rounded-xl bg-surface-container-low/60">
+          {% for campo in detail_form %}
+          <div class="space-y-1">
+            <label class="block text-xs font-semibold text-on-surface-variant">{{ campo.label }}</label>
+            {{ campo }}
+            {% for error in campo.errors %}<p class="text-xs text-error font-medium">{{ error }}</p>{% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+      <a href="{% url 'sales:index' %}" class="px-4 py-2.5 rounded-xl text-center font-semibold text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-sm">
+        Guardar venta
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

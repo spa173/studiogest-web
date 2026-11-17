@@ -84,6 +84,36 @@
       {% endfor %}
     </div>
 
+    <!-- Horario laboral -->
+    <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-3">
+      <div class="space-y-0.5">
+        <h2 class="text-sm font-semibold text-on-surface">Horario laboral</h2>
+        <p class="text-xs text-on-surface-variant">Si defines un horario, las citas solo podrán agendarse dentro de ese rango. Si dejas ambos campos vacíos, el profesional no tendrá restricción horaria.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label for="{{ form.work_start_time.id_for_label }}" class="block text-sm font-semibold text-on-surface">
+            {{ form.work_start_time.label }}
+          </label>
+          {{ form.work_start_time }}
+          {% if form.work_start_time.help_text %}<p class="text-xs text-on-surface-variant">{{ form.work_start_time.help_text }}</p>{% endif %}
+          {% for error in form.work_start_time.errors %}
+          <p class="text-sm text-error font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+        <div class="space-y-1.5">
+          <label for="{{ form.work_end_time.id_for_label }}" class="block text-sm font-semibold text-on-surface">
+            {{ form.work_end_time.label }}
+          </label>
+          {{ form.work_end_time }}
+          {% if form.work_end_time.help_text %}<p class="text-xs text-on-surface-variant">{{ form.work_end_time.help_text }}</p>{% endif %}
+          {% for error in form.work_end_time.errors %}
+          <p class="text-sm text-error font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
     <!-- Color identificador en agenda y paleta rápida -->
     <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
