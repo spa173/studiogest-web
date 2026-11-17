@@ -14,7 +14,7 @@ function ConvertTo-CodexAgentToml {
     $lines.Add("# GENERATED: DO NOT EDIT. Sources: office/registry.json; $($Role.prompt). Run scripts/Build-Office.ps1 -Platform Codex.")
     foreach ($key in $fields.Keys) {
         if ($fields[$key] -isnot [string] -or [string]::IsNullOrWhiteSpace($fields[$key])) { throw "Invalid Codex field '$key'." }
-        $escaped = ConvertTo-Json -InputObject $fields[$key] -Compress
+        $escaped = (ConvertTo-Json -InputObject $fields[$key] -Compress).Replace([string] [char] 0x7f, '\u007f')
         if (($escaped | ConvertFrom-Json) -cne $fields[$key]) { throw "Codex field '$key' did not round-trip." }
         $lines.Add("$key = $escaped")
     }

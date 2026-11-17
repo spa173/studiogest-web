@@ -113,7 +113,7 @@ function Get-OfficeContractSchema {
 
 # Deliberately implements only the JSON Schema vocabulary used by the four
 # bundled contracts: type, required, properties, enum, const, minLength,
-# items, minItems, allOf and if/then. It is not a general schema engine.
+# pattern, items, minItems, allOf and if/then. It is not a general schema engine.
 function Assert-OfficeSchemaValue {
     param([AllowNull()] $Value, [pscustomobject] $Schema, [string] $Path)
     $keywords = @($Schema.PSObject.Properties.Name)
@@ -134,6 +134,7 @@ function Assert-OfficeSchemaValue {
     if ($keywords -contains 'enum' -and $Value -cnotin $Schema.enum) { throw "Invalid enum at $Path." }
     if ($keywords -contains 'const' -and $Value -cne $Schema.const) { throw "Invalid const at $Path." }
     if ($Value -is [string] -and $keywords -contains 'minLength' -and $Value.Trim().Length -lt $Schema.minLength) { throw "Expected nonempty string at $Path." }
+    if ($Value -is [string] -and $keywords -contains 'pattern' -and -not [regex]::IsMatch($Value, $Schema.pattern)) { throw "Invalid pattern at $Path." }
     if ($Value -is [array]) {
         if ($keywords -contains 'minItems' -and $Value.Count -lt $Schema.minItems) { throw "Invalid minItems at $Path." }
         if ($keywords -contains 'items') {

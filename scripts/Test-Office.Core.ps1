@@ -167,7 +167,12 @@ if ($Section -in @('OpenCode', 'All')) {
                 Assert-True ($rule.action -is [string] -and $rule.resource -is [string] -and $rule.effect -cin @('allow', 'deny', 'ask')) 'Invalid V2 permission rule.'
             }
             Assert-True ((Get-OpenCodeEffect $agent.permissions read 'src/main.ps1') -eq 'allow') 'Local reading must be allowed.'
-            Assert-True ((Get-OpenCodeEffect $agent.permissions grep 'pattern') -eq 'allow' -and (Get-OpenCodeEffect $agent.permissions glob '*.ps1') -eq 'allow') 'Native search tools must remain available.'
+            Assert-True ((Get-OpenCodeEffect $agent.permissions glob '*.ps1') -eq 'allow') 'Native glob must remain available.'
+            # OpenCode authorizes grep against the search expression, not each
+            # matched path. Approval must therefore apply to every expression
+            # until the tool exposes per-file permission checks.
+            $grepExpression = 'DATABASE_URL\s*='
+            Assert-True ((Get-OpenCodeEffect $agent.permissions grep $grepExpression) -eq 'ask') 'Native grep must ask for the real expression resource.'
             # Inspection tools accept options that write files, execute programs or
             # read secrets; a shell prefix alone cannot prove read-only behavior.
             $unsafeInspection = @('git diff --output=src/main.ps1', 'rg --pre=./preprocessor.exe pattern README.md', 'Get-Content .env')
@@ -247,6 +252,15 @@ if ($Section -in @('Codex', 'All')) {
         Assert-True ($fields.Count -eq 3) 'Expected exactly three Codex fields, with inherited model and permissions.'
         [pscustomobject] $fields
     }
+    $tomlParser = Get-Command python -ErrorAction SilentlyContinue
+    Assert-True ($null -ne $tomlParser) 'Python with stdlib tomllib is required for real TOML compatibility checks.'
+    function Read-CodexToml([string] $Path) {
+        $python = 'import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], "rb")), ensure_ascii=True))'
+        $output = @(& $tomlParser.Source -c $python $Path 2>&1)
+        $exitCode = $LASTEXITCODE
+        Assert-True ($exitCode -eq 0) "Real TOML parser rejected '$Path': $($output -join "`n")"
+        ($output -join "`n") | ConvertFrom-Json
+    }
     $start = '<!-- oficina-unificada:inicio -->'
     $end = '<!-- oficina-unificada:fin -->'
     $block = "$start`nNuevo bloque`n$end"
@@ -298,7 +312,9 @@ if ($Section -in @('Codex', 'All')) {
             $text = [Text.UTF8Encoding]::new($false, $true).GetString($bytes)
             Assert-True (-not ($bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191) -and -not $text.Contains("`r")) 'Codex output must be UTF-8 without BOM and use LF.'
             $agent = Read-CodexAgent $text
+            $tomlAgent = Read-CodexToml (Join-Path $agentDir "$($role.id).toml")
             Assert-True ($agent.name -ceq $role.id -and $agent.description -ceq $role.description) "Codex identity did not round-trip: $($role.id)."
+            Assert-True ($tomlAgent.name -ceq $role.id -and $tomlAgent.description -ceq $role.description) "Real TOML parser lost Codex identity: $($role.id)."
             Assert-True ($agent.developer_instructions -ceq ((Get-OfficeRolePrompt $role $kitRoot) -replace "`r`n", "`n")) "Canonical Codex prompt differs: $($role.id)."
             Assert-True ($text.StartsWith('# GENERATED:') -and $text.Contains('office/registry.json') -and $text.Contains($role.prompt)) "Canonical-source header missing: $($role.id)."
         }
@@ -334,9 +350,15 @@ if ($Section -in @('Codex', 'All')) {
         Assert-True ([IO.File]::ReadAllText($driftPath) -ceq $before -and [IO.File]::ReadAllText($configPath) -ceq '{"theme":"before-failure"}' -and [IO.File]::ReadAllText($agentsPath) -ceq $start) 'Failed Both build partially wrote output.'
         $role = Copy-Value $roles[0]
         $role.description = 'Descripción: "línea" # comentario'
-        $prompt = "# Análisis`r`nComillas: `"`"`"; ruta: C:\carpeta; tab:`tfin`n"
-        $agent = Read-CodexAgent (ConvertTo-CodexAgentToml $role $prompt)
-        Assert-True ($agent.description -ceq $role.description -and $agent.developer_instructions -ceq ($prompt -replace "`r`n", "`n")) 'Codex renderer lost quoted, multiline or Unicode content.'
+        $prompt = "# Análisis`r`nComillas: `"`"`"; ruta: C:\carpeta; tab:`tfin`nDEL:" + [char] 0x7f + "`n"
+        $renderedToml = ConvertTo-CodexAgentToml $role $prompt
+        $agent = Read-CodexAgent $renderedToml
+        $compatibilityPath = Join-Path $sandbox 'codex-del-compatibility.toml'
+        [IO.File]::WriteAllText($compatibilityPath, $renderedToml, [Text.UTF8Encoding]::new($false))
+        $tomlAgent = Read-CodexToml $compatibilityPath
+        Assert-True ($renderedToml.Contains('\u007f')) 'Codex renderer must escape U+007F for TOML compatibility.'
+        Assert-True ($agent.description -ceq $role.description -and $agent.developer_instructions -ceq ($prompt -replace "`r`n", "`n")) 'Codex renderer lost quoted, multiline, Unicode or control content.'
+        Assert-True ($tomlAgent.developer_instructions -ceq ($prompt -replace "`r`n", "`n")) 'Real TOML parser did not round-trip U+007F content.'
         Assert-Throws { ConvertTo-CodexAgentToml ($registry.profiles | Where-Object id -CEQ 'directora') '# Director' } 'Director'
     } finally {
         $resolved = [IO.Path]::GetFullPath($sandbox)
@@ -522,6 +544,7 @@ if ($Section -in @('Registry', 'Contracts', 'All')) {
                 foreach ($allowed in $property.Value.enum) {
                     $candidate = Copy-Value $value; $candidate.($property.Name) = $allowed
                     if ($name -eq 'gate' -and $allowed -eq 'waived') { $candidate | Add-Member waiver ([pscustomobject]@{ approved_by = 'human'; reason = 'Accepted risk'; evidence = @('Human approval') }) }
+                    if ($name -eq 'escalation' -and $property.Name -eq 'status' -and $allowed -eq 'resolved') { $candidate.resolution = 'Approved by human' }
                     Assert-OfficeContractInstance $candidate $name $schema
                 }
                 $bad = Copy-Value $value; $bad.($property.Name) = 'invalid'
@@ -529,6 +552,17 @@ if ($Section -in @('Registry', 'Contracts', 'All')) {
             }
         }
     }
+    $escalationSchema = Get-OfficeContractSchema escalation $kitRoot
+    $escalation = $samples.escalation | ConvertFrom-Json
+    Assert-OfficeContractInstance $escalation escalation $escalationSchema
+    $escalation.status = 'resolved'; $escalation.resolution = $null
+    Assert-Throws { Assert-OfficeContractInstance $escalation escalation $escalationSchema } 'type.*resolution'
+    foreach ($invalidResolution in @('', '   ')) {
+        $escalation.resolution = $invalidResolution
+        Assert-Throws { Assert-OfficeContractInstance $escalation escalation $escalationSchema } 'nonempty.*resolution'
+    }
+    $escalation.resolution = 'Approved by human'
+    Assert-OfficeContractInstance $escalation escalation $escalationSchema
     $taskSchema = Get-OfficeContractSchema task $kitRoot
     $transitions = @{ drafted = 'approved,blocked,cancelled'; approved = 'in_progress,blocked,cancelled'; in_progress = 'verification,blocked,cancelled'; verification = 'completed,blocked,cancelled'; completed = ''; blocked = 'previous_state,cancelled'; cancelled = '' }
     foreach ($state in $transitions.Keys) {

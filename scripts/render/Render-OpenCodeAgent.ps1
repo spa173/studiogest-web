@@ -10,9 +10,12 @@ function ConvertTo-OpenCodeAgent {
     $rules = [Collections.Generic.List[object]]::new()
     # Unknown connector tools remain denied/ask until a verified tool binding exists.
     $rules.Add([ordered]@{ action = '*'; resource = '*'; effect = $policy.external_write })
-    foreach ($action in @('read', 'glob', 'grep', 'skill', 'question')) {
+    foreach ($action in @('read', 'glob', 'skill', 'question')) {
         $rules.Add([ordered]@{ action = $action; resource = '*'; effect = 'allow' })
     }
+    # OpenCode's grep permission resource is the search expression, not each
+    # candidate path, so native grep cannot inherit unrestricted search access.
+    $rules.Add([ordered]@{ action = 'grep'; resource = '*'; effect = 'ask' })
     $webEffect = if ('web_research' -cin $Role.capabilities) { 'allow' } else { 'deny' }
     foreach ($action in @('webfetch', 'websearch')) {
         $rules.Add([ordered]@{ action = $action; resource = '*'; effect = $webEffect })
