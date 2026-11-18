@@ -1,6 +1,7 @@
 ﻿import datetime
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_safe
 from appointments.models import Appointment
 from services.models import Professional
 from customers.models import Customer
@@ -9,6 +10,7 @@ from django.db.models import F
 from accounts.permissions import can_view_financial_dashboard
 
 
+@require_safe
 @login_required
 def dashboard_view(request):
     today = datetime.date.today()
