@@ -95,6 +95,13 @@
 
   <!-- Scripts Adicionales -->
   <script src="{% static 'js/navigation.js' %}" defer></script>
+  {% if request.user.is_authenticated and request.session_idle_remaining %}
+  <div id="session-idle" hidden data-activity-url="{% url 'accounts:session_activity' %}"
+       data-login-url="{% url 'accounts:login' %}" data-remaining="{{ request.session_idle_remaining }}">
+    {% csrf_token %}
+  </div>
+  <script src="{% static 'js/session-idle.js' %}" defer></script>
+  {% endif %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>

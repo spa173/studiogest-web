@@ -6,11 +6,13 @@ from django.utils.deprecation import MiddlewareMixin
 from services.models import BookingBusiness
 
 from .authentication import has_admin_login
+from .idle_session import ACTIVITY_ROUTE
 
 
 class RequireTermsAcceptance(MiddlewareMixin):
     public_routes = {
         'accounts:accept_terms',
+        ACTIVITY_ROUTE,
         'accounts:mfa_setup',
         'accounts:mfa_verify',
         'accounts:logout',
