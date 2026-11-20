@@ -14,9 +14,12 @@
     <div class="max-w-2xl mx-auto w-full space-y-6">
       <div class="pb-2 border-b border-outline-variant/30">
         <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Reserva tu cita</h1>
+        {% if booking_available %}
         <p class="text-sm text-on-surface-variant mt-1">Completa el formulario para solicitar tu cita. La solicitud queda pendiente de confirmación según disponibilidad y horario del profesional.</p>
+        {% endif %}
       </div>
 
+      {% if booking_available %}
       <form method="post" class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-sm p-5 sm:p-6 space-y-4">
         {% csrf_token %}
         {% if form.errors %}
@@ -75,6 +78,13 @@
         </div>
         <p class="text-xs text-on-surface-variant">Al enviar, tu solicitud queda registrada como pendiente. El negocio confirmará la cita y la disponibilidad final.</p>
       </form>
+      {% else %}
+      <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 sm:p-6" aria-labelledby="booking-unavailable-title">
+        <h2 id="booking-unavailable-title" class="font-headline text-xl font-semibold">Las reservas en línea aún no están disponibles</h2>
+        <p class="mt-2 text-sm text-on-surface-variant">Vuelve más adelante para consultar los servicios y profesionales disponibles.</p>
+        <a class="privacy-link mt-4 inline-block py-2 text-sm" href="{% url 'root' %}">Volver al inicio</a>
+      </section>
+      {% endif %}
     </div>
   </main>
 </div>
