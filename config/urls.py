@@ -3,7 +3,7 @@ URL configuration for StudioGest project.
 """
 from django.conf import settings
 from django.contrib import admin
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import include, path
 from django.views.generic import TemplateView
 
@@ -19,7 +19,7 @@ admin.site.has_permission = _admin_has_permission
 def root_redirect(request):
     if request.user.is_authenticated:
         return redirect('dashboard:index')
-    return redirect('accounts:login')
+    return render(request, 'landing.html')
 
 
 urlpatterns = [
