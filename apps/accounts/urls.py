@@ -1,5 +1,5 @@
 from django.urls import path
-from . import business_views, security, views
+from . import business_views, idle_session, security, views
 
 app_name = 'accounts'
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('seguridad/multifactor/', security.mfa_setup, name='mfa_setup'),
     path('seguridad/verificar/', security.mfa_verify, name='mfa_verify'),
     path('login/', views.login_view, name='login'),
+    path('sesion/actividad/', idle_session.session_activity, name='session_activity'),
     path('logout/', views.logout_view, name='logout'),
     path('configuracion/', views.profile_settings, name='settings'),
 ]
