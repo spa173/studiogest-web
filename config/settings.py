@@ -101,6 +101,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.idle_session.IdleSessionMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'accounts.security.PrivilegedAccessMiddleware',
     'accounts.middleware.RequireTermsAcceptance',
@@ -184,6 +185,7 @@ else:
 
 # Sesión: expiración tras 30 minutos de inactividad (RNF-04)
 SESSION_COOKIE_AGE = 1800
+SESSION_IDLE_SECONDS = 1800
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Endurecimiento de seguridad para producción (solo cuando DEBUG=False)
