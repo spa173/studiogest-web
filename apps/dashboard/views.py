@@ -44,6 +44,7 @@ def dashboard_view(request):
 
     # 6. Alertas de inventario desde la base de datos (RF-09)
     low_stock_products = Product.objects.filter(
+        business__isnull=True,
         is_active=True, stock__lte=F('minimum_stock')
     ).order_by('stock', 'name')
     inventory_alerts = []

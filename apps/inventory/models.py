@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models.functions import Round
+from django.db.models.functions import Coalesce, Round
 
 
 class Product(models.Model):
@@ -22,7 +22,13 @@ class Product(models.Model):
         ML = 'ML', 'Mililitros (ml)'
         G = 'G', 'Gramos (g)'
 
-    code = models.CharField('Código', max_length=50, unique=True)
+    business = models.ForeignKey('services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True)
+    # The legacy catalog has its own namespace, even on databases that allow repeated NULLs in unique indexes.
+    catalog_key = models.GeneratedField(
+        expression=Coalesce('business', models.Value(0), output_field=models.BigIntegerField()),
+        output_field=models.BigIntegerField(), db_persist=True,
+    )
+    code = models.CharField('Código', max_length=50)
     name = models.CharField('Nombre', max_length=150)
     description = models.TextField('Descripción', blank=True)
     presentation = models.CharField('Presentación', max_length=6, choices=Presentation.choices, blank=True)
@@ -59,6 +65,7 @@ class Product(models.Model):
         verbose_name_plural = 'Productos'
         ordering = ['name', 'code']
         constraints = [
+            models.UniqueConstraint(fields=['catalog_key', 'code'], name='inventory_unique_code_per_catalog'),
             models.CheckConstraint(condition=models.Q(content_per_presentation__isnull=True) | models.Q(content_per_presentation__gt=0), name='inventory_content_positive'),
             models.CheckConstraint(condition=models.Q(presentation_sale_price__isnull=True) | models.Q(presentation_sale_price__gte=0), name='inventory_package_price_nonnegative'),
             models.CheckConstraint(condition=models.Q(usage_price_override__isnull=True) | models.Q(usage_price_override__gte=0), name='inventory_override_nonnegative'),
