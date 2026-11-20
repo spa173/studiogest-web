@@ -22,7 +22,7 @@ def test_navigation_keeps_sales_access_by_role(django_user_model, role, menu):
         assert (f'href="{reverse("reports:index")}"' in html) == (role != 'TRABAJADOR')
     if menu == 'sidebar':
         assert ('Nuevo Turno' in html) == (role != 'CAJA_RECEPCION')
-        assert 'img/branding/isotipo.png' in html
+        assert 'img/landing/isotipo.webp' in html
 
 
 @pytest.mark.parametrize('role', ['ADMIN', 'CAJA_RECEPCION', 'TRABAJADOR'])

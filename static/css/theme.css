@@ -1,29 +1,29 @@
-/* RGB channels let Tailwind reuse these tokens with its opacity modifiers. */
+/* RGB channels from the Papel y Tinta palette, for Tailwind opacity modifiers. */
 :root {
-  --sg-night: 16 25 41;           /* #101929 */
-  --sg-deep: 10 18 32;           /* #0A1220 */
-  --sg-gold: 217 171 112;        /* #D9AB70 */
-  --sg-turquoise: 21 157 156;    /* #159D9C */
-  --sg-soft-white: 241 243 246;  /* #F1F3F6 */
-  --sg-paper: 255 255 255;
-  --sg-link: 13 119 118;         /* Darker turquoise for text on light surfaces. */
-  --sg-muted: 71 85 105;
-  --sg-border: 203 213 225;
+  --sg-night: 26 23 20;
+  --sg-deep: 48 40 34;
+  --sg-gold: 213 154 127;
+  --sg-turquoise: 175 88 60;
+  --sg-soft-white: 246 240 232;
+  --sg-paper: 252 248 242;
+  --sg-link: 139 59 38;
+  --sg-muted: 86 74 65;
+  --sg-border: 214 200 186;
   --sg-success: 22 101 52;
   --sg-success-container: 220 252 231;
   --sg-warning: 146 64 14;
   --sg-warning-container: 254 243 199;
 }
 
-/* Internal screens only: the approved login keeps its own presentation. */
+/* Shared layout and interaction styles for internal screens. */
 .studio-app,
 .studio-app main {
   min-width: 0;
 }
 
 .studio-app .bg-secondary {
-  background-color: rgb(var(--sg-turquoise));
-  color: rgb(var(--sg-deep));
+  background-color: rgb(var(--sg-link));
+  color: rgb(var(--sg-soft-white));
 }
 
 .studio-app :is(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -81,7 +81,12 @@ dialog.studio-app::backdrop {
 .studio-sidebar nav a[class~="bg-brand-turquoise/15"],
 #mobile-menu nav a[aria-current="page"],
 .studio-bottom-nav a[class~="bg-brand-turquoise/15"] {
-  color: rgb(var(--sg-soft-white));
+  background-color: var(--sg-brand-clay-deep);
+  color: var(--sg-brand-paper);
+}
+
+.studio-bottom-nav a:hover {
+  color: var(--sg-brand-clay-soft);
 }
 
 .studio-sidebar :is(a, button):focus-visible,
