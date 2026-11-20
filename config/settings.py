@@ -5,6 +5,7 @@ Django settings for StudioGest project.
 import os
 import sys
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -108,7 +109,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #   sqlite     -> SQLite (valor por defecto, para desarrollo sin instalar nada)
 DB_ENGINE = os.getenv('DB_ENGINE', 'sqlite').lower()
 
-if DB_ENGINE == 'mysql':
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            disable_server_side_cursors=True,
+        )
+    }
+elif DB_ENGINE == 'mysql':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -152,6 +161,8 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
+    if os.getenv('VERCEL') == '1':
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -189,7 +200,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = (
+    BASE_DIR / 'public' / 'static' if os.getenv('VERCEL') == '1' else BASE_DIR / 'staticfiles'
+)
 
 # Media files
 MEDIA_URL = '/media/'
