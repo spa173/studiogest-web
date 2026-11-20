@@ -17,10 +17,10 @@ from .services import operation_token, request_fingerprint, save_registration, v
 @login_required
 @require_GET
 def product_list(request):
-    products = Product.objects.annotate(has_entries=Exists(StockEntry.objects.filter(product_id=OuterRef('pk'))))
+    products = Product.objects.filter(business_id=request.user.business_id).annotate(has_entries=Exists(StockEntry.objects.filter(product_id=OuterRef('pk'))))
     if not can_view_inventory_costs(request.user):
         products = products.defer('acquisition_cost')
-    return render(request, 'inventory/list.html', {'products': products})
+    return render(request, 'inventory/list.html', {'products': products, 'inventory_business': request.user.business})
 
 
 @login_required
@@ -30,17 +30,19 @@ def register_product(request, pk=None, mode='new'):
         raise PermissionDenied('Solo los administradores pueden registrar productos y actualizar sus datos y precios.')
     product = None
     if pk:
-        product = get_object_or_404(Product, pk=pk)
+        product = get_object_or_404(Product, pk=pk, business_id=request.user.business_id)
     data = None
     if request.method == 'POST':
         data = request.POST
     form = ProductRegistrationForm(data, product=product, mode=mode,
-                                   initial={'operation_token': operation_token(request.user, product, mode)})
+                                   business_id=request.user.business_id, initial={'operation_token': operation_token(request.user, product, mode)})
     if request.method == 'POST':
         response = _handle_registration_post(request, form, product, mode)
         if response is not None:
             return response
-    return render(request, 'inventory/form.html', {'form': form, 'product': product, 'mode': mode})
+    return render(request, 'inventory/form.html', {
+        'form': form, 'product': product, 'mode': mode, 'inventory_business': request.user.business,
+    })
 
 
 def _duplicate_registration_response(request):
@@ -63,8 +65,10 @@ def _save_registration_form(request, form, product, mode, key, fingerprint):
         _, created = save_registration(data=form.cleaned_data, user=request.user, key=key,
                                       fingerprint=fingerprint, product=product, mode=mode)
     except IntegrityError as error:
-        duplicate = StockEntry.objects.filter(operation_key=key, created_by=request.user,
-                                              request_fingerprint=fingerprint).exists()
+        duplicate = StockEntry.objects.filter(
+            operation_key=key, created_by=request.user, request_fingerprint=fingerprint,
+            product__business_id=request.user.business_id,
+        ).exists()
         if duplicate:
             return _duplicate_registration_response(request)
         raise ValidationError('No se pudo guardar: el código o la operación ya existen. Revisa el inventario.') from error
@@ -75,7 +79,9 @@ def _save_registration_form(request, form, product, mode, key, fingerprint):
 def _process_registration_post(request, form, product, mode):
     key = verify_token(request.POST.get('operation_token'), request.user, product, mode)
     fingerprint = request_fingerprint(request.POST)
-    previous = StockEntry.objects.filter(operation_key=key).first()
+    previous = StockEntry.objects.filter(
+        operation_key=key, product__business_id=request.user.business_id,
+    ).first()
     if previous:
         if previous.request_fingerprint != fingerprint or previous.created_by_id != request.user.pk:
             raise ValidationError('Esta operación ya se registró con otros datos. Abre un formulario nuevo.')
@@ -102,8 +108,11 @@ def _handle_registration_post(request, form, product, mode):
 def entry_history(request):
     if not can_view_inventory_history(request.user):
         raise PermissionDenied('No tienes permisos para ver el historial de inventario.')
-    entries = StockEntry.objects.select_related('product', 'created_by')
+    entries = StockEntry.objects.filter(
+        product__business_id=request.user.business_id,
+    ).select_related('product', 'created_by')
     return render(request, 'inventory/history.html', {
+        'inventory_business': request.user.business,
         'page': Paginator(entries, 25).get_page(request.GET.get('page')),
         'can_view_inventory_costs': can_view_inventory_costs(request.user),
     })

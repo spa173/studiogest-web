@@ -27,8 +27,9 @@ class ProductRegistrationForm(forms.Form):
                                        decimal_places=3, min_value=Decimal('0'))
     is_active = forms.BooleanField(label='Producto activo', required=False, initial=True)
 
-    def __init__(self, *args, product=None, mode='new', **kwargs):
+    def __init__(self, *args, product=None, mode='new', business_id=None, **kwargs):
         self.product = product
+        self.business_id = business_id
         self.mode = mode
         super().__init__(*args, **kwargs)
         self._configure_mode()
@@ -98,7 +99,7 @@ class ProductRegistrationForm(forms.Form):
 
     def clean_code(self):
         code = self.cleaned_data['code'].strip().upper()
-        query = Product.objects.filter(code__iexact=code)
+        query = Product.objects.filter(business_id=self.business_id, code__iexact=code)
         if self.product:
             query = query.exclude(pk=self.product.pk)
         if query.exists():

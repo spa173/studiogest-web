@@ -2898,10 +2898,6 @@ input:where([type='file']):focus {
     width: 58.333333%;
   }
 
-  .lg\:w-\[calc\(100\%-260px\)\] {
-    width: calc(100% - 260px);
-  }
-
   .lg\:flex-row {
     flex-direction: row;
   }

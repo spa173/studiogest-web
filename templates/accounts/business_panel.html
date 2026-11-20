@@ -9,10 +9,13 @@
       <h1 class="font-headline text-3xl font-bold">{{ business.name }}</h1>
       <a class="privacy-link inline-block py-2" href="{% url 'appointments:business_booking' business.slug %}">Abrir mi página de reservas</a>
     </div>
-    <form method="post" action="{% url 'accounts:logout' %}">
-      {% csrf_token %}
-      <button class="privacy-link py-2" type="submit">Cerrar sesión</button>
-    </form>
+    <div class="flex flex-wrap items-center gap-4">
+      <a class="privacy-link py-2" href="{% url 'inventory:list' %}">Inventario</a>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="privacy-link py-2" type="submit">Cerrar sesión</button>
+      </form>
+    </div>
   </header>
 
   {% if messages %}
