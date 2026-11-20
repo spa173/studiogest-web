@@ -43,8 +43,8 @@ elif DEBUG:
     CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
-# Enable business URLs only after staff access is scoped by business too.
-TENANT_BOOKING_ENABLED = False
+# Enable the isolated business portal and public booking URLs together.
+TENANT_BOOKING_ENABLED = os.getenv('TENANT_BOOKING_ENABLED', 'false').lower() == 'true'
 
 # Application definition
 
@@ -83,6 +83,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'accounts.middleware.RequireTermsAcceptance',
+    'accounts.middleware.IsolateBusinessPanel',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
