@@ -42,6 +42,8 @@ class ProfessionalScheduleForm(forms.ModelForm):
 @login_required
 @require_GET
 def panel(request):
+    if request.user.is_superuser and not request.user.business_id:
+        return redirect('admin:services_bookingbusiness_changelist')
     business = _business(request.user)
     appointments = _appointments(business).select_related(
         'customer', 'service', 'professional__user',
