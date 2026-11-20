@@ -3,7 +3,23 @@
 
 {% block title %}StudioGest | Software para salones y barberías{% endblock %}
 {% block extra_head %}
-<meta name="description" content="Gestiona la agenda, la caja, el inventario y las reservas de tu salón o barbería con StudioGest.">
+{% url 'root' as landing_path %}
+{% static 'img/landing/social-card.jpg' as social_image %}
+{% with description="Gestiona la agenda, la caja, el inventario y las reservas de tu salón o barbería con StudioGest." social_title="StudioGest | Software para salones y barberías" %}
+<meta name="description" content="{{ description }}">
+<link rel="canonical" href="{{ public_site_origin }}{{ landing_path }}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="StudioGest">
+<meta property="og:title" content="{{ social_title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ public_site_origin }}{{ landing_path }}">
+<meta property="og:image" content="{{ public_site_origin }}{{ social_image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="StudioGest, software para salones y barberías">
+<meta name="twitter:card" content="summary_large_image">
+{% endwith %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,350;0,400;0,450;1,400&amp;family=Manrope:wght@400;600;700;800&amp;display=swap">
 <link rel="stylesheet" href="{% static 'css/landing.css' %}">
 {% endblock %}
