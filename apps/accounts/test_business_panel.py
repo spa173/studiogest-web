@@ -3,6 +3,7 @@ import datetime
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django_otp.oath import TOTP
 
 from appointments.models import Appointment
 from customers.models import Customer
@@ -139,3 +140,33 @@ class BusinessPanelTests(TestCase):
         professional = Professional(user=self.unassigned, business=self.alpha)
         with self.assertRaisesMessage(ValidationError, 'deben pertenecer al mismo negocio'):
             professional.save()
+
+    def test_staff_mfa_is_opt_in_and_applies_only_to_the_enrolled_account(self):
+        worker = get_user_model().objects.create_user(
+            username='prisma-barbero', email='barbero@example.test',
+            password='test-password', business=self.alpha,
+        )
+        panel = reverse('accounts:business_panel')
+        setup = reverse('accounts:mfa_setup')
+        verify = reverse('accounts:mfa_verify')
+        self.client.force_login(worker)
+        self.assertContains(self.client.get(panel), f'href="{setup}"')
+        self.assertRedirects(self.client.post(setup, {'password': 'test-password'}), setup)
+        pending = self.client.session['privileged_mfa_setup']
+        token = f"{TOTP(bytes.fromhex(pending['key'])).token():06d}"
+        enrollment = self.client.post(setup, {'token': token})
+        self.assertContains(enrollment, 'Multifactor activado')
+        self.assertNotContains(enrollment, 'Ir a Django Admin')
+
+        self.client.logout()
+        self.client.force_login(worker)
+        self.assertRedirects(
+            self.client.get(panel), f'{verify}?next={panel}', fetch_redirect_response=False,
+        )
+        self.client.logout()
+        self.client.force_login(self.alpha_admin)
+        self.assertEqual(self.client.get(panel).status_code, 200)
+        self.client.logout()
+        self.client.force_login(worker)
+        recovery = enrollment.context['recovery_codes'][0]
+        self.assertRedirects(self.client.post(f'{verify}?next={panel}', {'token': recovery}), panel)
