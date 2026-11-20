@@ -10,6 +10,7 @@
 
 {% block full_page %}
 <div class="landing" id="inicio">
+  <a class="landing-skip-link" href="#contenido">Saltar al contenido</a>
   <header class="landing-header">
     <div class="landing-shell landing-header-inner">
       <a class="landing-wordmark" href="#inicio">
@@ -26,15 +27,15 @@
     </div>
   </header>
 
-  <main>
+  <main id="contenido" tabindex="-1">
     <section class="landing-shell landing-hero landing-split" aria-labelledby="landing-title">
       <div>
         <p class="landing-eyebrow">Software para salones, barberías y spas · Colombia</p>
         <h1 id="landing-title">El control total de tu <em>salón</em>, en una sola plataforma.</h1>
         <p class="landing-intro">Gestiona tus citas, cuadra la caja, controla el inventario y recibe solicitudes de reserva desde un mismo lugar.</p>
         <div class="landing-actions">
-          <a class="landing-button" href="#planes">Ver planes <span aria-hidden="true">→</span></a>
-          <a class="landing-button landing-button-outline" href="#demo">Solicitar demostración</a>
+          <a class="landing-button" href="#demo">Solicitar demostración <span aria-hidden="true">→</span></a>
+          <a class="landing-button landing-button-outline" href="#planes">Ver planes</a>
         </div>
         <p class="landing-booking-link"><a href="{% url 'appointments:public_booking' %}">¿Eres cliente? Reserva tu cita <span aria-hidden="true">→</span></a></p>
       </div>
