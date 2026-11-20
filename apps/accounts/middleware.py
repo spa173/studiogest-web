@@ -9,6 +9,8 @@ from services.models import BookingBusiness
 class RequireTermsAcceptance(MiddlewareMixin):
     public_routes = {
         'accounts:accept_terms',
+        'accounts:mfa_setup',
+        'accounts:mfa_verify',
         'accounts:logout',
         'appointments:public_booking',
         'appointments:business_booking',

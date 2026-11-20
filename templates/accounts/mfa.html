@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Seguridad multifactor - StudioGest{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
+{% block full_page %}
+<main class="max-w-lg mx-auto p-6 space-y-4">
+  {% if recovery_codes %}
+    <h1 class="text-2xl font-bold">Multifactor activado</h1>
+    <p>Guarda estos códigos en un lugar seguro. Cada uno se puede usar una sola vez y solo se muestra ahora.</p>
+    <ul class="font-mono">
+    {% for code in recovery_codes %}
+      <li>{{ code }}</li>
+    {% endfor %}
+    </ul>
+    <a class="underline" href="{% url 'dashboard:index' %}">Ir al panel de StudioGest</a>
+    <a class="underline" href="{% url 'admin:index' %}">Ir a Django Admin</a>
+  {% else %}
+    <h1 class="text-2xl font-bold">{% if setup %}Activar multifactor{% else %}Verificar multifactor{% endif %}</h1>
+    {% if manual_key %}
+      <p>En tu app autenticadora, escanea el QR o elige introducir una clave basada en tiempo.</p>
+      <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR de StudioGest" width="220" height="220">
+      <label for="manual-key">Clave de configuración manual</label>
+      <input id="manual-key" class="block w-full border p-2 font-mono" value="{{ manual_key }}" readonly>
+    {% endif %}
+    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    <form method="post" class="space-y-3">
+      {% csrf_token %}
+      {% if setup and not manual_key %}
+        <p>Confirma tu contraseña para configurar una app autenticadora.</p>
+        <label for="mfa-password">Contraseña actual</label>
+        <input id="mfa-password" name="password" type="password" class="block w-full border p-2" autocomplete="current-password" required>
+      {% else %}
+        <label for="mfa-token">Código de la app{% if not setup %} o de recuperación{% endif %}</label>
+        <input id="mfa-token" name="token" class="block w-full border p-2"
+               {% if setup %}inputmode="numeric"{% endif %} autocomplete="one-time-code" maxlength="32" required>
+      {% endif %}
+      <button type="submit" class="border px-4 py-2">Confirmar</button>
+    </form>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="underline">Cerrar sesión</button>
+    </form>
+  {% endif %}
+</main>
+{% endblock %}
