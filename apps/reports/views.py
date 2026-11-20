@@ -44,7 +44,7 @@ def _build_summary(appointments):
 
 
 def _build_sales_data(start, end):
-    sales_qs = _filter_by_dates(Sale.objects.filter(status=SaleStatus.REGISTERED), 'created_at__date', start, end)
+    sales_qs = _filter_by_dates(Sale.objects.filter(status=SaleStatus.REGISTERED, business__isnull=True), 'created_at__date', start, end)
     sales_summary = sales_qs.aggregate(total=Sum('total'), count=Count('pk'))
     sales_summary['total'] = sales_summary['total'] or Decimal('0')
     sales_by_payment = list(sales_qs.values('payment_method').annotate(

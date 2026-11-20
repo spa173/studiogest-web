@@ -12,7 +12,9 @@ from appointments.models import Appointment
 from services.forms import ServiceForm
 from services.models import Professional, Service
 
-from .permissions import can_change_appointment_status, can_manage_professionals, can_manage_services
+from .permissions import (
+    can_change_appointment_status, can_manage_professionals, can_manage_sales, can_manage_services,
+)
 
 
 def _business(user):
@@ -56,6 +58,7 @@ def panel(request):
         'professionals': Professional.objects.filter(
             business=business, user__business=business,
         ).select_related('user'),
+        'can_manage_sales': can_manage_sales(request.user),
         'can_manage_services': can_manage_services(request.user),
         'can_manage_professionals': can_manage_professionals(request.user),
     })

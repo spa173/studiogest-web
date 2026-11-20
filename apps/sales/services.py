@@ -24,6 +24,31 @@ def _to_decimal(value):
     return Decimal(str(value))
 
 
+def _require_same_business(business_id, *records):
+    if any(record is not None and record.business_id != business_id for record in records):
+        raise ValidationError('La caja, el cliente, la cita y los artículos deben pertenecer al mismo negocio.')
+
+
+def _lock_cash_session(session_id, business_id):
+    current = CashRegisterSession.objects.select_for_update().filter(
+        pk=session_id, business_id=business_id,
+    ).first()
+    if current is None:
+        raise ValidationError('La sesión de caja no está disponible en este negocio.')
+    return current
+
+
+def _lock_billable_appointment(appointment_id, business_id):
+    appointment = Appointment.objects.select_for_update().filter(
+        pk=appointment_id, business_id=business_id,
+    ).exclude(status=Appointment.Status.CANCELLED).first()
+    if appointment is None:
+        raise ValidationError('La cita no está disponible para cobro en este negocio.')
+    if Sale.objects.filter(appointment=appointment, status=SaleStatus.REGISTERED).exists():
+        raise ValidationError('Esta cita ya fue cobrada.')
+    return appointment
+
+
 @transaction.atomic
 def create_sale(*, user, payment_method, details, customer=None, appointment=None,
                 cash_session=None, notes=''):
@@ -33,18 +58,22 @@ def create_sale(*, user, payment_method, details, customer=None, appointment=Non
         raise ValidationError('Solo los administradores y el personal de caja/recepción pueden registrar ventas.')
     if cash_session is None:
         raise ValidationError('Debes seleccionar una sesión de caja abierta para registrar la venta.')
+    business_id = user.business_id
+    _require_same_business(business_id, cash_session, customer, appointment)
+    cash_session = _lock_cash_session(cash_session.pk, business_id)
     if not cash_session.is_open:
         raise ValidationError('No se puede registrar la venta porque la sesión de caja seleccionada está cerrada.')
     if not details:
         raise ValidationError('La venta debe tener al menos un detalle.')
 
     if appointment is not None:
-        if Sale.objects.filter(appointment=appointment, status=SaleStatus.REGISTERED).exists():
-            raise ValidationError('Esta cita ya fue cobrada.')
+        appointment = _lock_billable_appointment(appointment.pk, business_id)
         if customer is None:
             customer = appointment.customer
+        _require_same_business(business_id, appointment.customer)
 
     sale = Sale.objects.create(
+        business_id=business_id,
         customer=customer,
         appointment=appointment,
         user=user,
@@ -69,18 +98,20 @@ def create_sale(*, user, payment_method, details, customer=None, appointment=Non
         if detail_type == SaleDetailType.SERVICE:
             service = raw.get('service')
             if isinstance(service, int):
-                service = Service.objects.get(pk=service)
+                service = Service.objects.filter(pk=service, business_id=business_id).first()
             if service is None:
                 raise ValidationError('El detalle de servicio requiere un servicio.')
+            _require_same_business(business_id, service)
             if quantity != Decimal('1'):
                 raise ValidationError('La cantidad de un servicio debe ser 1.')
             product = None
         elif detail_type == SaleDetailType.PRODUCT:
             product = raw.get('product')
             if isinstance(product, int):
-                product = Product.objects.get(pk=product)
+                product = Product.objects.filter(pk=product, business_id=business_id).first()
             if product is None:
                 raise ValidationError('El detalle de producto requiere un producto.')
+            _require_same_business(business_id, product)
             service = None
             consume_stock(product=product, quantity=quantity, user=user)
         else:
@@ -142,7 +173,14 @@ def _apply_cancellation_metadata(locked_sale, reason):
 def cancel_sale(*, sale, user, reason=''):
     _require_cancel_sale_permission(user)
     sale_id = getattr(sale, 'pk', sale)
-    locked_sale = Sale.objects.select_for_update().select_related('appointment').get(pk=sale_id)
+    business_id = user.business_id
+    sales = Sale.objects.filter(pk=sale_id, business_id=business_id)
+    original = sales.only('cash_session').first()
+    if original is None:
+        raise ValidationError('La venta no está disponible en este negocio.')
+    if original.cash_session_id:
+        _lock_cash_session(original.cash_session_id, business_id)
+    locked_sale = sales.select_for_update().get()
     _validate_cancelable_sale(locked_sale)
     _restore_sale_products(locked_sale, user)
 
