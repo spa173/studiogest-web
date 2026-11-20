@@ -10,9 +10,12 @@ from .forms import LoginForm, ProfileForm
 from .models import TermsAcceptance
 
 
+DASHBOARD = "dashboard:index"
+
+
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard:index')
+        return redirect(DASHBOARD)
 
     next_url = request.GET.get('next', '')
 
@@ -33,7 +36,7 @@ def login_view(request):
             # Redirección segura
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                 return redirect(next_url)
-            return redirect('dashboard:index')
+            return redirect(DASHBOARD)
     else:
         form = LoginForm()
 
@@ -83,12 +86,8 @@ class TermsAcceptanceForm(forms.Form):
 @require_http_methods(['GET', 'POST'])
 def accept_terms(request):
     version = settings.TERMS_VERSION
-    next_url = request.POST.get('next') if request.method == 'POST' else request.GET.get('next')
-    if not url_has_allowed_host_and_scheme(next_url, {request.get_host()}, require_https=request.is_secure()):
-        next_url = None
-
     if not version or request.user.terms_acceptances.filter(version=version).exists():
-        return redirect(next_url or 'dashboard:index')
+        return redirect(DASHBOARD)
 
     form = TermsAcceptanceForm(
         request.POST if request.method == 'POST' else None,
@@ -96,10 +95,9 @@ def accept_terms(request):
     )
     if request.method == 'POST' and form.is_valid():
         TermsAcceptance.objects.get_or_create(user=request.user, version=form.cleaned_data['version'])
-        return redirect(next_url or 'dashboard:index')
+        return redirect(DASHBOARD)
 
     return render(request, 'accounts/accept_terms.html', {
         'form': form,
         'terms_version': version,
-        'next': next_url,
     })
