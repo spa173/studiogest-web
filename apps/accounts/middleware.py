@@ -1,6 +1,5 @@
 from django.conf import settings
-from django.contrib.auth.views import redirect_to_login
-from django.urls import reverse
+from django.shortcuts import redirect
 from django.utils.deprecation import MiddlewareMixin
 
 
@@ -20,5 +19,4 @@ class RequireTermsAcceptance(MiddlewareMixin):
         if not request.user.is_authenticated or request.user.terms_acceptances.filter(version=version).exists():
             return None
 
-        next_url = request.get_full_path() if request.method in ('GET', 'HEAD') else reverse('dashboard:index')
-        return redirect_to_login(next_url, login_url=reverse('accounts:accept_terms'))
+        return redirect('accounts:accept_terms')

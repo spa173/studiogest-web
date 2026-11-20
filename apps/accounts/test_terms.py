@@ -17,7 +17,7 @@ class TermsAcceptanceTests(TestCase):
             'login': self.user.username, 'password': 'test-password',
         }, follow=True)
         self.assertEqual(response.request['PATH_INFO'], self.accept)
-        self.assertRedirects(self.client.get(self.dashboard), f'{self.accept}?next={self.dashboard}')
+        self.assertRedirects(self.client.get(self.dashboard), self.accept)
 
         for data in ({'version': '1.0'}, {'version': '0.9', 'accepted': 'on'}):
             response = self.client.post(self.accept, data)
@@ -25,7 +25,7 @@ class TermsAcceptanceTests(TestCase):
             self.assertFalse(self.user.terms_acceptances.exists())
 
         response = self.client.post(self.accept, {
-            'version': '1.0', 'accepted': 'on',
+            'version': '1.0', 'accepted': 'on', 'next': 'https://example.com/',
         })
         self.assertRedirects(response, self.dashboard)
         acceptance = self.user.terms_acceptances.get()
@@ -35,7 +35,7 @@ class TermsAcceptanceTests(TestCase):
         self.assertEqual(self.user.terms_acceptances.count(), 1)
 
         with self.settings(TERMS_VERSION='2.0'):
-            self.assertRedirects(self.client.get(self.dashboard), f'{self.accept}?next={self.dashboard}')
+            self.assertRedirects(self.client.get(self.dashboard), self.accept)
             self.client.post(self.accept, {'version': '2.0', 'accepted': 'on'})
         self.assertEqual(set(self.user.terms_acceptances.values_list('version', flat=True)), {'1.0', '2.0'})
 
