@@ -7,17 +7,12 @@ from django.shortcuts import redirect, render
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from accounts.authentication import AdminLoginForm
+from accounts.authentication import AdminLoginForm, has_admin_login
 from dashboard.demo import demo_request
 from dashboard.forms import DemoRequestForm
 
 
-def _admin_has_permission(request):
-    return request.user.is_active and getattr(request.user, 'is_admin', False)
-
-
-# Restringe /admin/ a usuarios con rol ADMIN de negocio (o superuser).
-admin.site.has_permission = _admin_has_permission
+admin.site.has_permission = has_admin_login
 admin.site.login_form = AdminLoginForm
 
 

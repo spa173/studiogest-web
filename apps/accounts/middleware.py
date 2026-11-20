@@ -5,6 +5,8 @@ from django.utils.deprecation import MiddlewareMixin
 
 from services.models import BookingBusiness
 
+from .authentication import has_admin_login
+
 
 class RequireTermsAcceptance(MiddlewareMixin):
     public_routes = {
@@ -21,7 +23,10 @@ class RequireTermsAcceptance(MiddlewareMixin):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         version = settings.TERMS_VERSION
-        if not version or request.resolver_match.view_name in self.public_routes:
+        match = request.resolver_match
+        if not version or match.view_name in self.public_routes:
+            return None
+        if match.namespace == 'admin' and (match.url_name == 'login' or not has_admin_login(request)):
             return None
         if not request.user.is_authenticated or request.user.terms_acceptances.filter(version=version).exists():
             return None
