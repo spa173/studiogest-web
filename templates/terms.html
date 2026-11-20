@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Términos y condiciones - StudioGest{% endblock %}
+
+{% block full_page %}
+<main class="privacy-notice text-on-surface">
+  <a class="privacy-link" href="{% url 'root' %}">Volver al inicio</a>
+  <h1 class="font-headline text-3xl font-bold">Términos y condiciones de uso de StudioGest</h1>
+  <p>Versión {{ terms_version }} · Vigencia desde su publicación</p>
+
+  <h2 class="text-xl font-semibold">1. Alcance</h2>
+  <p>StudioGest es una herramienta para gestionar citas, clientes, servicios, inventario, ventas y caja. Estos términos se aplican al personal autorizado que usa una cuenta de StudioGest.</p>
+
+  <h2 class="text-xl font-semibold">2. Cuenta y acceso</h2>
+  <p>Usa únicamente la cuenta que te asignaron, protege tus credenciales y evita compartirlas. Si sospechas que alguien accedió a tu cuenta, informa de inmediato a la administración de tu establecimiento.</p>
+
+  <h2 class="text-xl font-semibold">3. Uso de la plataforma</h2>
+  <p>Utiliza StudioGest para las tareas autorizadas por tu establecimiento. Registra información exacta y accede únicamente a los datos que necesitas para tu trabajo. Evita copiar, exportar o compartir datos de clientes o del personal sin autorización.</p>
+
+  <h2 class="text-xl font-semibold">4. Citas, ventas y caja</h2>
+  <p>El establecimiento es responsable de confirmar las citas, verificar los cobros y corregir los registros cuando corresponda. Si detectas un error en StudioGest que afecte una operación, comunícalo a la administración de tu establecimiento.</p>
+
+  <h2 class="text-xl font-semibold">5. Privacidad</h2>
+  <p>El <a class="privacy-link" href="{% url 'privacy_notice' %}">Aviso de privacidad</a> explica cómo se usan los datos personales y cómo puedes ejercer tus derechos.</p>
+
+  <h2 class="text-xl font-semibold">6. Cambios</h2>
+  <p>Cuando se publiquen cambios en estos términos, StudioGest mostrará la versión actualizada y solicitará una nueva aceptación para continuar usando la cuenta.</p>
+
+  <h2 class="text-xl font-semibold">7. Contacto</h2>
+  <p>Para consultas sobre estos términos, escribe a <a class="privacy-link" href="mailto:envisionone@gmail.com">envisionone@gmail.com</a>.</p>
+</main>
+{% endblock %}
