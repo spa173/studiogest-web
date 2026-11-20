@@ -1,0 +1,99 @@
+.landing {
+  --display: "Fraunces", Georgia, serif;
+  background: var(--sg-brand-paper);
+  color: var(--sg-brand-ink);
+  font-family: "Manrope", system-ui, sans-serif;
+  line-height: 1.6;
+}
+.landing-shell { width: min(100% - 2.5rem, 75rem); margin-inline: auto; }
+.landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--sg-brand-line);
+  background: var(--sg-brand-paper);
+}
+.landing-header-inner, .landing-footer .landing-shell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.5rem;
+  padding-block: .8rem;
+}
+.landing-header nav, .landing-footer nav { display: flex; flex-wrap: wrap; gap: .35rem 1.5rem; }
+.landing-header nav a, .landing-footer nav a { padding-block: .55rem; }
+.landing-header nav a:hover, .landing-footer nav a:hover { text-decoration: underline; }
+.landing-wordmark { display: inline-flex; align-items: center; gap: .55rem; font: 1.65rem/1 var(--display); }
+.landing-wordmark img { flex: none; }
+.landing-section { padding-block: clamp(3rem, 9vw, 7rem); }
+.landing-split { display: grid; gap: clamp(1.5rem, 6vw, 5rem); }
+.landing section[id] { scroll-margin-top: 8rem; }
+.landing-hero { align-items: center; padding-block: clamp(2rem, 6vw, 5.5rem); }
+.landing h1, .landing h2, .landing h3 { font-family: var(--display); line-height: 1.08; overflow-wrap: anywhere; }
+.landing h1 { margin-top: 1rem; font-size: clamp(2.65rem, 6vw, 5.5rem); font-weight: 400; letter-spacing: -.035em; }
+.landing h2 { margin-top: .65rem; font-size: clamp(2.15rem, 4.7vw, 4.2rem); font-weight: 400; letter-spacing: -.025em; }
+.landing h3 { font-size: clamp(1.45rem, 2.6vw, 2.25rem); font-weight: 450; }
+.landing em { color: var(--sg-brand-clay-deep); }
+.landing-eyebrow { color: var(--sg-brand-sage); font-size: .75rem; font-weight: 800; letter-spacing: .095em; text-transform: uppercase; }
+.landing-intro { margin-top: 1.25rem; max-width: 34rem; color: var(--sg-brand-ink-soft); font-size: clamp(1rem, 2vw, 1.22rem); }
+.landing-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.landing-button {
+  display: inline-flex;
+  min-height: 44px;
+  justify-content: center;
+  align-items: center;
+  gap: .5rem;
+  border: 1px solid transparent;
+  border-radius: .4rem;
+  padding: .6rem 1rem;
+  background: var(--sg-brand-ink);
+  color: var(--sg-brand-paper);
+  font-size: .9rem;
+  font-weight: 750;
+  text-align: center;
+}
+.landing-button-outline { border-color: currentColor; background: transparent; color: var(--sg-brand-ink); }
+.landing-button-paper { background: var(--sg-brand-paper); color: var(--sg-brand-ink); }
+.landing-button:hover { text-decoration: underline; }
+.landing :is(a, summary):focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.landing-booking-link { margin-top: 1rem; font-weight: 750; color: var(--sg-brand-clay-deep); text-decoration: underline; }
+.landing-hero-photo, .landing-section-photo, .landing-booking img { display: block; width: 100%; object-fit: cover; }
+.landing-hero-photo { aspect-ratio: 4 / 5; max-height: 42rem; border-radius: .5rem; }
+.landing-section-photo { aspect-ratio: 4 / 3; margin-top: 1.6rem; border-radius: .5rem; }
+.landing-audience, .landing-demo, .landing-footer { background: var(--sg-brand-ink); color: var(--sg-brand-paper); }
+.landing-audience ul { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1.5rem; padding-block: 1.25rem; font: italic 1.2rem/1.5 var(--display); }
+.landing-feature-list article, .landing-faq details { border-top: 1px solid var(--sg-brand-line); padding-block: 1.4rem; }
+.landing-feature-list article:last-child, .landing-faq details:last-child { border-bottom: 1px solid var(--sg-brand-line); }
+.landing-feature-list p, .landing-faq p { margin-top: .65rem; color: var(--sg-brand-ink-soft); }
+.landing-faq summary { cursor: pointer; font-weight: 750; }
+.landing-faq a { color: var(--sg-brand-clay-deep); text-decoration: underline; }
+.landing-plans { background: var(--sg-brand-paper-deep); }
+.landing-plan-grid { display: grid; gap: 1rem; margin-top: 2rem; }
+.landing-plan { display: flex; flex-direction: column; gap: .8rem; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--sg-brand-line); border-radius: .5rem; background: var(--sg-brand-card); }
+.landing-plan-featured { color: var(--sg-brand-paper); background: var(--sg-brand-ink); border-color: var(--sg-brand-ink); }
+.landing-plan .landing-button { margin-top: auto; }
+.landing-price { font: clamp(1.8rem, 3vw, 2.7rem)/1.2 var(--display); }
+.landing-price small { font: .8rem/1.25 system-ui, sans-serif; }
+.landing-booking { background: var(--sg-brand-clay-deep); color: var(--sg-brand-paper); }
+.landing-booking img { align-self: center; aspect-ratio: 4 / 3; }
+.landing-booking em, .landing-booking .landing-eyebrow, .landing-demo em, .landing-demo .landing-eyebrow, .landing-footer em { color: var(--sg-brand-clay-soft); }
+.landing-booking h2 + p, .landing-demo h2 + p { margin-block: 1rem 1.5rem; max-width: 35rem; }
+.landing-footer { border-top: 1px solid color-mix(in oklch, var(--sg-brand-paper) 35%, transparent); }
+.landing-footer .landing-shell { padding-block: 1.25rem; }
+
+@media (min-width: 48rem) {
+  .landing-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .landing-plan-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 47.99rem) {
+  .landing-header nav { order: 2; flex-basis: 100%; font-size: .85rem; gap: .25rem 1rem; }
+  .landing-booking img { margin-bottom: 1.25rem; }
+  .landing-booking .landing-section { padding-bottom: 0; }
+}
+@media (max-width: 23rem) {
+  .landing-shell { width: calc(100% - 1.5rem); }
+  .landing-wordmark { font-size: 1.35rem; }
+  .landing-wordmark img { width: 32px; height: 32px; }
+  .landing-header-inner { column-gap: .55rem; }
+}
