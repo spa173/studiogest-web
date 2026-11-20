@@ -58,14 +58,14 @@
 
     <div class="studio-app min-h-screen flex flex-row">
       <!-- Menú lateral fijo de escritorio -->
-      {% if not inventory_business %}{% include 'includes/sidebar.html' %}{% endif %}
+      {% if not panel_business %}{% include 'includes/sidebar.html' %}{% endif %}
 
       <!-- Contenedor principal con margen en escritorio -->
-      <div class="w-full min-h-screen flex flex-col bg-surface {% if not inventory_business %}lg:w-[calc(100%-260px)] lg:ml-[260px] pb-20{% endif %} lg:pb-8">
+      <div class="w-full min-h-screen flex flex-col bg-surface {% if not panel_business %}lg:w-[calc(100%-260px)] lg:ml-[260px] pb-20{% endif %} lg:pb-8">
         <!-- Barra superior -->
-        {% if inventory_business %}
+        {% if panel_business %}
         <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface-container-lowest px-4 py-3">
-          <a class="privacy-link py-2" href="{% url 'accounts:business_panel' %}">Volver al panel de {{ inventory_business.name }}</a>
+          <a class="privacy-link py-2" href="{% url 'accounts:business_panel' %}">Volver al panel de {{ panel_business.name }}</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button class="privacy-link py-2" type="submit">Cerrar sesión</button>
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Barra de navegación inferior para móvil -->
-    {% if not inventory_business %}
+    {% if not panel_business %}
     {% include 'includes/bottom_nav.html' %}
     {% include 'includes/mobile_menu.html' %}
     {% include 'includes/notifications.html' %}

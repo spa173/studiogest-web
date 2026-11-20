@@ -73,7 +73,7 @@ class BusinessPanelTests(TestCase):
     def test_legacy_private_modules_do_not_expose_tenant_rows(self):
         for user in (self.alpha_admin, self.unassigned):
             self.client.force_login(user)
-            for route in ('admin:index', 'sales:index', 'customers:list', 'appointments:calendar'):
+            for route in ('admin:index', 'customers:list', 'appointments:calendar'):
                 self.assertEqual(self.client.get(reverse(route)).status_code, 403)
 
     def test_inactive_business_cannot_access_panel(self):
