@@ -8,6 +8,7 @@ class RequireTermsAcceptance(MiddlewareMixin):
         'accounts:accept_terms',
         'accounts:logout',
         'appointments:public_booking',
+        'appointments:business_booking',
         'privacy_notice',
         'terms',
     }

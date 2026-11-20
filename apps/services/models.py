@@ -3,7 +3,19 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
+class BookingBusiness(models.Model):
+    name = models.CharField('Nombre del negocio', max_length=150)
+    slug = models.SlugField('Identificador público', max_length=80, unique=True)
+    is_active = models.BooleanField('Activo', default=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Service(models.Model):
+    business = models.ForeignKey(
+        'services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True,
+    )
     name = models.CharField('Nombre del Servicio', max_length=150)
     description = models.TextField('Descripción', blank=True)
     duration_minutes = models.PositiveIntegerField('Duración (minutos)', default=45, help_text='Tiempo estimado en minutos')
@@ -56,6 +68,9 @@ class Service(models.Model):
 
 
 class Professional(models.Model):
+    business = models.ForeignKey(
+        'services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True,
+    )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

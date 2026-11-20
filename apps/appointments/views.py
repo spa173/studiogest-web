@@ -1,9 +1,11 @@
 ﻿import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -11,7 +13,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from accounts.permissions import can_change_appointment_status, can_create_appointments, can_view_agenda
 from customers.models import Customer
-from services.models import Professional, Service
+from services.models import BookingBusiness, Professional, Service
 
 from .forms import AppointmentForm, PublicBookingForm
 from .models import Appointment
@@ -214,20 +216,31 @@ def pending_requests(request):
 
 
 @require_http_methods(['GET', 'POST'])
-def public_booking(request):
-    """Reserva pública de cita (RF-14, MVP): sin autenticación."""
+def public_booking(request, business_slug=None):
+    """Serve the legacy catalog or the catalog identified by the business URL."""
+    business = None
+    if business_slug is not None:
+        if not settings.TENANT_BOOKING_ENABLED:
+            raise Http404
+        business = get_object_or_404(BookingBusiness, slug=business_slug, is_active=True)
+
     is_submission = request.method == 'POST'
-    form = PublicBookingForm(request.POST if is_submission else None)
+    form = PublicBookingForm(request.POST if is_submission else None, business=business)
     booking_available = (
         form.fields['service'].queryset.exists()
         and form.fields['professional'].queryset.exists()
     )
     if booking_available and is_submission and form.is_valid():
-        appointment = form.save()
-        return render(request, 'appointments/public_booking_success.html', {
-            'appointment': appointment,
-        })
+        try:
+            appointment = form.save()
+        except ValidationError as error:
+            form.add_error(None, error.messages)
+        else:
+            return render(request, 'appointments/public_booking_success.html', {
+                'appointment': appointment,
+            })
     return render(request, 'appointments/public_booking.html', {
         'form': form,
         'booking_available': booking_available,
+        'business': business,
     })

@@ -43,6 +43,9 @@ elif DEBUG:
     CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
+# Enable business URLs only after staff access is scoped by business too.
+TENANT_BOOKING_ENABLED = False
+
 # Application definition
 
 INSTALLED_APPS = [
