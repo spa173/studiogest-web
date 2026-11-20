@@ -37,6 +37,9 @@ class Appointment(models.Model):
         COMPLETED = 'COMPLETADA', 'Completada'
         CANCELLED = 'CANCELADA', 'Cancelada'
 
+    business = models.ForeignKey(
+        'services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True,
+    )
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -99,10 +102,16 @@ class Appointment(models.Model):
 
     def clean(self):
         super().clean()
+        self._validate_business()
         self._validate_pricing()
         self._validate_interval()
         self._validate_work_schedule()
         self._validate_conflicts()
+
+    def _validate_business(self):
+        for field in ('customer', 'service', 'professional'):
+            if getattr(self, f'{field}_id') and getattr(self, field).business_id != self.business_id:
+                raise ValidationError('El cliente, el servicio y el profesional deben pertenecer al negocio de la cita.')
 
     def _validate_pricing(self):
         if self.price_cop is not None:

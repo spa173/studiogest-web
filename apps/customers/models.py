@@ -9,6 +9,9 @@ class Customer(models.Model):
         DIGITAL = 'digital', 'Digital'
         OTRO = 'otro', 'Otro'
 
+    business = models.ForeignKey(
+        'services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True,
+    )
     name = models.CharField('Nombre Completo', max_length=150)
     phone = models.CharField('Teléfono / WhatsApp', max_length=20)
     email = models.EmailField('Correo Electrónico', blank=True, null=True)
