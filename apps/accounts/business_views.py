@@ -13,7 +13,7 @@ from services.forms import ServiceForm
 from services.models import Professional, Service
 
 from .permissions import (
-    can_change_appointment_status, can_manage_professionals, can_manage_sales, can_manage_services,
+    can_change_appointment_status, can_manage_professionals, can_manage_sales, can_manage_services, can_view_reports,
 )
 
 
@@ -59,6 +59,7 @@ def panel(request):
             business=business, user__business=business,
         ).select_related('user'),
         'can_manage_sales': can_manage_sales(request.user),
+        'can_view_reports': can_view_reports(request.user),
         'can_manage_services': can_manage_services(request.user),
         'can_manage_professionals': can_manage_professionals(request.user),
     })
