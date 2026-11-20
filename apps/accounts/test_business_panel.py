@@ -121,6 +121,10 @@ class BusinessPanelTests(TestCase):
         self.client.force_login(root)
         self.assertContains(self.client.get(reverse('admin:services_bookingbusiness_add')), 'Identificador público')
         self.assertEqual(self.client.get(reverse('dashboard:index')).status_code, 200)
+        self.assertRedirects(
+            self.client.get(reverse('accounts:business_panel')),
+            reverse('admin:services_bookingbusiness_changelist'),
+        )
 
     def test_terms_gate_precedes_private_panel(self):
         self.client.force_login(self.alpha_admin)
