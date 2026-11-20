@@ -1,6 +1,6 @@
 /* Presentation only. Original brand PNGs are displayed without cropping. */
 .login-brand-panel {
-  background-color: #101929;
+  background-color: var(--sg-brand-ink);
 }
 
 .login-brand-logo {
@@ -220,20 +220,7 @@
   --sg-brand-line: oklch(0.861 0.023 80.7);
 }
 
-.login-layout {
-  --sg-night: 26 23 20;
-  --sg-deep: 20 17 14;
-  --sg-gold: 190 107 75;
-  --sg-turquoise: 159 70 43;
-  --sg-soft-white: 246 240 232;
-  --sg-paper: 254 248 241;
-  --sg-link: 139 59 38;
-  --sg-muted: 75 65 57;
-  --sg-border: 195 180 164;
-  background: var(--sg-brand-paper);
-}
-
-.login-layout .login-brand-panel { background: var(--sg-brand-ink); }
+.login-layout { background: var(--sg-brand-paper); }
 .login-layout .login-form-panel { background: var(--sg-brand-paper); }
 .login-layout .login-context,
 .login-layout .login-utility > div { background: var(--sg-brand-paper-deep); }
