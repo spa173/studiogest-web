@@ -34,6 +34,11 @@ class IsolateBusinessPanel(MiddlewareMixin):
         'accounts:business_service_create',
         'accounts:business_service_edit',
         'accounts:business_professional_edit',
+        'inventory:list',
+        'inventory:create',
+        'inventory:history',
+        'inventory:purchase',
+        'inventory:update',
     }
 
     def process_view(self, request, view_func, view_args, view_kwargs):

@@ -63,6 +63,7 @@ def _build_report_data(export, start, end):
     summary = _build_summary(appointments)
     sales_summary, sales_by_payment, popular_products = _build_sales_data(start, end)
     low_stock = list(Product.objects.filter(
+        business__isnull=True,
         is_active=True, stock__lte=F('minimum_stock'),
     ).order_by('stock', 'name')[:10])
     popular_services = list(appointments.order_by().values('service_id', 'service__name').annotate(
