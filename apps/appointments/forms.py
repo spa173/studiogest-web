@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from .models import Appointment, calculate_end_time
 from customers.models import Customer
 from services.models import Service, Professional
@@ -274,8 +275,11 @@ class PublicBookingForm(forms.Form):
         }),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, business=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.business = business
+        for field in ('service', 'professional'):
+            self.fields[field].queryset = self.fields[field].queryset.filter(business=business)
         self.fields['service'].empty_label = 'Selecciona un servicio'
         self.fields['professional'].empty_label = 'Selecciona un profesional'
         if not self.initial.get('date'):
@@ -358,14 +362,27 @@ class PublicBookingForm(forms.Form):
             self._add_validation_error(error)
         return cleaned
 
+    @transaction.atomic
     def save(self):
         data = self.cleaned_data
+        professional = self.fields['professional'].queryset.select_for_update().filter(
+            pk=data['professional'].pk,
+        ).first()
+        if professional is None:
+            raise ValidationError('El profesional ya no está disponible.')
+        service = self.fields['service'].queryset.filter(pk=data['service'].pk).first()
+        if service is None:
+            raise ValidationError('El servicio ya no está disponible.')
+        data['professional'] = professional
+        data['service'] = service
+        end_time = calculate_end_time(data['start_time'], service.duration_minutes)
+        self._validate_public_availability(data, end_time)
         phone = data['customer_phone']
         declared_name = data['customer_name']
-        customer = Customer.objects.filter(phone=phone).order_by('id').first()
+        customer = Customer.objects.filter(business=self.business, phone=phone).order_by('id').first()
         appointment_notes = data.get('notes', '')
         if customer is None:
-            customer = Customer.objects.create(name=declared_name, phone=phone)
+            customer = Customer.objects.create(business=self.business, name=declared_name, phone=phone)
         else:
             # Privacidad/seguridad: no mutar datos de un cliente existente desde la
             # reserva pública. Si llega un nombre distinto, conservarlo en la observación.
@@ -374,12 +391,13 @@ class PublicBookingForm(forms.Form):
                 note = f"Nombre declarado en reserva pública: {declared_name}"
                 appointment_notes = f"{note}\n{appointment_notes}".strip() if appointment_notes else note
         appointment = Appointment(
+            business=self.business,
             customer=customer,
             service=data['service'],
             professional=data['professional'],
             date=data['date'],
             start_time=data['start_time'],
-            end_time=data['end_time'],
+            end_time=end_time,
             status=Appointment.Status.PENDING,
             notes=appointment_notes,
             send_whatsapp=False,
