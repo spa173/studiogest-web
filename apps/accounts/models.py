@@ -9,6 +9,10 @@ class User(AbstractUser):
         WORKER = 'TRABAJADOR', 'Trabajador (Barbero / Estilista)'
         CASHIER = 'CAJA_RECEPCION', 'Caja / Recepción'
 
+    business = models.ForeignKey(
+        'services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='team',
+    )
     email = models.EmailField('Correo electrónico', unique=True)
     role = models.CharField(
         'Rol',

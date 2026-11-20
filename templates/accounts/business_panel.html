@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ business.name }} | StudioGest{% endblock %}
+
+{% block full_page %}
+<main class="max-w-5xl mx-auto w-full px-4 py-8 space-y-6">
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="font-headline text-3xl font-bold">{{ business.name }}</h1>
+      <a class="privacy-link inline-block py-2" href="{% url 'appointments:business_booking' business.slug %}">Abrir mi página de reservas</a>
+    </div>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button class="privacy-link py-2" type="submit">Cerrar sesión</button>
+    </form>
+  </header>
+
+  {% if messages %}
+  <div aria-live="polite">
+    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <section aria-labelledby="business-appointments" class="space-y-3">
+    <h2 id="business-appointments" class="font-headline text-xl font-semibold">Citas y solicitudes</h2>
+    {% for item in page %}
+    <article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 space-y-2">
+      <h3 class="font-semibold">{{ item.customer.name }} · {{ item.service.name }}</h3>
+      <p>{{ item.date|date:"d/m/Y" }} · {{ item.start_time|time:"H:i" }} · {{ item.professional.name }}</p>
+      <p class="text-sm text-on-surface-variant">{{ item.get_status_display }} · {{ item.customer.phone }}</p>
+      {% if item.status == 'PENDIENTE' %}
+      {% if request.user.is_admin or request.user.is_worker and item.professional.user_id == request.user.id %}
+      <form method="post" action="{% url 'accounts:business_appointment' item.pk %}" class="flex flex-wrap gap-3">
+        {% csrf_token %}
+        <button class="bg-secondary text-on-secondary rounded-xl px-4 py-2" type="submit" name="action" value="confirm">Confirmar</button>
+        <button class="privacy-link px-4 py-2" type="submit" name="action" value="reject">Rechazar</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </article>
+    {% empty %}<p>Aún no hay citas para este negocio.</p>{% endfor %}
+    {% if page.has_other_pages %}
+    <nav aria-label="Páginas de citas" class="flex flex-wrap gap-4">
+      {% if page.has_previous %}<a class="privacy-link" href="?page={{ page.previous_page_number }}">Anterior</a>{% endif %}
+      <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="privacy-link" href="?page={{ page.next_page_number }}">Siguiente</a>{% endif %}
+    </nav>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="business-services" class="space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="business-services" class="font-headline text-xl font-semibold">Servicios</h2>
+      {% if can_manage_services %}<a class="privacy-link py-2" href="{% url 'accounts:business_service_create' %}">Agregar servicio</a>{% endif %}
+    </div>
+    <ul class="space-y-2">
+      {% for service in services %}
+      <li class="rounded-xl bg-surface-container-lowest border border-outline-variant p-4">
+        {{ service.name }} · {{ service.duration_minutes }} min · {{ service.price_cop_formatted }}
+        {% if not service.is_active %}<span> · Inactivo</span>{% endif %}
+        {% if can_manage_services %}<a class="privacy-link ml-2" href="{% url 'accounts:business_service_edit' service.pk %}">Editar</a>{% endif %}
+      </li>
+      {% empty %}<li>Aún no hay servicios configurados.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section aria-labelledby="business-professionals" class="space-y-3">
+    <h2 id="business-professionals" class="font-headline text-xl font-semibold">Profesionales</h2>
+    <ul class="space-y-2">
+      {% for professional in professionals %}
+      <li class="rounded-xl bg-surface-container-lowest border border-outline-variant p-4">
+        {{ professional.name }} · {{ professional.work_schedule_display }}
+        {% if not professional.is_active %}<span> · Inactivo</span>{% endif %}
+        {% if can_manage_professionals %}<a class="privacy-link ml-2" href="{% url 'accounts:business_professional_edit' professional.pk %}">Editar horario</a>{% endif %}
+      </li>
+      {% empty %}<li>Aún no hay profesionales vinculados al negocio.</li>{% endfor %}
+    </ul>
+  </section>
+</main>
+{% endblock %}
