@@ -27,6 +27,7 @@ from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from .authentication import ADMIN_ALERT, has_admin_login
+from .idle_session import ACTIVITY_ROUTE
 from .models import MFARecoveryCode
 
 
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 DEVICE_NAME = 'studiogest-privileged'
 PENDING_SETUP = 'privileged_mfa_setup'
 PUBLIC_ROUTES = {
-    'root', 'terms', 'privacy_notice', 'demo_request', 'appointments:public_booking',
+    ACTIVITY_ROUTE, 'root', 'terms', 'privacy_notice', 'demo_request', 'appointments:public_booking',
     'appointments:business_booking', 'accounts:logout', 'accounts:mfa_setup', 'accounts:mfa_verify',
 }
 
