@@ -7,6 +7,9 @@ from django.shortcuts import redirect, render
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from dashboard.demo import demo_request
+from dashboard.forms import DemoRequestForm
+
 
 def _admin_has_permission(request):
     return request.user.is_active and getattr(request.user, 'is_admin', False)
@@ -19,10 +22,11 @@ admin.site.has_permission = _admin_has_permission
 def root_redirect(request):
     if request.user.is_authenticated:
         return redirect('dashboard:index')
-    return render(request, 'landing.html')
+    return render(request, 'landing.html', {'demo_form': DemoRequestForm()})
 
 
 urlpatterns = [
+    path('solicitar-demo/', demo_request, name='demo_request'),
     path('terminos/', TemplateView.as_view(template_name='terms.html', extra_context={
         'terms_version': settings.TERMS_VERSION,
     }), name='terms'),
