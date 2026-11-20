@@ -116,7 +116,7 @@ class SaleDetailForm(forms.Form):
         widget=forms.Select(attrs={'class': CLASE_INPUT}),
     )
     product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_active=True).order_by('name'),
+        queryset=Product.objects.filter(is_active=True, business__isnull=True).order_by('name'),
         required=False,
         label='Producto',
         widget=forms.Select(attrs={'class': CLASE_INPUT}),

@@ -20,14 +20,15 @@ PRODUCT_UPDATE_FIELDS = [
 
 
 def operation_token(user, product, mode):
-    return signing.dumps({'key': str(uuid.uuid4()), 'user': user.pk,
+    return signing.dumps({'key': str(uuid.uuid4()), 'user': user.pk, 'business': user.business_id,
                           'product': product.pk if product else None, 'mode': mode}, salt=TOKEN_SALT)
 
 
 def verify_token(token, user, product, mode):
     try:
         payload = signing.loads(token, salt=TOKEN_SALT, max_age=43200)
-        if (payload['user'], payload['product'], payload['mode']) != (user.pk, product.pk if product else None, mode):
+        scope = (payload['user'], payload.get('business'), payload['product'], payload['mode'])
+        if scope != (user.pk, user.business_id, product.pk if product else None, mode):
             raise ValueError
         return uuid.UUID(payload['key'])
     except (signing.BadSignature, KeyError, ValueError, TypeError):
@@ -40,10 +41,11 @@ def request_fingerprint(data):
 
 
 def _existing_registration(key, user, fingerprint):
-    previous = StockEntry.objects.filter(operation_key=key).first()
+    previous = StockEntry.objects.select_related('product').filter(operation_key=key).first()
     if previous is None:
         return None
-    if previous.created_by_id != user.pk or previous.request_fingerprint != fingerprint:
+    if (previous.created_by_id != user.pk or previous.request_fingerprint != fingerprint
+            or previous.product.business_id != user.business_id):
         raise ValidationError('La operación ya se registró con otros datos. Abre un formulario nuevo.')
     return previous
 
@@ -57,13 +59,13 @@ def _validate_product_measurements(product, data):
         raise ValidationError('No se puede cambiar la presentación de un producto ya configurado.')
 
 
-def _registration_product(product, data, mode):
+def _registration_product(product, data, mode, business_id):
     if mode == 'new' and product is not None:
         raise ValidationError('El saldo inicial solo se registra al dar de alta un producto nuevo.')
     if product is None:
-        return Product(code=data['code'], stock=Decimal('0'), acquisition_cost=0,
+        return Product(business_id=business_id, code=data['code'], stock=Decimal('0'), acquisition_cost=0,
                        sale_price=0, service_usage_price=0)
-    product = Product.objects.select_for_update().get(pk=product.pk)
+    product = _lock_scoped_product(product.pk, business_id)
     _validate_product_measurements(product, data)
     return product
 
@@ -129,7 +131,7 @@ def save_registration(*, data, user, key, fingerprint, product=None, mode='new')
     previous = _existing_registration(key, user, fingerprint)
     if previous:
         return previous.product, False
-    product = _registration_product(product, data, mode)
+    product = _registration_product(product, data, mode, user.business_id)
     _update_product_details(product, data)
     values = _prepare_entry_values(product, data, mode)
     _save_product(product)
@@ -137,6 +139,13 @@ def save_registration(*, data, user, key, fingerprint, product=None, mode='new')
         _record_entry(product, data, user, key, fingerprint, mode, values)
         _increase_stock(product, values['quantity'])
     return product, True
+
+
+def _lock_scoped_product(pk, business_id):
+    product = Product.objects.select_for_update().filter(pk=pk, business_id=business_id).first()
+    if product is None:
+        raise ValidationError('El producto no está disponible en este inventario.')
+    return product
 
 
 @transaction.atomic
@@ -147,7 +156,7 @@ def consume_stock(*, product, quantity, user=None):
     if quantity <= 0:
         raise ValidationError('La cantidad a descontar debe ser mayor que cero.')
 
-    locked = Product.objects.select_for_update().get(pk=product_id)
+    locked = _lock_scoped_product(product_id, getattr(user, 'business_id', None))
     if not locked.is_active:
         raise ValidationError('No se puede consumir stock de un producto inactivo.')
     if locked.stock < quantity:
@@ -171,7 +180,7 @@ def restore_stock(*, product, quantity, user=None):
     if quantity <= 0:
         raise ValidationError('La cantidad a restaurar debe ser mayor que cero.')
 
-    locked = Product.objects.select_for_update().get(pk=product_id)
+    locked = _lock_scoped_product(product_id, getattr(user, 'business_id', None))
     if not locked.is_active:
         raise ValidationError('No se puede restaurar stock de un producto inactivo.')
     if locked.stock + quantity > MAX_STOCK:

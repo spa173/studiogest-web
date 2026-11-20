@@ -6,11 +6,11 @@ from .formatting import money_co, quantity_co
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'base_unit', 'display_stock', 'display_minimum',
+    list_display = ('code', 'name', 'business', 'base_unit', 'display_stock', 'display_minimum',
                     'display_cost', 'display_sale', 'display_package_sale', 'display_usage', 'is_active')
-    list_filter = ('base_unit', 'is_active')
+    list_filter = ('business', 'base_unit', 'is_active')
     search_fields = ('code', 'name', 'description')
-    fields = ('id', 'code', 'name', 'description', 'presentation', 'base_unit',
+    fields = ('id', 'code', 'name', 'business', 'description', 'presentation', 'base_unit',
               'display_content', 'display_stock', 'display_minimum', 'display_cost',
               'display_sale', 'display_package_sale', 'display_usage', 'display_override', 'is_active')
     readonly_fields = fields
