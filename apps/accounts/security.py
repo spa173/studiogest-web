@@ -26,13 +26,13 @@ from django.views.decorators.http import require_http_methods
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
+from .authentication import ADMIN_ALERT, has_admin_login
 from .models import MFARecoveryCode
 
 
 logger = logging.getLogger(__name__)
 DEVICE_NAME = 'studiogest-privileged'
 PENDING_SETUP = 'privileged_mfa_setup'
-ADMIN_ALERT = 'django_admin_access_alerted'
 PUBLIC_ROUTES = {
     'root', 'terms', 'privacy_notice', 'demo_request', 'appointments:public_booking',
     'appointments:business_booking', 'accounts:logout', 'accounts:mfa_setup', 'accounts:mfa_verify',
@@ -179,14 +179,16 @@ def _request_ip(request):
 
 class PrivilegedAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user.is_authenticated:
-            device = _device(request.user)
-            if device and not _verified(request.user, device):
-                match = request.resolver_match
-                if match.view_name not in PUBLIC_ROUTES and not (
-                    match.namespace == 'admin' and match.url_name == 'logout'
-                ):
-                    return redirect_to_login(request.get_full_path(), 'accounts:mfa_verify')
+        match = request.resolver_match
+        if not request.user.is_authenticated or match.view_name in PUBLIC_ROUTES:
+            return None
+        if match.namespace == 'admin' and (
+            match.url_name in {'login', 'logout'} or not has_admin_login(request)
+        ):
+            return None
+        device = _device(request.user)
+        if device and not _verified(request.user, device):
+            return redirect_to_login(request.get_full_path(), 'accounts:mfa_verify')
         return None
 
     def process_response(self, request, response):
@@ -194,8 +196,7 @@ class PrivilegedAccessMiddleware(MiddlewareMixin):
         if (
             not settings.ADMIN_ACCESS_ALERT_EMAIL or not match or match.namespace != 'admin'
             or match.url_name in {'login', 'logout', 'jsi18n'}
-            or response.status_code != 200 or not request.user.is_authenticated
-            or not request.user.is_active or not request.user.is_admin
+            or response.status_code != 200 or not has_admin_login(request)
             or request.session.get(ADMIN_ALERT)
         ):
             return response

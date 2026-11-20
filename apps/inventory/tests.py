@@ -19,7 +19,7 @@ class InventoryTests(TestCase):
     def setUpTestData(cls):
         cls.admin = User.objects.create_user(
             username='inventory-admin', email='admin@inventory.test',
-            role=User.Role.ADMIN, is_staff=True)
+            role=User.Role.ADMIN, is_staff=True, password='local-test-password')
         cls.worker = User.objects.create_user(
             username='inventory-worker', email='worker@inventory.test',
             role=User.Role.WORKER, is_staff=True)
@@ -32,6 +32,12 @@ class InventoryTests(TestCase):
     def setUp(self):
         self.url = reverse('inventory:list')
         self.client.force_login(self.admin)
+
+    def _login_to_admin(self):
+        self.assertRedirects(self.client.post(reverse('admin:login'), {
+            'username': self.admin.username, 'password': 'local-test-password',
+            'next': reverse('admin:index'),
+        }), reverse('admin:index'))
 
     def product_data(self, **changes):
         data = dict(code='NEW-001', name='Nuevo producto', description='',
@@ -83,6 +89,7 @@ class InventoryTests(TestCase):
         self.assertEqual(self.product.stock, 0)
 
     def test_admin_cannot_use_a_second_registration_form(self):
+        self._login_to_admin()
         url = reverse('admin:inventory_product_add')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
@@ -90,6 +97,7 @@ class InventoryTests(TestCase):
         self.assertFalse(Product.objects.filter(code='NEW-001').exists())
 
     def test_django_admin_is_read_only(self):
+        self._login_to_admin()
         # Simula un saldo futuro solo en la base temporal de pruebas.
         Product.objects.filter(pk=self.product.pk).update(stock=Decimal('25.125'))
         url = reverse('admin:inventory_product_change', args=[self.product.pk])
@@ -148,12 +156,14 @@ class InventoryTests(TestCase):
                 self.assertEqual(product.minimum_stock, Decimal('1.250'))
 
     def test_admin_invalid_product_is_not_saved(self):
+        self._login_to_admin()
         response = self.client.post(reverse('admin:inventory_product_add'),
                                     self.product_data(sale_price='-1'))
         self.assertEqual(response.status_code, 403)
         self.assertFalse(Product.objects.filter(code='NEW-001').exists())
 
     def test_admin_cannot_delete_product(self):
+        self._login_to_admin()
         url = reverse('admin:inventory_product_delete', args=[self.product.pk])
         self.assertEqual(self.client.post(url, {'post': 'yes'}).status_code, 403)
         self.assertTrue(Product.objects.filter(pk=self.product.pk).exists())
