@@ -65,12 +65,15 @@
           </div>
         </div>
 
+        <p class="text-sm text-on-surface-variant">
+          Usamos tus datos para gestionar la solicitud de cita y contactarte sobre su estado.
+          <a class="privacy-link" href="{% url 'privacy_notice' %}">Consulta el aviso de privacidad</a>.
+        </p>
         <div class="pt-2 flex flex-col sm:flex-row gap-3">
           <button type="submit" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm hover:opacity-95 transition-all">Solicitar reserva</button>
           <a href="/" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm text-on-surface-variant hover:bg-surface-container-low">Volver al inicio</a>
         </div>
         <p class="text-xs text-on-surface-variant">Al enviar, tu solicitud queda registrada como pendiente. El negocio confirmará la cita y la disponibilidad final.</p>
-        <p class="text-xs text-on-surface-variant">Aviso de datos: la información indicada (nombre, teléfono, servicio y horario solicitado) se usa únicamente para gestionar tu solicitud de cita y contactarte sobre su estado. No se publicará.</p>
       </form>
     </div>
   </main>

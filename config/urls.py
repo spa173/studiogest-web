@@ -1,9 +1,11 @@
 """
 URL configuration for StudioGest project.
 """
+from django.conf import settings
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 
 def _admin_has_permission(request):
@@ -21,6 +23,10 @@ def root_redirect(request):
 
 
 urlpatterns = [
+    path('terminos/', TemplateView.as_view(template_name='terms.html', extra_context={
+        'terms_version': settings.TERMS_VERSION,
+    }), name='terms'),
+    path('privacidad/', TemplateView.as_view(template_name='privacy_notice.html'), name='privacy_notice'),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('dashboard.urls')),
