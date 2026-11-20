@@ -12,6 +12,7 @@
     <div class="flex flex-wrap items-center gap-4">
       <a class="privacy-link py-2" href="{% url 'inventory:list' %}">Inventario</a>
       {% if can_manage_sales %}<a class="privacy-link py-2" href="{% url 'sales:index' %}">Ventas y caja</a>{% endif %}
+      {% if can_view_reports %}<a class="privacy-link py-2" href="{% url 'reports:index' %}">Reportes</a>{% endif %}
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button class="privacy-link py-2" type="submit">Cerrar sesión</button>

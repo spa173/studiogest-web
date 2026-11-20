@@ -49,6 +49,7 @@ class IsolateBusinessPanel(MiddlewareMixin):
         'sales:cash_history',
         'sales:cash_close',
         'sales:cash_finalize',
+        'reports:index',
     }
 
     def process_view(self, request, view_func, view_args, view_kwargs):

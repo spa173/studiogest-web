@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="pb-2 border-b border-outline-variant/30">
-  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Reportes</h1>
-  <p class="text-sm text-on-surface-variant mt-1">Resumen de las citas registradas y los servicios solicitados.</p>
+  <h1 class="font-headline text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Reportes{% if panel_business %} de {{ panel_business.name }}{% endif %}</h1>
+  <p class="text-sm text-on-surface-variant mt-1">Resumen de citas, ventas, servicios e inventario.</p>
 </div>
 
 <form action="{% url 'reports:index' %}" method="get" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm space-y-4">
-  <p class="text-sm text-on-surface-variant">Filtra por fecha de la cita. Ambos límites se incluyen; deja las fechas vacías para consultar todo el historial.</p>
+  <p class="text-sm text-on-surface-variant">El filtro incluye las fechas indicadas para citas y ventas. El stock bajo muestra las existencias actuales.</p>
   {% if form.errors %}
   <div role="alert" class="p-3 rounded-xl bg-error-container text-on-error-container text-sm">
     <p class="font-semibold">Revisa el filtro de fechas para consultar los reportes.</p>
