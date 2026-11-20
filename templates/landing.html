@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}StudioGest | Software para salones y barberías{% endblock %}
+{% block extra_head %}
+<meta name="description" content="Gestiona la agenda, la caja, el inventario y las reservas de tu salón o barbería con StudioGest.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,350;0,400;0,450;1,400&amp;family=Manrope:wght@400;600;700;800&amp;display=swap">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+{% endblock %}
+
+{% block full_page %}
+<div class="landing" id="inicio">
+  <header class="landing-header">
+    <div class="landing-shell landing-header-inner">
+      <a class="landing-wordmark" href="#inicio">
+        <img src="{% static 'img/landing/isotipo.webp' %}" width="40" height="40" alt="">
+        <span>Studio<em>Gest</em></span>
+      </a>
+      <nav aria-label="Navegación principal">
+        <a href="#soluciones">Soluciones</a>
+        <a href="#planes">Planes</a>
+        <a href="#reserva">Reservas</a>
+        <a href="#faq">Preguntas</a>
+      </nav>
+      <a class="landing-button landing-button-outline" href="{% url 'accounts:login' %}">Iniciar sesión</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="landing-shell landing-hero landing-split" aria-labelledby="landing-title">
+      <div>
+        <p class="landing-eyebrow">Software para salones, barberías y spas · Colombia</p>
+        <h1 id="landing-title">El control total de tu <em>salón</em>, en una sola plataforma.</h1>
+        <p class="landing-intro">Gestiona tus citas, cuadra la caja, controla el inventario y recibe solicitudes de reserva desde un mismo lugar.</p>
+        <div class="landing-actions">
+          <a class="landing-button" href="#planes">Ver planes <span aria-hidden="true">→</span></a>
+          <a class="landing-button landing-button-outline" href="#demo">Solicitar demostración</a>
+        </div>
+        <p class="landing-booking-link"><a href="{% url 'appointments:public_booking' %}">¿Eres cliente? Reserva tu cita <span aria-hidden="true">→</span></a></p>
+      </div>
+      <img class="landing-hero-photo" src="{% static 'img/landing/hero-barber.jpg' %}" width="1024" height="1280" fetchpriority="high" alt="Barbero recortando la barba de un cliente">
+    </section>
+
+    <div class="landing-audience">
+      <ul class="landing-shell" aria-label="Negocios que pueden usar StudioGest">
+        <li>Barberías de autor</li><li>Salones de belleza</li><li>Spas</li><li>Centros de estética</li>
+      </ul>
+    </div>
+
+    <section id="soluciones" class="landing-shell landing-section landing-split">
+      <div>
+        <p class="landing-eyebrow">Soluciones</p>
+        <h2>Todo tu negocio, <em>sin libretas</em> ni chats perdidos.</h2>
+        <img class="landing-section-photo" src="{% static 'img/landing/salon-stylist.jpg' %}" width="1280" height="960" loading="lazy" alt="Estilista aplicando color en un salón de belleza">
+      </div>
+      <div class="landing-feature-list">
+        <article><h3>Agenda inteligente</h3><p>Organiza horarios, descansos y citas por profesional. La agenda valida la disponibilidad.</p></article>
+        <article><h3>Caja y arqueo</h3><p>Controla la apertura, el arqueo y el cierre por método de pago.</p></article>
+        <article><h3>Control de inventario</h3><p>Gestiona existencias por unidad y volumen y registra entradas y consumos.</p></article>
+        <article><h3>Gestión de clientes</h3><p>Consulta los datos de tus clientes y registra sus autorizaciones de tratamiento.</p></article>
+      </div>
+    </section>
+
+    <section id="planes" class="landing-plans">
+      <div class="landing-shell landing-section">
+        <p class="landing-eyebrow">Planes en pesos colombianos</p>
+        <h2>Un plan para <em>cada negocio.</em></h2>
+        <div class="landing-plan-grid">
+          <article class="landing-plan">
+            <h3>Emprendedor</h3><p>Para profesionales independientes.</p>
+            <p class="landing-price">$59.000 <small>COP / mes</small></p>
+            <p>$566.400 COP al año con facturación anual.</p>
+            <a class="landing-button landing-button-outline" href="#demo">Consultar este plan</a>
+          </article>
+          <article class="landing-plan landing-plan-featured">
+            <h3>Profesional</h3><p>Para salones y barberías en crecimiento.</p>
+            <p class="landing-price">$119.000 <small>COP / mes</small></p>
+            <p>$1.142.400 COP al año con facturación anual.</p>
+            <a class="landing-button landing-button-paper" href="#demo">Consultar este plan</a>
+          </article>
+          <article class="landing-plan">
+            <h3>Multisede</h3><p>Para negocios con varias sedes.</p>
+            <p class="landing-price">$249.000 <small>COP / mes</small></p>
+            <p>$2.390.400 COP al año con facturación anual.</p>
+            <a class="landing-button landing-button-outline" href="#demo">Consultar disponibilidad</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="reserva" class="landing-booking">
+      <div class="landing-shell landing-split">
+        <div class="landing-section">
+          <p class="landing-eyebrow">Para tus clientes</p>
+          <h2>Solicita tu cita <em>desde el celular.</em></h2>
+          <p>Elige un servicio, profesional y horario. El establecimiento revisará la disponibilidad y confirmará tu solicitud.</p>
+          <a class="landing-button landing-button-paper" href="{% url 'appointments:public_booking' %}">Reservar mi cita <span aria-hidden="true">→</span></a>
+        </div>
+        <img src="{% static 'img/landing/tools-still-life.jpg' %}" width="1280" height="960" loading="lazy" alt="Navaja, peine y tijeras de barbería">
+      </div>
+    </section>
+
+    <section id="faq" class="landing-shell landing-section landing-split">
+      <div><p class="landing-eyebrow">Preguntas frecuentes</p><h2>Antes de <em>empezar.</em></h2></div>
+      <div class="landing-faq">
+        <details><summary>¿Tengo que instalar algún programa?</summary><p>StudioGest funciona en el navegador de tu computador, tableta o celular.</p></details>
+        <details><summary>¿Puedo configurar horarios por profesional?</summary><p>Sí. Puedes definir horarios y descansos por profesional para que la agenda valide la disponibilidad.</p></details>
+        <details><summary>¿Cómo se confirma una reserva?</summary><p>El establecimiento recibe tu solicitud pendiente y confirma la disponibilidad.</p></details>
+        <details><summary>¿Dónde consulto el tratamiento de mis datos?</summary><p>Consulta el <a href="{% url 'privacy_notice' %}">aviso de privacidad</a> y sus canales de contacto.</p></details>
+      </div>
+    </section>
+
+    <section id="demo" class="landing-demo">
+      <div class="landing-shell landing-section">
+        <p class="landing-eyebrow">Demostración</p>
+        <h2>Veamos tu salón <em>funcionando</em> en StudioGest.</h2>
+        <p>Escríbenos para conocer los planes y solicitar una demostración para tu negocio.</p>
+        <a class="landing-button landing-button-paper" href="mailto:envisionone@gmail.com?subject=Demostraci%C3%B3n%20de%20StudioGest">Solicitar demo por correo</a>
+      </div>
+    </section>
+  </main>
+  <footer class="landing-footer">
+    <div class="landing-shell">
+      <a class="landing-wordmark" href="#inicio"><img src="{% static 'img/landing/isotipo.webp' %}" width="40" height="40" alt=""><span>Studio<em>Gest</em></span></a>
+      <nav aria-label="Información legal y acceso">
+        <a href="{% url 'privacy_notice' %}">Aviso de privacidad</a>
+        <a href="{% url 'terms' %}">Términos y condiciones</a>
+        <a href="{% url 'accounts:login' %}">Acceso colaboradores</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+{% endblock %}
