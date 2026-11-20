@@ -216,13 +216,18 @@ def pending_requests(request):
 @require_http_methods(['GET', 'POST'])
 def public_booking(request):
     """Reserva pública de cita (RF-14, MVP): sin autenticación."""
-    if request.method == 'POST':
-        form = PublicBookingForm(request.POST)
-        if form.is_valid():
-            appointment = form.save()
-            return render(request, 'appointments/public_booking_success.html', {
-                'appointment': appointment,
-            })
-    else:
-        form = PublicBookingForm()
-    return render(request, 'appointments/public_booking.html', {'form': form})
+    is_submission = request.method == 'POST'
+    form = PublicBookingForm(request.POST if is_submission else None)
+    booking_available = (
+        form.fields['service'].queryset.exists()
+        and form.fields['professional'].queryset.exists()
+    )
+    if booking_available and is_submission and form.is_valid():
+        appointment = form.save()
+        return render(request, 'appointments/public_booking_success.html', {
+            'appointment': appointment,
+        })
+    return render(request, 'appointments/public_booking.html', {
+        'form': form,
+        'booking_available': booking_available,
+    })
