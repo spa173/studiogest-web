@@ -24,7 +24,7 @@
           <p><strong>Estado:</strong> {{ appointment.get_status_display }}</p>
         </div>
         <div class="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-          <a href="{% url 'appointments:public_booking' %}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm">Hacer otra reserva</a>
+          <a href="{% if appointment.business_id %}{% url 'appointments:business_booking' appointment.business.slug %}{% else %}{% url 'appointments:public_booking' %}{% endif %}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-secondary text-on-secondary font-semibold text-sm">Hacer otra reserva</a>
           <a href="/" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm text-on-surface-variant hover:bg-surface-container-low">Ir al inicio</a>
         </div>
       </div>

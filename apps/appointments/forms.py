@@ -280,6 +280,7 @@ class PublicBookingForm(forms.Form):
         self.business = business
         for field in ('service', 'professional'):
             self.fields[field].queryset = self.fields[field].queryset.filter(business=business)
+        self.fields['professional'].queryset = self.fields['professional'].queryset.filter(user__business=business)
         self.fields['service'].empty_label = 'Selecciona un servicio'
         self.fields['professional'].empty_label = 'Selecciona un profesional'
         if not self.initial.get('date'):

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | StudioGest{% endblock %}
+
+{% block full_page %}
+<main class="max-w-2xl mx-auto w-full px-4 py-8 space-y-5">
+  <a class="privacy-link" href="{% url 'accounts:business_panel' %}">Volver al panel</a>
+  <h1 class="font-headline text-2xl font-bold">{{ title }}</h1>
+  <form method="post" class="rounded-xl bg-surface-container-lowest border border-outline-variant p-5 space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-secondary text-on-secondary rounded-xl px-4 py-2">Guardar</button>
+  </form>
+</main>
+{% endblock %}

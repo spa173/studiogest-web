@@ -11,15 +11,15 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('username', 'email', 'first_name', 'last_name', 'phone')
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Información de StudioGest', {
-            'fields': ('role', 'phone')
+            'fields': ('role', 'phone', 'business')
         }),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('Información de StudioGest', {
-            'fields': ('role', 'phone', 'email')
+            'fields': ('role', 'phone', 'email', 'business')
         }),
     )
-    privileged_fields = {'role', 'is_staff', 'is_superuser', 'groups', 'user_permissions'}
+    privileged_fields = {'business', 'role', 'is_staff', 'is_superuser', 'groups', 'user_permissions'}
 
     def _filter_fieldsets(self, fieldsets):
         filtered = []

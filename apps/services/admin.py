@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Professional, Service
+from .models import BookingBusiness, Professional, Service
 
 
 class BusinessAdminAccessMixin:
@@ -26,6 +26,24 @@ class BusinessAdminAccessMixin:
         return self.has_module_permission(request)
 
 
+@admin.register(BookingBusiness)
+class BookingBusinessAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'is_active')
+    prepopulated_fields = {'slug': ('name',)}
+
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    has_change_permission = has_view_permission
+    has_delete_permission = has_view_permission
+
+
 @admin.register(Service)
 class ServiceAdmin(BusinessAdminAccessMixin, admin.ModelAdmin):
     list_display = ('name', 'duration_minutes', 'price_cop', 'is_active', 'created_at')
@@ -38,4 +56,4 @@ class ProfessionalAdmin(BusinessAdminAccessMixin, admin.ModelAdmin):
     list_display = ('name', 'specialty', 'work_start_time', 'work_end_time', 'color_tag', 'is_active')
     list_filter = ('is_active', 'specialty')
     search_fields = ('user__first_name', 'user__last_name', 'user__username', 'specialty')
-    fields = ('user', 'specialty', 'work_start_time', 'work_end_time', 'color_tag', 'is_active')
+    fields = ('user', 'business', 'specialty', 'work_start_time', 'work_end_time', 'color_tag', 'is_active')
