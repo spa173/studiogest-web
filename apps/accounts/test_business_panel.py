@@ -117,9 +117,9 @@ class BusinessPanelTests(TestCase):
 
     def test_platform_superuser_can_provision_businesses(self):
         root = get_user_model().objects.create_superuser(
-            username='platform', email='platform@example.test',
+            username='platform', email='platform@example.test', password='test-password',
         )
-        self.client.force_login(root)
+        self.client.post(reverse('admin:login'), {'username': root.username, 'password': 'test-password'})
         self.assertContains(self.client.get(reverse('admin:services_bookingbusiness_add')), 'Identificador público')
         self.assertEqual(self.client.get(reverse('dashboard:index')).status_code, 200)
         self.assertRedirects(

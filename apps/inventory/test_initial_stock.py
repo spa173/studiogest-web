@@ -16,7 +16,7 @@ class InitialStockTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.admin = User.objects.create_user(username='initial-admin', email='initial@inventory.test',
-                                           role=User.Role.ADMIN, is_staff=True)
+                                           role=User.Role.ADMIN, is_staff=True, password='local-test-password')
 
     def setUp(self):
         self.client.force_login(self.admin)
@@ -113,6 +113,9 @@ class InitialStockTests(TestCase):
             self.assertNotContains(response, text)
 
     def test_admin_list_and_detail_formats(self):
+        self.client.post(reverse('admin:login'), {
+            'username': self.admin.username, 'password': 'local-test-password',
+        })
         product, _ = self.create()
         urls = [reverse('admin:inventory_product_changelist'),
                 reverse('admin:inventory_product_change', args=[product.pk]),

@@ -131,12 +131,24 @@ def test_partial_save_validates_the_complete_instance():
     assert Service.objects.values().get(pk=service.pk) == before
 
 
+@pytest.fixture
+def django_admin_client(client, admin_user):
+    admin_user.set_password('local-test-password')
+    admin_user.save(update_fields=['password'])
+    response = client.post(reverse('admin:login'), {
+        'username': admin_user.username, 'password': 'local-test-password',
+        'next': reverse('admin:index'),
+    })
+    assert response.url == reverse('admin:index')
+    return client
+
+
 @pytest.mark.parametrize('field,value', [
     ('duration_minutes', '0'), ('price_cop', '-1'), ('name', '   '),
     ('duration_minutes', '2147483648'), ('price_cop', '1000000000000'),
 ])
-def test_django_admin_rejects_invalid_service_values(admin_client, field, value):
-    response = admin_client.post(
+def test_django_admin_rejects_invalid_service_values(django_admin_client, field, value):
+    response = django_admin_client.post(
         reverse('admin:services_service_add'), _service_data(**{field: value}),
     )
     assert response.status_code == 200
@@ -144,8 +156,8 @@ def test_django_admin_rejects_invalid_service_values(admin_client, field, value)
     assert not Service.objects.exists()
 
 
-def test_django_admin_creates_and_edits_valid_service(admin_client):
-    response = admin_client.post(
+def test_django_admin_creates_and_edits_valid_service(django_admin_client):
+    response = django_admin_client.post(
         reverse('admin:services_service_add'),
         _service_data(duration_minutes='1', price_cop='0'),
     )
@@ -153,7 +165,7 @@ def test_django_admin_creates_and_edits_valid_service(admin_client):
     service = Service.objects.get()
     assert service.duration_minutes == 1
     assert service.price_cop == 0
-    response = admin_client.post(
+    response = django_admin_client.post(
         reverse('admin:services_service_change', args=[service.pk]),
         _service_data(name='Editado desde Admin', duration_minutes='60', price_cop='50000'),
     )
