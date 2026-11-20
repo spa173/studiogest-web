@@ -134,3 +134,66 @@
     padding-top: clamp(0.5rem, 1.5vh, 1rem);
   }
 }
+
+.login-mobile-logo {
+  display: none;
+  object-fit: contain;
+}
+
+.login-form-options {
+  flex-wrap: wrap;
+  column-gap: 1rem;
+}
+
+.login-form-options > label,
+.login-form-options > button {
+  min-height: 44px;
+  text-align: left;
+}
+
+.privacy-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.privacy-link:focus-visible,
+#togglePasswordBtn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.login-footer .privacy-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+
+.privacy-notice {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 5vw, 3rem);
+  overflow-wrap: anywhere;
+}
+
+.privacy-notice h1,
+.privacy-notice h2 {
+  margin-block: 1.25rem 0.5rem;
+}
+
+.privacy-notice p {
+  margin-block: 0.5rem;
+}
+
+@media (max-width: 1023px) {
+  .login-layout .login-brand-panel,
+  .login-layout .login-utility {
+    display: none;
+  }
+
+  .login-mobile-logo {
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+}

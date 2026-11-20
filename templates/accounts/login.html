@@ -26,9 +26,9 @@
         <img src="{% static 'img/branding/logo-principal.png' %}" alt="StudioGest — Barbería y salón de belleza" width="1600" height="1200" class="login-brand-logo" fetchpriority="high">
       </figure>
 
-      <h1 class="login-brand-title font-headline text-2xl lg:text-3xl font-bold text-inverse-on-surface tracking-tight max-w-lg mb-4 leading-tight">
+      <p class="login-brand-title font-headline text-2xl lg:text-3xl font-bold text-inverse-on-surface tracking-tight max-w-lg mb-4 leading-tight">
         Gestión integral y eficiente para barberías y peluquerías
-      </h1>
+      </p>
 
     </div>
 
@@ -94,7 +94,7 @@
   </div>
 
   <!-- Columna Derecha: Tarjeta de Autenticación Centrada -->
-  <div class="login-form-panel w-full lg:w-7/12 xl:w-[52%] bg-surface flex flex-col justify-between p-6 sm:p-12 lg:p-16">
+  <main class="login-form-panel w-full lg:w-7/12 xl:w-[52%] bg-surface flex flex-col justify-between p-6 sm:p-12 lg:p-16">
     
     <!-- Top Utility Bar -->
     <div class="login-utility w-full flex justify-end items-center mb-6">
@@ -109,14 +109,15 @@
       
       <!-- Header de Login -->
       <div class="mb-6">
+        <img src="{% static 'img/branding/isotipo.png' %}" class="login-mobile-logo" width="64" height="64" alt="StudioGest">
         <div class="inline-block mb-3">
           <span class="font-label-xs text-xs uppercase tracking-wider text-secondary bg-secondary/10 px-2.5 py-1 rounded-md border border-secondary/20 font-semibold">
             Sistema de Gestión Local
           </span>
         </div>
-        <h2 class="font-headline text-3xl font-bold text-on-surface tracking-tight">
+        <h1 class="font-headline text-3xl font-bold text-on-surface tracking-tight">
           Iniciar Sesión
-        </h2>
+        </h1>
         <p class="font-body-md text-sm text-on-surface-variant mt-1.5">
           Ingresa tus credenciales para administrar tu negocio
         </p>
@@ -187,14 +188,14 @@
             </div>
             {{ form.password }}
             <!-- Botón para Mostrar/Ocultar Contraseña -->
-            <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface transition-colors cursor-pointer" title="Mostrar u ocultar contraseña">
-              <span class="material-symbols-outlined text-lg" id="passwordIcon">visibility</span>
+            <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface transition-colors cursor-pointer" aria-label="Mostrar contraseña" aria-controls="id_password">
+              <span class="material-symbols-outlined text-lg" id="passwordIcon" aria-hidden="true">visibility</span>
             </button>
           </div>
         </div>
 
         <!-- Fila Recordarme & Recuperación -->
-        <div class="flex items-center justify-between pt-1">
+        <div class="login-form-options flex items-center justify-between pt-1">
           <label for="{{ form.remember_me.id_for_label }}" class="flex items-center gap-2 cursor-pointer select-none">
             {{ form.remember_me }}
             <span class="font-body-md text-sm text-on-surface-variant">Recordarme</span>
@@ -226,12 +227,15 @@
 
     <!-- Pie de Página -->
     <footer class="login-footer w-full mt-8 pt-4 border-t border-outline-variant/30 text-center">
-      <p class="font-body-sm text-xs text-outline">
+      <nav aria-label="Información legal">
+        <a class="privacy-link" href="{% url 'privacy_notice' %}">Aviso de privacidad</a>
+      </nav>
+      <p class="font-body-sm text-xs text-on-surface-variant">
         StudioGest v1.0 • Sistema de Gestión para Barberías &amp; Peluquerías. Sede Principal.
       </p>
     </footer>
 
-  </div>
+  </main>
 
 </div>
 {% endblock %}
@@ -241,13 +245,11 @@
   function togglePasswordVisibility() {
     const passwordInput = document.getElementById('id_password');
     const passwordIcon = document.getElementById('passwordIcon');
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      passwordIcon.textContent = 'visibility_off';
-    } else {
-      passwordInput.type = 'password';
-      passwordIcon.textContent = 'visibility';
-    }
+    const toggle = document.getElementById('togglePasswordBtn');
+    const showPassword = passwordInput.type === 'password';
+    passwordInput.type = showPassword ? 'text' : 'password';
+    passwordIcon.textContent = showPassword ? 'visibility_off' : 'visibility';
+    toggle.setAttribute('aria-label', showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
   }
 </script>
 {% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Aviso de privacidad - StudioGest{% endblock %}
+
+{% block full_page %}
+<main class="privacy-notice text-on-surface">
+  <a class="privacy-link" href="{% url 'root' %}">Volver al inicio</a>
+  <h1 class="font-headline text-3xl font-bold">Aviso de privacidad</h1>
+
+  <h2 class="text-xl font-semibold">Responsable del tratamiento</h2>
+  <p>Envision One</p>
+
+  <h2 class="text-xl font-semibold">Datos que usamos y para qué</h2>
+  <p>En el inicio de sesión, usamos tu correo o nombre de usuario y tu contraseña para verificar tu identidad. Una cookie de sesión mantiene tu acceso mientras usas StudioGest.</p>
+  <p>Si solicitas una cita, usamos tu nombre, teléfono, servicio, horario y las notas que decidas enviar para gestionar la solicitud y contactarte sobre su estado.</p>
+
+  <h2 class="text-xl font-semibold">Tus derechos y cómo ejercerlos</h2>
+  <p>Puedes solicitar acceso, actualización o rectificación de tus datos, pedir prueba de la autorización cuando corresponda, y solicitar la supresión de tus datos o revocar la autorización en los casos previstos por la Ley 1581 de 2012.</p>
+  <p>Envía tu solicitud a <a class="privacy-link" href="mailto:envisionone@gmail.com">envisionone@gmail.com</a>.</p>
+  {% endif %}
+</main>
+{% endblock %}
