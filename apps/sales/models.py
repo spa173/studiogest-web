@@ -32,6 +32,7 @@ class CashRegisterSession(models.Model):
         OPEN = 'ABIERTA', 'Abierta'
         CLOSED = 'CERRADA', 'Cerrada'
 
+    business = models.ForeignKey('services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True)
     opened_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -71,6 +72,7 @@ class CashRegisterSession(models.Model):
 
 
 class Sale(models.Model):
+    business = models.ForeignKey('services.BookingBusiness', on_delete=models.PROTECT, null=True, blank=True)
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='sales', verbose_name='Cliente',

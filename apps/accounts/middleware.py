@@ -39,6 +39,16 @@ class IsolateBusinessPanel(MiddlewareMixin):
         'inventory:history',
         'inventory:purchase',
         'inventory:update',
+        'sales:index',
+        'sales:create',
+        'sales:store',
+        'sales:receipt',
+        'sales:cancel',
+        'sales:cash_open',
+        'sales:cash_store',
+        'sales:cash_history',
+        'sales:cash_close',
+        'sales:cash_finalize',
     }
 
     def process_view(self, request, view_func, view_args, view_kwargs):

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recibo {{ sale.receipt_number }} - StudioGest</title>
+  <title>Recibo {{ sale.receipt_number }} - {{ sale.business.name|default:'StudioGest' }}</title>
   <style>
     body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #111; background: #fff; }
     .receipt { max-width: 720px; margin: 0 auto; }
@@ -34,7 +34,7 @@
       <a href="{% url 'sales:index' %}" class="btn">Volver a ventas</a>
     </div>
 
-    <h1>StudioGest</h1>
+    <h1>{{ sale.business.name|default:'StudioGest' }}</h1>
     <div class="muted">Comprobante de venta</div>
 
     <div class="meta">
