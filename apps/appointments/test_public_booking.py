@@ -25,6 +25,31 @@ class PublicBookingTests(TestCase):
         self.assertContains(response, 'Reserva tu cita')
         self.assertContains(response, f'href="{reverse("privacy_notice")}"')
 
+    def test_unconfigured_catalog_hides_form_until_entries_are_active(self):
+        unavailable = 'Las reservas en línea aún no están disponibles'
+
+        self.service.is_active = False
+        self.service.save(update_fields=['is_active'])
+        self.professional.is_active = False
+        self.professional.save(update_fields=['is_active'])
+        for method in (self.client.get, self.client.post):
+            response = method(self.url)
+            self.assertContains(response, unavailable)
+            self.assertNotContains(response, 'name="customer_phone"')
+
+        self.assertFalse(Appointment.objects.exists())
+        self.assertFalse(Customer.objects.exists())
+
+        self.service.is_active = True
+        self.service.save(update_fields=['is_active'])
+        self.assertContains(self.client.get(self.url), unavailable)
+
+        self.professional.is_active = True
+        self.professional.save(update_fields=['is_active'])
+        response = self.client.get(self.url)
+        self.assertNotContains(response, unavailable)
+        self.assertContains(response, 'name="customer_phone"')
+
     def test_public_booking_creates_pending_appointment_and_customer(self):
         payload = {
             'customer_name': 'Ana Cliente',
