@@ -163,6 +163,13 @@
   outline-offset: 3px;
 }
 
+.login-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 1rem;
+}
+
 .login-footer .privacy-link {
   display: inline-flex;
   align-items: center;

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Aceptar términos y condiciones - StudioGest{% endblock %}
+
+{% block full_page %}
+<main class="privacy-notice text-on-surface">
+  <h1 class="font-headline text-3xl font-bold">Acepta los términos para continuar</h1>
+  <p>Lee los <a class="privacy-link" href="{% url 'terms' %}">Términos y Condiciones de StudioGest</a>, versión {{ terms_version }}.</p>
+  {% if form.errors %}
+  <div role="alert" class="text-on-error-container">
+    {{ form.version.errors }}
+    {{ form.accepted.errors }}
+  </div>
+  {% endif %}
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="version" value="{{ terms_version }}">
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <label class="flex items-center gap-3 py-3" for="{{ form.accepted.id_for_label }}">
+      {{ form.accepted }}
+      <span>He leído y acepto los Términos y Condiciones de StudioGest.</span>
+    </label>
+    <button class="rounded-xl bg-brand-turquoise text-primary-container font-semibold px-4 py-3" type="submit">Aceptar y continuar</button>
+  </form>
+  <form method="post" action="{% url 'accounts:logout' %}" class="mt-4">
+    {% csrf_token %}
+    <button class="privacy-link py-3" type="submit">Cerrar sesión</button>
+  </form>
+</main>
+{% endblock %}

@@ -1,3 +1,5 @@
+from django import forms
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -5,6 +7,7 @@ from django.contrib import messages
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 from .forms import LoginForm, ProfileForm
+from .models import TermsAcceptance
 
 
 def login_view(request):
@@ -63,3 +66,40 @@ def profile_settings(request):
     else:
         form = ProfileForm(instance=request.user)
     return render(request, 'accounts/settings.html', {'form': form})
+
+
+class TermsAcceptanceForm(forms.Form):
+    version = forms.CharField(max_length=32, widget=forms.HiddenInput)
+    accepted = forms.BooleanField(error_messages={'required': 'Marca la casilla para aceptar los términos.'})
+
+    def clean_version(self):
+        version = self.cleaned_data['version']
+        if version != settings.TERMS_VERSION:
+            raise forms.ValidationError('Los términos cambiaron. Vuelve a leer la versión vigente.')
+        return version
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def accept_terms(request):
+    version = settings.TERMS_VERSION
+    next_url = request.POST.get('next') if request.method == 'POST' else request.GET.get('next')
+    if not url_has_allowed_host_and_scheme(next_url, {request.get_host()}, require_https=request.is_secure()):
+        next_url = None
+
+    if not version or request.user.terms_acceptances.filter(version=version).exists():
+        return redirect(next_url or 'dashboard:index')
+
+    form = TermsAcceptanceForm(
+        request.POST if request.method == 'POST' else None,
+        initial={'version': version},
+    )
+    if request.method == 'POST' and form.is_valid():
+        TermsAcceptance.objects.get_or_create(user=request.user, version=form.cleaned_data['version'])
+        return redirect(next_url or 'dashboard:index')
+
+    return render(request, 'accounts/accept_terms.html', {
+        'form': form,
+        'terms_version': version,
+        'next': next_url,
+    })

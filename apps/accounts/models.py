@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -40,3 +41,16 @@ class User(AbstractUser):
     @property
     def is_cashier(self):
         return self.role == self.Role.CASHIER
+
+
+class TermsAcceptance(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='terms_acceptances',
+    )
+    version = models.CharField(max_length=32)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'version'], name='unique_user_terms_version'),
+        ]

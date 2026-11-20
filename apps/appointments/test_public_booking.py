@@ -23,7 +23,7 @@ class PublicBookingTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Reserva tu cita')
-        self.assertContains(response, 'Aviso de datos')
+        self.assertContains(response, f'href="{reverse("privacy_notice")}"')
 
     def test_public_booking_creates_pending_appointment_and_customer(self):
         payload = {
