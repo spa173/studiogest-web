@@ -16,7 +16,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.mail import send_mail
 from django.db import transaction
-from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -96,8 +95,6 @@ def _verify_token(user, token):
 @require_http_methods(['GET', 'POST'])
 def mfa_setup(request):
     user = request.user
-    if not user.is_superuser:
-        return HttpResponseForbidden()
     device = _device(user)
     if device:
         return redirect('dashboard:index' if _verified(user, device) else 'accounts:mfa_verify')
@@ -153,7 +150,7 @@ def mfa_setup(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def mfa_verify(request):
-    if not request.user.is_superuser or not _device(request.user):
+    if not _device(request.user):
         return redirect('dashboard:index')
     destination = request.GET.get('next', '')
     if not url_has_allowed_host_and_scheme(
@@ -182,7 +179,7 @@ def _request_ip(request):
 
 class PrivilegedAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user.is_authenticated and request.user.is_superuser:
+        if request.user.is_authenticated:
             device = _device(request.user)
             if device and not _verified(request.user, device):
                 match = request.resolver_match
