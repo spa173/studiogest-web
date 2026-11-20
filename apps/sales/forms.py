@@ -84,10 +84,12 @@ class SaleForm(forms.Form):
         widget=forms.Textarea(attrs={'class': CLASE_INPUT + ' resize-none', 'rows': 2}),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, business_id=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Solo citas no cobradas (venta registrada) y no canceladas pueden cobrarse.
-        self.fields['appointment'].queryset = Appointment.objects.exclude(
+        for field in ('customer', 'cash_session'):
+            self.fields[field].queryset = self.fields[field].queryset.filter(business_id=business_id)
+        self.fields['appointment'].queryset = Appointment.objects.filter(business_id=business_id).exclude(
             status=Appointment.Status.CANCELLED,
         ).exclude(sale__status=SaleStatus.REGISTERED).select_related('customer', 'service').order_by('-date', '-start_time')
         open_sessions = self.fields['cash_session'].queryset
@@ -116,7 +118,7 @@ class SaleDetailForm(forms.Form):
         widget=forms.Select(attrs={'class': CLASE_INPUT}),
     )
     product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_active=True, business__isnull=True).order_by('name'),
+        queryset=Product.objects.filter(is_active=True).order_by('name'),
         required=False,
         label='Producto',
         widget=forms.Select(attrs={'class': CLASE_INPUT}),
@@ -131,6 +133,11 @@ class SaleDetailForm(forms.Form):
         label='Precio unitario',
         widget=forms.NumberInput(attrs={'class': CLASE_INPUT, 'min': '0', 'step': '1'}),
     )
+
+    def __init__(self, *args, business_id=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in ('service', 'product'):
+            self.fields[field].queryset = self.fields[field].queryset.filter(business_id=business_id)
 
     def clean(self):
         cleaned = super().clean()

@@ -20,7 +20,7 @@ def product_list(request):
     products = Product.objects.filter(business_id=request.user.business_id).annotate(has_entries=Exists(StockEntry.objects.filter(product_id=OuterRef('pk'))))
     if not can_view_inventory_costs(request.user):
         products = products.defer('acquisition_cost')
-    return render(request, 'inventory/list.html', {'products': products, 'inventory_business': request.user.business})
+    return render(request, 'inventory/list.html', {'products': products, 'panel_business': request.user.business})
 
 
 @login_required
@@ -41,7 +41,7 @@ def register_product(request, pk=None, mode='new'):
         if response is not None:
             return response
     return render(request, 'inventory/form.html', {
-        'form': form, 'product': product, 'mode': mode, 'inventory_business': request.user.business,
+        'form': form, 'product': product, 'mode': mode, 'panel_business': request.user.business,
     })
 
 
@@ -112,7 +112,7 @@ def entry_history(request):
         product__business_id=request.user.business_id,
     ).select_related('product', 'created_by')
     return render(request, 'inventory/history.html', {
-        'inventory_business': request.user.business,
+        'panel_business': request.user.business,
         'page': Paginator(entries, 25).get_page(request.GET.get('page')),
         'can_view_inventory_costs': can_view_inventory_costs(request.user),
     })
