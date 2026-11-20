@@ -58,3 +58,8 @@ class TermsAcceptance(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'version'], name='unique_user_terms_version'),
         ]
+
+
+class MFARecoveryCode(models.Model):
+    device = models.ForeignKey('otp_totp.TOTPDevice', on_delete=models.CASCADE)
+    digest = models.CharField(max_length=64, unique=True)

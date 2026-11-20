@@ -40,17 +40,7 @@ class LoginForm(forms.Form):
         password = cleaned_data.get('password')
 
         if login_input and password:
-            # Primero intentar autenticar con username
             user = authenticate(username=login_input, password=password)
-            
-            # Si no funciona, intentar buscar usuario por email
-            if user is None:
-                from .models import User
-                try:
-                    user_obj = User.objects.get(email__iexact=login_input)
-                    user = authenticate(username=user_obj.username, password=password)
-                except User.DoesNotExist:
-                    user = None
 
             if user is None:
                 raise forms.ValidationError("Credenciales inválidas. Verifica tu correo y contraseña.")

@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     # Aplicaciones del proyecto
     'accounts',
     'customers',
@@ -67,6 +69,22 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'accounts.authentication.EmailBackend',
+]
+OTP_TOTP_ISSUER = 'StudioGest'
+
+VERCEL_DEPLOYMENT = os.getenv('VERCEL') == '1'
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 5
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'webmaster@localhost')
+ADMIN_ACCESS_ALERT_EMAIL = os.getenv('ADMIN_ACCESS_ALERT_EMAIL', '')
+
 
 # Update the terms document together with its version.
 TERMS_VERSION = '1.0'
@@ -83,6 +101,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
+    'accounts.security.PrivilegedAccessMiddleware',
     'accounts.middleware.RequireTermsAcceptance',
     'accounts.middleware.IsolateBusinessPanel',
     'django.contrib.messages.middleware.MessageMiddleware',
