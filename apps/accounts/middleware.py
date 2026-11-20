@@ -13,6 +13,7 @@ class RequireTermsAcceptance(MiddlewareMixin):
         'appointments:public_booking',
         'appointments:business_booking',
         'privacy_notice',
+        'demo_request',
         'terms',
     }
 

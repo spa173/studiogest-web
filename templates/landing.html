@@ -111,11 +111,48 @@
     </section>
 
     <section id="demo" class="landing-demo">
-      <div class="landing-shell landing-section">
-        <p class="landing-eyebrow">Demostración</p>
-        <h2>Veamos tu salón <em>funcionando</em> en StudioGest.</h2>
-        <p>Escríbenos para conocer los planes y solicitar una demostración para tu negocio.</p>
-        <a class="landing-button landing-button-paper" href="mailto:envisionone@gmail.com?subject=Demostraci%C3%B3n%20de%20StudioGest">Solicitar demo por correo</a>
+      <div class="landing-shell landing-section landing-split">
+        <div>
+          <p class="landing-eyebrow">Demostración</p>
+          <h2>Veamos tu salón <em>funcionando</em> en StudioGest.</h2>
+          <p>Déjanos tus datos para que podamos coordinar una demostración para tu negocio.</p>
+        </div>
+        <div class="landing-demo-card">
+          {% for message in messages %}
+            {% if message.extra_tags == 'demo-request' %}
+              <p class="landing-demo-success" role="status">{{ message }} Te contactaremos para coordinarla.</p>
+            {% endif %}
+          {% endfor %}
+          <form method="post" action="{% url 'demo_request' %}#demo" class="landing-demo-form">
+            {% csrf_token %}
+            {{ demo_form.request_id }}
+            <div hidden aria-hidden="true">{{ demo_form.website }}</div>
+            {% if demo_form.errors %}
+              <div role="alert" class="landing-demo-errors">
+                <p>Revisa los datos indicados antes de enviar.</p>
+                {{ demo_form.non_field_errors }}
+                {{ demo_form.request_id.errors }}
+              </div>
+            {% endif %}
+
+            {% for field in demo_form.visible_fields %}
+              {% if field.name == 'contact_consent' %}
+                <div class="landing-demo-consent">
+                  <label for="{{ field.id_for_label }}">{{ field }} <span>{{ field.label }}</span></label>
+                  <a class="privacy-link" href="{% url 'privacy_notice' %}">Consulta el aviso de privacidad</a>
+                  {{ field.errors }}
+                </div>
+              {% elif field.name != 'website' %}
+                <div class="landing-demo-field">
+                  {{ field.label_tag }}
+                  {{ field }}
+                  {{ field.errors }}
+                </div>
+              {% endif %}
+            {% endfor %}
+            <button class="landing-button" type="submit">Enviar solicitud</button>
+          </form>
+        </div>
       </div>
     </section>
   </main>

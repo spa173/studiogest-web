@@ -97,3 +97,28 @@
   .landing-wordmark img { width: 32px; height: 32px; }
   .landing-header-inner { column-gap: .55rem; }
 }
+
+.landing-demo-card {
+  background: var(--sg-brand-card);
+  color: var(--sg-brand-ink);
+  border-radius: .5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.landing-demo-form, .landing-demo-field, .landing-demo-consent { display: grid; gap: .5rem; }
+.landing-demo-form { gap: 1rem; }
+.landing-demo-field label { font-weight: 750; }
+.landing-demo-field :is(input, textarea) {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--sg-brand-ink-soft);
+  border-radius: .35rem;
+  background: var(--sg-brand-paper);
+  color: var(--sg-brand-ink);
+  font: inherit;
+}
+.landing-demo-field textarea { resize: vertical; }
+.landing-demo-consent label { display: flex; align-items: flex-start; gap: .65rem; padding-block: .35rem; }
+.landing-demo-consent input { flex: none; margin-top: .32rem; color: var(--sg-brand-clay-deep); }
+.landing-demo-form :is(input, textarea):focus-visible { outline: 2px solid var(--sg-brand-clay-deep); outline-offset: 2px; }
+.landing-demo-errors, .landing-demo-form .errorlist { color: var(--sg-brand-clay-deep); }
+.landing-demo-success { margin-bottom: 1rem; padding: .8rem; border-radius: .35rem; background: var(--sg-brand-sage-soft); }
