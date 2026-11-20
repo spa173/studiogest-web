@@ -21,7 +21,7 @@ class BusinessBookingTests(TestCase):
 
     @staticmethod
     def make_catalog(business, label):
-        user = get_user_model().objects.create_user(username=label, email=f'{label}@example.test')
+        user = get_user_model().objects.create_user(username=label, email=f'{label}@example.test', business=business)
         professional = Professional.objects.create(business=business, user=user)
         service = Service.objects.create(
             business=business, name=f'Corte {label}', duration_minutes=30, price_cop=25000,
@@ -66,6 +66,7 @@ class BusinessBookingTests(TestCase):
         ):
             response = self.client.post(self.url(business), self.payload(service, professional))
             self.assertContains(response, 'Solicitud de reserva recibida')
+            self.assertContains(response, f'href="{self.url(business)}"')
             appointment = Appointment.objects.get(business=business)
             self.assertEqual(appointment.customer.business, business)
             self.assertEqual(appointment.service, service)

@@ -1,6 +1,9 @@
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.utils.deprecation import MiddlewareMixin
+
+from services.models import BookingBusiness
 
 
 class RequireTermsAcceptance(MiddlewareMixin):
@@ -21,3 +24,34 @@ class RequireTermsAcceptance(MiddlewareMixin):
             return None
 
         return redirect('accounts:accept_terms')
+
+
+class IsolateBusinessPanel(MiddlewareMixin):
+    public_routes = RequireTermsAcceptance.public_routes | {'root', 'accounts:login'}
+    business_routes = {
+        'accounts:business_panel',
+        'accounts:business_appointment',
+        'accounts:business_service_create',
+        'accounts:business_service_edit',
+        'accounts:business_professional_edit',
+    }
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        route = request.resolver_match.view_name
+        user = request.user
+        if route in self.public_routes or not user.is_authenticated or user.is_superuser:
+            return None
+
+        if not user.business_id:
+            if not BookingBusiness.objects.exists():
+                return None
+            raise PermissionDenied
+
+        if not settings.TENANT_BOOKING_ENABLED or not user.business.is_active:
+            raise PermissionDenied
+
+        if route == 'dashboard:index':
+            return redirect('accounts:business_panel')
+        if route not in self.business_routes:
+            raise PermissionDenied
+        return None

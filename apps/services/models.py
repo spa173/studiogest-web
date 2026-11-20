@@ -101,6 +101,8 @@ class Professional(models.Model):
     def clean(self):
         super().clean()
         errors = {}
+        if self.user_id and self.business_id != self.user.business_id:
+            errors['user'] = 'La cuenta y el profesional deben pertenecer al mismo negocio.'
         start = self.work_start_time
         end = self.work_end_time
         if (start is None) != (end is None):
