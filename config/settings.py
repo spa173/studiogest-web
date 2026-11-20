@@ -70,6 +70,7 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # Update the terms document together with its version.
 TERMS_VERSION = '1.0'
+PUBLIC_SITE_ORIGIN = os.getenv('PUBLIC_SITE_ORIGIN', 'https://studiogest-web-1.vercel.app').rstrip('/')
 
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
@@ -99,6 +100,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'config.seo.public_site',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
