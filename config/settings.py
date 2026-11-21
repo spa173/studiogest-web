@@ -49,7 +49,7 @@ TENANT_BOOKING_ENABLED = os.getenv('TENANT_BOOKING_ENABLED', 'false').lower() ==
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'config.admin_apps.StudioGestAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

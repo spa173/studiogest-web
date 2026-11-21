@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+from . import admin_totp  # noqa: F401
 from .models import User
 
 
