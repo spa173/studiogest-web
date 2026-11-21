@@ -5,8 +5,15 @@ from django.core.exceptions import ValidationError
 
 class BookingBusiness(models.Model):
     name = models.CharField('Nombre del negocio', max_length=150)
-    slug = models.SlugField('Identificador público', max_length=80, unique=True)
+    slug = models.SlugField(
+        'Nombre en el enlace de reservas', max_length=80, unique=True,
+        help_text='Usa letras, números y guiones. Por ejemplo, estudio-centro aparece al final del enlace de reservas.',
+    )
     is_active = models.BooleanField('Activo', default=True)
+
+    class Meta:
+        verbose_name = 'Negocio'
+        verbose_name_plural = 'Negocios'
 
     def __str__(self):
         return self.name
