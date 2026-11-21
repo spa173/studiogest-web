@@ -20,8 +20,7 @@
 <meta property="og:image:alt" content="StudioGest, software para salones y barberías">
 <meta name="twitter:card" content="summary_large_image">
 {% endwith %}
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,350;0,400;0,450;1,400&amp;family=Manrope:wght@400;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}?v=landing-hero-restored-11">
 {% endblock %}
 
 {% block full_page %}
@@ -30,7 +29,7 @@
   <header class="landing-header">
     <div class="landing-shell landing-header-inner">
       <a class="landing-wordmark" href="#inicio">
-        <img src="{% static 'img/landing/isotipo.webp' %}" width="40" height="40" alt="">
+        <img src="{% static 'img/branding/isotipo.png' %}" width="40" height="40" alt="">
         <span>Studio<em>Gest</em></span>
       </a>
       <nav aria-label="Navegación principal">
@@ -44,44 +43,83 @@
   </header>
 
   <main id="contenido" tabindex="-1">
-    <section class="landing-shell landing-hero landing-split" aria-labelledby="landing-title">
-      <div>
+    <section class="landing-hero" aria-labelledby="landing-title">
+      <div class="landing-shell landing-split landing-hero-layout">
+      <div class="landing-hero-copy">
         <p class="landing-eyebrow">Software para salones, barberías y spas · Colombia</p>
         <h1 id="landing-title">El control total de tu <em>salón</em>, en una sola plataforma.</h1>
-        <p class="landing-intro">Gestiona tus citas, cuadra la caja, controla el inventario y recibe solicitudes de reserva desde un mismo lugar.</p>
+        <div class="landing-intro landing-hero-benefits">
+          <ul aria-label="Funciones de StudioGest">
+            <li><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>Gestiona tus citas</span></li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span><span>Cuadra la caja</span></li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span>Controla el inventario</span></li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">event_available</span><span>Recibe solicitudes de reserva</span></li>
+          </ul>
+          <p>Todo desde un mismo lugar.</p>
+        </div>
         <div class="landing-actions">
           <a class="landing-button" href="#demo">Solicitar demostración <span aria-hidden="true">→</span></a>
           <a class="landing-button landing-button-outline" href="#planes">Ver planes</a>
         </div>
         <p class="landing-booking-link"><a href="{% url 'appointments:public_booking' %}">¿Eres cliente? Reserva tu cita <span aria-hidden="true">→</span></a></p>
+
       </div>
-      <img class="landing-hero-photo" src="{% static 'img/landing/hero-barber.jpg' %}" width="1024" height="1280" fetchpriority="high" alt="Barbero recortando la barba de un cliente">
+        <img class="landing-hero-photo" src="{% static 'img/landing/hero-barber.jpg' %}" width="1024" height="1280" fetchpriority="high" alt="Barbero recortando la barba de un cliente">
+      </div>
     </section>
 
     <div class="landing-audience">
-      <ul class="landing-shell" aria-label="Negocios que pueden usar StudioGest">
-        <li>Barberías de autor</li><li>Salones de belleza</li><li>Spas</li><li>Centros de estética</li>
-      </ul>
+      <div class="landing-audience-viewport">
+        <div class="landing-audience-track">
+          <ul aria-label="Negocios que pueden usar StudioGest">
+            <li>Barberías de autor</li><li>Salones de belleza</li><li>Spas</li><li>Centros de estética</li>
+          </ul>
+          <ul aria-hidden="true">
+            <li>Barberías de autor</li><li>Salones de belleza</li><li>Spas</li><li>Centros de estética</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    <section id="soluciones" class="landing-shell landing-section landing-split">
-      <div>
+    <section id="soluciones" class="landing-shell landing-section landing-split landing-solutions">
+      <div class="landing-solutions-visual">
         <p class="landing-eyebrow">Soluciones</p>
         <h2>Todo tu negocio, <em>sin libretas</em> ni chats perdidos.</h2>
-        <img class="landing-section-photo" src="{% static 'img/landing/salon-stylist.jpg' %}" width="1280" height="960" loading="lazy" alt="Estilista aplicando color en un salón de belleza">
+        <img class="landing-solutions-photo" src="{% static 'img/landing/salon-stylist.jpg' %}" width="1280" height="960" loading="lazy" alt="Estilista aplicando color en un salón de belleza">
       </div>
       <div class="landing-feature-list">
-        <article><h3>Agenda inteligente</h3><p>Organiza horarios, descansos y citas por profesional. La agenda valida la disponibilidad.</p></article>
-        <article><h3>Caja y arqueo</h3><p>Controla la apertura, el arqueo y el cierre por método de pago.</p></article>
-        <article><h3>Control de inventario</h3><p>Gestiona existencias por unidad y volumen y registra entradas y consumos.</p></article>
-        <article><h3>Gestión de clientes</h3><p>Consulta los datos de tus clientes y registra sus autorizaciones de tratamiento.</p></article>
+        <article><span class="material-symbols-outlined landing-feature-icon" aria-hidden="true">calendar_month</span><h3>Agenda inteligente</h3><p>Organiza horarios, descansos y citas por profesional. La agenda valida la disponibilidad.</p></article>
+        <article><span class="material-symbols-outlined landing-feature-icon" aria-hidden="true">point_of_sale</span><h3>Caja y arqueo</h3><p>Controla la apertura, el arqueo y el cierre por método de pago.</p></article>
+        <article><span class="material-symbols-outlined landing-feature-icon" aria-hidden="true">inventory_2</span><h3>Control de inventario</h3><p>Gestiona existencias por unidad y volumen y registra entradas y consumos.</p></article>
+        <article><span class="material-symbols-outlined landing-feature-icon" aria-hidden="true">groups</span><h3>Gestión de clientes</h3><p>Consulta los datos de tus clientes y registra sus autorizaciones de tratamiento.</p></article>
+      </div>
+
+    </section>
+
+    <section id="reserva" class="landing-booking">
+      <div class="landing-shell landing-split">
+        <div class="landing-section">
+          <p class="landing-eyebrow">Para tus clientes</p>
+          <h2>Solicita tu cita <em>desde el celular.</em></h2>
+          <p>Elige un servicio, profesional y horario. El establecimiento revisará la disponibilidad y confirmará tu solicitud.</p>
+          <a class="landing-button landing-button-paper" href="{% url 'appointments:public_booking' %}">Reservar mi cita <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="landing-booking-visual">
+          <div class="landing-booking-preview" aria-hidden="true">
+            <div class="landing-booking-preview-heading"><span class="material-symbols-outlined">calendar_month</span><strong>Solicitud de reserva</strong></div>
+            <div><span class="landing-booking-step">1</span><span>Servicio</span><span class="material-symbols-outlined">expand_more</span></div>
+            <div><span class="landing-booking-step">2</span><span>Profesional</span><span class="material-symbols-outlined">expand_more</span></div>
+            <div><span class="landing-booking-step">3</span><span>Horario</span><span class="material-symbols-outlined">schedule</span></div>
+            <p>Pendiente de confirmación</p>
+          </div>
+          <img src="{% static 'img/landing/tools-still-life.jpg' %}" width="1280" height="960" loading="lazy" alt="Navaja, peine y tijeras de barbería">
+        </div>
       </div>
     </section>
 
     <section id="planes" class="landing-plans">
       <div class="landing-shell landing-section">
-        <p class="landing-eyebrow">Planes en pesos colombianos</p>
-        <h2>Un plan para <em>cada negocio.</em></h2>
+        <div class="landing-section-heading"><p class="landing-eyebrow">Planes en pesos colombianos</p><h2>Un plan para <em>cada negocio.</em></h2></div>
         <div class="landing-plan-grid">
           <article class="landing-plan">
             <h3>Emprendedor</h3><p>Para profesionales independientes.</p>
@@ -105,20 +143,8 @@
       </div>
     </section>
 
-    <section id="reserva" class="landing-booking">
-      <div class="landing-shell landing-split">
-        <div class="landing-section">
-          <p class="landing-eyebrow">Para tus clientes</p>
-          <h2>Solicita tu cita <em>desde el celular.</em></h2>
-          <p>Elige un servicio, profesional y horario. El establecimiento revisará la disponibilidad y confirmará tu solicitud.</p>
-          <a class="landing-button landing-button-paper" href="{% url 'appointments:public_booking' %}">Reservar mi cita <span aria-hidden="true">→</span></a>
-        </div>
-        <img src="{% static 'img/landing/tools-still-life.jpg' %}" width="1280" height="960" loading="lazy" alt="Navaja, peine y tijeras de barbería">
-      </div>
-    </section>
-
     <section id="faq" class="landing-shell landing-section landing-split">
-      <div><p class="landing-eyebrow">Preguntas frecuentes</p><h2>Antes de <em>empezar.</em></h2></div>
+      <div class="landing-faq-heading"><p class="landing-eyebrow">Preguntas frecuentes</p><h2>Antes de <em>empezar.</em></h2></div>
       <div class="landing-faq">
         <details><summary>¿Tengo que instalar algún programa?</summary><p>StudioGest funciona en el navegador de tu computador, tableta o celular.</p></details>
         <details><summary>¿Puedo configurar horarios por profesional?</summary><p>Sí. Puedes definir horarios y descansos por profesional para que la agenda valide la disponibilidad.</p></details>
@@ -175,7 +201,7 @@
   </main>
   <footer class="landing-footer">
     <div class="landing-shell">
-      <a class="landing-wordmark" href="#inicio"><img src="{% static 'img/landing/isotipo.webp' %}" width="40" height="40" alt=""><span>Studio<em>Gest</em></span></a>
+      <a class="landing-wordmark" href="#inicio"><img src="{% static 'img/branding/isotipo.png' %}" width="40" height="40" alt=""><span>Studio<em>Gest</em></span></a>
       <nav aria-label="Información legal y acceso">
         <a href="{% url 'privacy_notice' %}">Aviso de privacidad</a>
         <a href="{% url 'terms' %}">Términos y condiciones</a>

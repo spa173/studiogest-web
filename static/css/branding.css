@@ -205,19 +205,19 @@
   }
 }
 
-/* Papel y Tinta, shared by the public home and staff login. */
+/* Compatibility aliases share the official palette across public pages and login. */
 :root {
-  --sg-brand-paper: oklch(0.954 0.013 82.4);
-  --sg-brand-paper-deep: oklch(0.909 0.021 81.8);
-  --sg-brand-card: oklch(0.98 0.009 84.6);
-  --sg-brand-ink: oklch(0.207 0.008 67.4);
-  --sg-brand-ink-soft: oklch(0.33 0.016 67.2);
-  --sg-brand-clay: oklch(0.557 0.137 41.9);
-  --sg-brand-clay-deep: oklch(0.452 0.117 39.9);
-  --sg-brand-clay-soft: oklch(0.9 0.032 53.5);
-  --sg-brand-sage: oklch(0.551 0.046 126.1);
-  --sg-brand-sage-soft: oklch(0.905 0.022 121);
-  --sg-brand-line: oklch(0.861 0.023 80.7);
+  --sg-brand-paper: rgb(var(--sg-soft-white));
+  --sg-brand-paper-deep: rgb(var(--sg-border) / 0.35);
+  --sg-brand-card: rgb(var(--sg-paper));
+  --sg-brand-ink: rgb(var(--sg-night));
+  --sg-brand-ink-soft: rgb(var(--sg-muted));
+  --sg-brand-clay: rgb(var(--sg-turquoise));
+  --sg-brand-clay-deep: rgb(var(--sg-link));
+  --sg-brand-clay-soft: rgb(var(--sg-turquoise-soft));
+  --sg-brand-sage: rgb(var(--sg-link));
+  --sg-brand-sage-soft: rgb(var(--sg-turquoise-soft));
+  --sg-brand-line: rgb(var(--sg-border));
 }
 
 .login-layout { background: var(--sg-brand-paper); }
@@ -227,14 +227,14 @@
 
 .login-layout .text-secondary-container { color: var(--sg-brand-sage-soft); }
 .login-layout .bg-secondary-container { background: var(--sg-brand-sage-soft); }
-.login-layout .text-on-tertiary-container { color: var(--sg-brand-clay-deep); }
-.login-layout [class~="bg-tertiary-container/90"] { background: var(--sg-brand-clay-soft); }
+.login-layout .text-on-tertiary-container { color: #64451E; }
+.login-layout [class~="bg-tertiary-container/90"] { background: #F3E4CF; }
 .login-layout .text-outline { color: var(--sg-brand-ink-soft); }
 .login-layout .login-brand-panel .text-outline { color: var(--sg-brand-paper); }
 
 .login-layout button[type="submit"] {
-  background: var(--sg-brand-clay-deep);
-  color: var(--sg-brand-paper);
+  background: rgb(var(--sg-turquoise));
+  color: rgb(var(--sg-deep));
 }
 
 .login-layout :is(a, button, input):focus-visible {
