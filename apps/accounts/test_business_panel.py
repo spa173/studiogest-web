@@ -120,7 +120,7 @@ class BusinessPanelTests(TestCase):
             username='platform', email='platform@example.test', password='test-password',
         )
         self.client.post(reverse('admin:login'), {'username': root.username, 'password': 'test-password'})
-        self.assertContains(self.client.get(reverse('admin:services_bookingbusiness_add')), 'Identificador público')
+        self.assertContains(self.client.get(reverse('admin:services_bookingbusiness_add')), 'Nombre en el enlace de reservas')
         self.assertEqual(self.client.get(reverse('dashboard:index')).status_code, 200)
         self.assertRedirects(
             self.client.get(reverse('accounts:business_panel')),

@@ -100,3 +100,19 @@ class RootSecurityTests(TestCase):
         self.assertRedirects(self.client.post(admin_login, {
             'username': self.user.email, 'password': 'Test-only-password-42', 'next': admin_index,
         }), admin_index)
+
+    def test_admin_home_uses_plain_spanish_labels(self):
+        self.assertRedirects(self._login_to_admin(), reverse('admin:index'))
+        response = self.client.get(reverse('admin:index'))
+        self.assertContains(response, 'Administración de StudioGest')
+        self.assertContains(response, 'Negocios')
+        self.assertContains(response, 'Autenticadores')
+        self.assertNotContains(response, 'Booking businesss')
+        self.assertNotContains(response, 'TOTP devices')
+
+    def test_authenticator_form_explains_codes_in_spanish(self):
+        self._login_to_admin()
+        response = self.client.get(reverse('admin:otp_totp_totpdevice_add'))
+        self.assertContains(response, 'Añadir autenticador')
+        self.assertContains(response, 'Duración del código (segundos)')
+        self.assertContains(response, 'Intentos fallidos')

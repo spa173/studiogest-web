@@ -1,0 +1,8 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+  {% if request.user.is_superuser %}
+    <p>Para dar de alta una barbería, crea el negocio, vincula las cuentas del equipo y configura sus servicios y profesionales.</p>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

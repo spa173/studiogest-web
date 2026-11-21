@@ -7,13 +7,8 @@ from django.shortcuts import redirect, render
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from accounts.authentication import AdminLoginForm, has_admin_login
 from dashboard.demo import demo_request
 from dashboard.forms import DemoRequestForm
-
-
-admin.site.has_permission = has_admin_login
-admin.site.login_form = AdminLoginForm
 
 
 def root_redirect(request):
