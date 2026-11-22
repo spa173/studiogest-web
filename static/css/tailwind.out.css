@@ -1542,12 +1542,12 @@ input:where([type='file']):focus {
 }
 
 .border-on-tertiary-container\/30 {
-  border-color: rgb(129 60 39 / 0.3);
+  border-color: rgb(100 69 30 / 0.3);
 }
 
 .border-outline {
   --tw-border-opacity: 1;
-  border-color: rgb(116 100 88 / var(--tw-border-opacity, 1));
+  border-color: rgb(100 116 139 / var(--tw-border-opacity, 1));
 }
 
 .border-outline-variant {
@@ -1738,7 +1738,7 @@ input:where([type='file']):focus {
 
 .bg-secondary-container {
   --tw-bg-opacity: 1;
-  background-color: rgb(221 228 212 / var(--tw-bg-opacity, 1));
+  background-color: rgb(188 231 229 / var(--tw-bg-opacity, 1));
 }
 
 .bg-secondary\/10 {
@@ -1765,29 +1765,29 @@ input:where([type='file']):focus {
 
 .bg-surface-container {
   --tw-bg-opacity: 1;
-  background-color: rgb(235 224 213 / var(--tw-bg-opacity, 1));
+  background-color: rgb(226 232 240 / var(--tw-bg-opacity, 1));
 }
 
 .bg-surface-container-high {
   --tw-bg-opacity: 1;
-  background-color: rgb(230 216 204 / var(--tw-bg-opacity, 1));
+  background-color: rgb(218 225 235 / var(--tw-bg-opacity, 1));
 }
 
 .bg-surface-container-low {
   --tw-bg-opacity: 1;
-  background-color: rgb(240 232 222 / var(--tw-bg-opacity, 1));
+  background-color: rgb(233 237 242 / var(--tw-bg-opacity, 1));
 }
 
 .bg-surface-container-low\/40 {
-  background-color: rgb(240 232 222 / 0.4);
+  background-color: rgb(233 237 242 / 0.4);
 }
 
 .bg-surface-container-low\/50 {
-  background-color: rgb(240 232 222 / 0.5);
+  background-color: rgb(233 237 242 / 0.5);
 }
 
 .bg-surface-container-low\/60 {
-  background-color: rgb(240 232 222 / 0.6);
+  background-color: rgb(233 237 242 / 0.6);
 }
 
 .bg-surface-container-lowest {
@@ -1810,15 +1810,15 @@ input:where([type='file']):focus {
 
 .bg-tertiary-container {
   --tw-bg-opacity: 1;
-  background-color: rgb(241 220 207 / var(--tw-bg-opacity, 1));
+  background-color: rgb(243 228 207 / var(--tw-bg-opacity, 1));
 }
 
 .bg-tertiary-container\/10 {
-  background-color: rgb(241 220 207 / 0.1);
+  background-color: rgb(243 228 207 / 0.1);
 }
 
 .bg-tertiary-container\/90 {
-  background-color: rgb(241 220 207 / 0.9);
+  background-color: rgb(243 228 207 / 0.9);
 }
 
 .bg-tertiary\/10 {
@@ -2326,12 +2326,12 @@ input:where([type='file']):focus {
 
 .text-on-tertiary-container {
   --tw-text-opacity: 1;
-  color: rgb(129 60 39 / var(--tw-text-opacity, 1));
+  color: rgb(100 69 30 / var(--tw-text-opacity, 1));
 }
 
 .text-outline {
   --tw-text-opacity: 1;
-  color: rgb(116 100 88 / var(--tw-text-opacity, 1));
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
 
 .text-primary-container {
@@ -2346,7 +2346,7 @@ input:where([type='file']):focus {
 
 .text-secondary-container {
   --tw-text-opacity: 1;
-  color: rgb(221 228 212 / var(--tw-text-opacity, 1));
+  color: rgb(188 231 229 / var(--tw-text-opacity, 1));
 }
 
 .text-success {
@@ -2362,6 +2362,10 @@ input:where([type='file']):focus {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.underline {
+  text-decoration-line: underline;
 }
 
 .antialiased {
@@ -2507,12 +2511,12 @@ input:where([type='file']):focus {
 
 .placeholder\:text-outline::-moz-placeholder {
   --tw-text-opacity: 1;
-  color: rgb(116 100 88 / var(--tw-text-opacity, 1));
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
 
 .placeholder\:text-outline::placeholder {
   --tw-text-opacity: 1;
-  color: rgb(116 100 88 / var(--tw-text-opacity, 1));
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
 
 .backdrop\:bg-primary\/50::backdrop {
@@ -2579,26 +2583,26 @@ input:where([type='file']):focus {
 
 .hover\:bg-surface-container:hover {
   --tw-bg-opacity: 1;
-  background-color: rgb(235 224 213 / var(--tw-bg-opacity, 1));
+  background-color: rgb(226 232 240 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-surface-container-high:hover {
   --tw-bg-opacity: 1;
-  background-color: rgb(230 216 204 / var(--tw-bg-opacity, 1));
+  background-color: rgb(218 225 235 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-surface-container-highest:hover {
   --tw-bg-opacity: 1;
-  background-color: rgb(221 205 190 / var(--tw-bg-opacity, 1));
+  background-color: rgb(210 219 230 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-surface-container-low:hover {
   --tw-bg-opacity: 1;
-  background-color: rgb(240 232 222 / var(--tw-bg-opacity, 1));
+  background-color: rgb(233 237 242 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-surface-container-low\/60:hover {
-  background-color: rgb(240 232 222 / 0.6);
+  background-color: rgb(233 237 242 / 0.6);
 }
 
 .hover\:text-brand-turquoise:hover {
@@ -2623,7 +2627,7 @@ input:where([type='file']):focus {
 
 .hover\:text-on-secondary-container:hover {
   --tw-text-opacity: 1;
-  color: rgb(69 83 58 / var(--tw-text-opacity, 1));
+  color: rgb(9 86 85 / var(--tw-text-opacity, 1));
 }
 
 .hover\:text-on-surface:hover {
